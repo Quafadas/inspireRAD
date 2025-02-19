@@ -122,62 +122,68 @@ class DAGSuite extends FunSuite:
   }
 
   def unaryTest[Double: Field: Trig: ClassTag](
-      fct: (Tej[Double]) => Unit
+      fct: (Tej[Double]) => Unit,
+      opLabel: String
   )(using td: TejDim[Double]) =
     val one = Tej.one[Double]
     fct(one)
+    // println(td.dag.toGraphviz)
+    assert(td.dag.toGraphviz.contains(opLabel))
+
     assertEquals(td.dag.toposort.size, 2)
   end unaryTest
 
   def binaryTest[Double: Trig: Field: ClassTag](
-      fct: (Tej[Double], Tej[Double]) => Unit
+      fct: (Tej[Double], Tej[Double]) => Unit,
+      opLabel: String
   )(using td: TejDim[Double]) =
     val one = Tej.one[Double]
     val zero = Tej.zero[Double]
     fct(one, zero)
     // println(td.dag.toGraphviz)
+    assert(td.dag.toGraphviz.contains(opLabel))
 
     assertEquals(td.dag.toposort.size, 3)
   end binaryTest
 
   test("unary nodes : exp") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(exp[Tej[Double]])
+    unaryTest(exp[Tej[Double]], "Exp")
 
   }
 
   test("unary nodes : sin") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(sin[Tej[Double]])
+    unaryTest(sin[Tej[Double]], "Sin")
   }
 
   test("unary nodes : log") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(log[Tej[Double]])
+    unaryTest(log[Tej[Double]], "Log")
   }
 
   test("unary nodes : cos") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(cos[Tej[Double]])
+    unaryTest(cos[Tej[Double]], "Cos")
   }
 
   test("binary nodes : +") {
     given td: TejDim[Double] = TejDim(1)
-    binaryTest[Double]((x, y) => x + y)
+    binaryTest[Double]((x, y) => x + y, "+")
   }
 
   test("binary nodes : -") {
     given td: TejDim[Double] = TejDim(1)
-    binaryTest[Double]((x, y) => x - y)
+    binaryTest[Double]((x, y) => x - y, "-")
   }
 
   test("binary nodes : *") {
     given td: TejDim[Double] = TejDim(1)
-    binaryTest[Double]((x, y) => x * y)
+    binaryTest[Double]((x, y) => x * y, "Mul")
   }
 
   test("binary nodes : /") {
     given td: TejDim[Double] = TejDim(1)
-    binaryTest[Double]((x, y) => x / y)
+    binaryTest[Double]((x, y) => x / y, "Div")
   }
 end DAGSuite
