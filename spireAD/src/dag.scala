@@ -4,8 +4,6 @@ import scala.collection.mutable
 import java.util.UUID
 import java.util as ju
 import algebra.ring.Field
-import algebra.ring.Ring
-import spire.algebra.NRoot
 import spire.algebra.Trig
 import spire.implicits.*
 import scala.reflect.ClassTag

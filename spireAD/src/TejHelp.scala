@@ -1,7 +1,6 @@
 package io.github.quafadas.spireAD
 
 import scala.math.*
-import scala.reflect.*
 
 inline def anyIsZero(n: Any): Boolean =
   n match

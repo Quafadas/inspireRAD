@@ -1,28 +1,26 @@
-import munit._
-import spire._
-import spire.math._
-import spire.implicits._
+package io.github.quafadas.spireAD
+
+import munit.*
+import spire.*
+import spire.math.*
+import spire.implicits.*
 import _root_.algebra.ring.Field
 import spire.algebra.Trig
-import spire.syntax.rig
-import _root_.algebra.ring.Rig
-import vecxt.all.`*`
 
 // import Tej.*
 // import scala.math.Fractional.Implicits.infixFractionalOps
 // import scala.math.Integral.Implicits.infixIntegralOps
 // import scala.math.Numeric.Implicits.infixNumericOps
 
-import vecxt.BoundsCheck.DoBoundsCheck.yes
-import spire.algebra.VectorSpace
-import spire.algebra.NRoot
 import cats.kernel.Eq
 
-class TejSuite extends FunSuite {
+class TejSuite extends FunSuite:
 
   def assertEqualsTejToJet[T: Eq](t: Tej[T], j: Jet[T]) =
     assertEquals(t.j.real, j.real)
     for (i, ji) <- t.j.infinitesimal.zip(j.infinitesimal) do assertEquals(i, ji)
+    end for
+  end assertEqualsTejToJet
 
   test("jet addition") {
     given jd: JetDim = JetDim(2)
@@ -134,5 +132,4 @@ class TejSuite extends FunSuite {
     // println(td.dag.toGraphviz)
 
   }
-
-}
+end TejSuite

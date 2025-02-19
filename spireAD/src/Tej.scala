@@ -6,7 +6,6 @@ import scala.reflect.*
 import spire.algebra.*
 import spire.std.ArraySupport
 import spire.syntax.isReal.*
-import spire.syntax.nroot.*
 import spire.syntax.vectorSpace.*
 import scala.specialized as sp
 import spire.math.Jet
