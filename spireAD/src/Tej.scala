@@ -20,7 +20,7 @@ end AdMode
   * @param dimension
   *   the number of dimensions.
   */
-case class TejDim[T: Field: ClassTag: Trig](dimension: Int):
+case class TejDim[T: Field: ClassTag: Trig: NRoot](dimension: Int):
   require(dimension > 0)
   val jd = JetDim(dimension)
   val dag = DAG[T]()
@@ -214,6 +214,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
   def unary_-(implicit
       f: Field[T],
       t: Trig[T],
+      n: NRoot[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
@@ -393,6 +394,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       o: Order[T],
       t: Trig[T],
       s: Signed[T],
+      n: NRoot[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
@@ -458,6 +460,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
   def log(implicit
       f: Field[T],
       t: Trig[T],
+      n: NRoot[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
@@ -521,6 +524,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       t: Trig[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T],
+      n: NRoot[T],
       r: Field[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Exp, Tej(j.exp), this.nodeId))
@@ -531,6 +535,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       t: Trig[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T],
+      n: NRoot[T],
       r: Field[T]
   ): Tej[T] =
     // println("sin")
@@ -542,6 +547,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       t: Trig[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T],
+      n: NRoot[T],
       r: Field[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Cos, Tej(j.sinh), this.nodeId))
@@ -551,6 +557,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
   def cos(implicit
       f: Field[T],
       t: Trig[T],
+      n: NRoot[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
@@ -633,6 +640,7 @@ trait TejIsRing[@sp(Float, Double) T] extends Ring[Tej[T]]:
   implicit def eq: Eq[T]
   implicit def f: Field[T]
   implicit def s: Signed[T]
+  implicit def n: NRoot[T]
   implicit def t: Trig[T]
   implicit def v: VectorSpace[Array[T], T]
 

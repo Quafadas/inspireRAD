@@ -121,16 +121,40 @@ class DAGSuite extends FunSuite:
     assert(dag.isEmpty)
   }
 
-  def unaryTest[Double: Field: Trig: ClassTag](
-      fct: (Tej[Double]) => Unit,
+  def unaryTest(
+      fct: Tej[Double] => Unit,
+      fctJet: Jet[Double] => Jet[Double],
       opLabel: String
-  )(using td: TejDim[Double]) =
-    val one = Tej.one[Double]
-    fct(one)
-    // println(td.dag.toGraphviz)
-    assert(td.dag.toGraphviz.contains(opLabel))
+      // jetCheck: Jet[Double]
+  )(using td: TejDim[Double], f: Field[Double], ct: ClassTag[Double]) =
 
-    assertEquals(td.dag.toposort.size, 2)
+    given jd: JetDim = td.jd
+    val twoD = summon[Field[Double]].one * 2.0
+    val two = Tej(twoD)
+    val twoj = Jet(twoD) + Jet.h(0)
+    // val one = Tej(summon[Field[Double]].one) // corrected back to one
+    fct(two)
+    assert(td.dag.toGraphviz.contains(opLabel))
+    val sorted = td.dag.toposort.reverse
+    assert(sorted.size == 2)
+
+    sorted.head.grad = summon[Field[Double]].one
+
+    for node <- sorted.reverse do td.dag.getNode(node.id).backward
+    end for
+
+    val forwardVersion = fctJet(twoj)
+    assertEqualsDouble(
+      sorted.last.grad,
+      fctJet(twoj).infinitesimal(0),
+      0.0000001
+    )
+
+    // topo.last
+    // topo.last.backward()
+
+    // assert(jetCheck.infinitesimal(0) ==)
+
   end unaryTest
 
   def binaryTest[Double: Trig: Field: ClassTag](
@@ -148,23 +172,33 @@ class DAGSuite extends FunSuite:
 
   test("unary nodes : exp") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(exp[Tej[Double]], "Exp")
+    given jd: JetDim = td.jd
+    unaryTest(
+      exp[Tej[Double]],
+      exp[Jet[Double]],
+      "Exp"
+    )
+
+    // assert(sorted.last == Jet())
 
   }
 
   test("unary nodes : sin") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(sin[Tej[Double]], "Sin")
+    given jd: JetDim = td.jd
+    unaryTest(sin[Tej[Double]], sin[Jet[Double]], "Sin")
   }
 
   test("unary nodes : log") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(log[Tej[Double]], "Log")
+    given jd: JetDim = td.jd
+    unaryTest(log[Tej[Double]], log[Jet[Double]], "Log")
   }
 
   test("unary nodes : cos") {
     given td: TejDim[Double] = TejDim(1)
-    unaryTest(cos[Tej[Double]], "Cos")
+    given jd: JetDim = td.jd
+    unaryTest(cos[Tej[Double]], cos[Jet[Double]], "Cos")
   }
 
   test("binary nodes : +") {
