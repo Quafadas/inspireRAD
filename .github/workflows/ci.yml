@@ -102,22 +102,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          ref: benchmark
-
-      - name: Aggregate benchmark results
-        run: |
-            chmod +x aggregate.sh
-            ./aggregate.sh
-
-      - name: Switch to main branch
-        run: |
-          git fetch origin main
-          git checkout -f main
-          git reset --hard origin/main
-          ls
-
-      - name: Copy benchmark results into docs generation
-        run: mkdir -p site/docs/_assets/benchmarks && cp benchmark_history.json site/docs/_assets/benchmarks/benchmark_history.json
 
       - name: Generate static site
         run: ./millw site.publishDocs
