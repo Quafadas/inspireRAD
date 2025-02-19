@@ -63,15 +63,15 @@ jobs:
         if: matrix.project == 'js'
         run: ./millw spireAD.${{ matrix.project }}.fastLinkJS
 
-      - name: nativeLink
-        if: matrix.project == 'native'
-        run: ./millw spireAD.${{ matrix.project }}.test.nativeLink
+      # - name: nativeLink
+      #   if: matrix.project == 'native'
+      #   run: ./millw spireAD.${{ matrix.project }}.test.nativeLink
 
       - name: Test
         run: ./millw spireAD.${{ matrix.project }}.test
 
   publish:
-    if: github.repository == 'Quafadas/spire_AD' && contains(github.ref, 'refs/tags/')
+    if: github.repository == 'Quafadas/spireAD' && contains(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
