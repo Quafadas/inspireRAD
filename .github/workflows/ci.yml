@@ -30,7 +30,7 @@ jobs:
         os: [ubuntu-latest]
         scala: [3]
         java: [temurin@17]
-        project: [js, jvm, native]
+        project: [js, jvm]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -56,16 +56,11 @@ jobs:
       - if: matrix.project == 'js'
         run: npm install
 
-      - if: matrix.project == 'native'
-        run: sudo apt-get install -y libatlas-base-dev
+      # Removed native project configuration, no need to install dependencies
 
       - name: scalaJSLink
         if: matrix.project == 'js'
         run: ./millw spireAD.${{ matrix.project }}.fastLinkJS
-
-      # - name: nativeLink
-      #   if: matrix.project == 'native'
-      #   run: ./millw spireAD.${{ matrix.project }}.test.nativeLink
 
       - name: Test
         run: ./millw spireAD.${{ matrix.project }}.test
