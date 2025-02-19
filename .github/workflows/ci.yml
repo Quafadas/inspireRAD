@@ -61,17 +61,17 @@ jobs:
 
       - name: scalaJSLink
         if: matrix.project == 'js'
-        run: ./millw vecxt.${{ matrix.project }}.fastLinkJS
+        run: ./millw spireAD.${{ matrix.project }}.fastLinkJS
 
       - name: nativeLink
         if: matrix.project == 'native'
-        run: ./millw vecxt.${{ matrix.project }}.test.nativeLink
+        run: ./millw spireAD.${{ matrix.project }}.test.nativeLink
 
       - name: Test
-        run: ./millw vecxt.${{ matrix.project }}.test
+        run: ./millw spireAD.${{ matrix.project }}.test
 
   publish:
-    if: github.repository == 'Quafadas/vecxt' && contains(github.ref, 'refs/tags/')
+    if: github.repository == 'Quafadas/spire_AD' && contains(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
