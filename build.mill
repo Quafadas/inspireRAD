@@ -48,7 +48,7 @@ val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
 
 trait CommonJS extends ScalaJSModule {
   def scalaJSVersion = "1.18.2"
-  // def ivyDeps = super.ivyDeps() ++ Seq(ivy"com.raquo::ew::0.2.0")
+  def ivyDeps = super.ivyDeps() ++ Seq(ivy"org.scala-js:scalajs-java-securerandom_sjs1_2.13:1.0.0")
   // def moduleKind = ModuleKind.
 }
 
@@ -88,10 +88,10 @@ object spireAD extends CrossPlatform {
     }
   }
 
-  object native extends Shared with CommonNative {
-    // native specific settings here
-    object test extends ScalaNativeTests with SharedTests
-  }
+  // object native extends Shared with CommonNative {
+  //   // native specific settings here
+  //   object test extends ScalaNativeTests with SharedTests
+  // }
 }
 
 
