@@ -7,7 +7,6 @@ import spire.math.*
 import spire.implicits.DoubleAlgebra
 import spire.std.array.ArrayVectorSpace
 
-import spire.algebra.Trig
 import _root_.algebra.ring.Field
 
 class DAGSuite extends FunSuite:
