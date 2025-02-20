@@ -41,6 +41,6 @@ sumSin(softmax[Jet[Double]](range.jetArr))
 
 ```
 
-Once you're past the (somewhat formiddable ) list of Spire's typeclasses, we can use function composition to track  the derivaties of arbitrarily complex functions. Pretty neat!
+Once you're past the (somewhat formiddable) list of Spire's typeclasses, we can use function composition to track  the derivaties of arbitrarily complex functions. Pretty neat!
 
-This is forward mode automatic differentation. 
+This is forward mode automatic differentation - it calculations the partial differentials of the output value, with respect to it's inputs. 
