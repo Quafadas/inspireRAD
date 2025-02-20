@@ -28,7 +28,7 @@ def softmax[T](x: Array[T])(using
 
 val upper = 4
 given jd: JetDim = JetDim(upper)
-val range = (1 to upper).toArray
+val range = (1 to upper).toArray.map(_.toDouble)
 
 softmax[Double](range)
 softmax[Jet[Double]](range.jetArr)
