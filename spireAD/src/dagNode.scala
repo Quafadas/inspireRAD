@@ -16,7 +16,7 @@ import spire.algebra.NRoot
 trait AdNode[T: Field]:
   def id: UUID
   val realValue: T
-  val infinitesimal: Array[T]
+  // val infinitesimal: Array[T]
   var grad: T = summon[Field[T]].zero // Gradient accumulator
   def backward(using td: TejDim[T]): Unit
 end AdNode
@@ -33,8 +33,8 @@ end DebugNode
 case class TejNode[T: Field](tej: Tej[T]) extends AdNode[T]:
   override def id: UUID = tej.nodeId
 
-  override val realValue: T = tej.j.real
-  override val infinitesimal: Array[T] = tej.j.infinitesimal
+  override val realValue: T = tej.tejNum
+  // override val infinitesimal: Array[T] = tej.j.infinitesimal
 
   override def toString(): String =
     s"const \n v:$realValue g: $grad \n (_id: ${id.toString().takeRight(4)})"
@@ -53,8 +53,8 @@ case class TejOpUrnary[T: Field: Trig: NRoot](
 ) extends AdNode[T]:
   override def id: UUID = value.nodeId
 
-  override val realValue: T = value.j.real
-  override val infinitesimal: Array[T] = value.j.infinitesimal
+  override val realValue: T = value.tejNum
+  // override val infinitesimal: Array[T] = value
 
   override def toString(): String =
     s"$op \n v:$value g: $grad \n (_id: ${value.nodeId.toString().takeRight(4)})"
@@ -92,8 +92,7 @@ case class TejOpBinary[T: Field](
 ) extends AdNode[T]:
   override def id: UUID = value.nodeId
 
-  override val realValue: T = value.j.real
-  override val infinitesimal: Array[T] = value.j.infinitesimal
+  override val realValue: T = value.tejNum
 
   override def toString(): String =
     s"$op \n v:$value g: $grad \n (_id: ${value.nodeId.toString().takeRight(4)})"

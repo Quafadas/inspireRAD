@@ -8,6 +8,7 @@ import spire.std.ArraySupport
 import spire.syntax.isReal.*
 import spire.syntax.vectorSpace.*
 import scala.specialized as sp
+import scala.math.Numeric.Implicits.infixNumericOps
 import spire.math.Jet
 import spire.math.JetDim
 import scala.util.chaining.*
@@ -56,7 +57,7 @@ object Tej extends TejInstances:
       s: Semiring[T],
       r: Ring[T]
   ): Tej[T] =
-    d.addToGraph(Tej(s.zero))
+    d.addToGraph(Tej[T](tejNum = s.zero))
 
   // From real.
   inline def apply[@sp(Float, Double) T](
@@ -67,51 +68,51 @@ object Tej extends TejInstances:
       s: Semiring[T],
       r: Ring[T]
   ): Tej[T] =
-    d.addToGraph(Tej(Jet(real, Array.fill[T](d.dimension)(s.zero))))
+    d.addToGraph(Tej[T](tejNum = real))
 
-  // From real, to compute k-th partial derivative.
-  inline def apply[@sp(Float, Double) T](a: T, k: Int)(implicit
-      c: ClassTag[T],
-      inline d: TejDim[T],
-      r: Rig[T],
-      s: Semiring[T]
-  ): Tej[T] =
-    val v = Array.fill[T](d.dimension)(r.zero)
-    v(k) = r.one
-    d.addToGraph(Tej(Jet(a, v)))
-  end apply
+  // // From real, to compute k-th partial derivative.
+  // inline def apply[@sp(Float, Double) T](a: T, k: Int)(implicit
+  //     c: ClassTag[T],
+  //     inline d: TejDim[T],
+  //     r: Rig[T],
+  //     s: Semiring[T]
+  // ): Tej[T] =
+  //   val v = Array.fill[T](d.dimension)(r.zero)
+  //   v(k) = r.one
+  //   d.addToGraph(Tej(Jet(a, v)))
+  // end apply
 
-  // From real, to compute k-th partial derivative.
-  inline def apply[@sp(Float, Double) T](a: T, k: Array[T])(implicit
-      // c: ClassTag[T],
-      inline d: TejDim[T],
-      r: Rig[T]
-  ): Tej[T] =
-    d.addToGraph(Tej(Jet(a, k)))
+  // // From real, to compute k-th partial derivative.
+  // inline def apply[@sp(Float, Double) T](a: T, k: Array[T])(implicit
+  //     // c: ClassTag[T],
+  //     inline d: TejDim[T],
+  //     r: Rig[T]
+  // ): Tej[T] =
+  //   d.addToGraph(Tej(Jet(a, k)))
 
   // Zero real, indicator for k-th partial derivative.
-  inline def h[@sp(Float, Double) T](
-      k: Int
-  )(implicit
-      c: ClassTag[T],
-      inline d: TejDim[T],
-      r: Rig[T]
-  ): Tej[T] =
-    d.addToGraph(Tej(r.zero, k))
+  // inline def h[@sp(Float, Double) T](
+  //     k: Int
+  // )(implicit
+  //     c: ClassTag[T],
+  //     inline d: TejDim[T],
+  //     r: Rig[T]
+  // ): Tej[T] =
+  //   d.addToGraph(Tej(r.zero, k))
 
   inline def one[@sp(Float, Double) T](implicit
       c: ClassTag[T],
       inline d: TejDim[T],
       r: Ring[T]
   ): Tej[T] =
-    d.addToGraph(Tej(r.one))
+    d.addToGraph(Tej[T](tejNum = r.one))
 
   def zero[@sp(Float, Double) T](implicit
       c: ClassTag[T],
       d: TejDim[T],
       s: Ring[T]
   ): Tej[T] =
-    d.addToGraph(Tej(s.zero))
+    d.addToGraph(Tej[T](tejNum = s.zero))
 
   def fromInt[@sp(Float, Double) T](
       n: Int
@@ -120,7 +121,7 @@ object Tej extends TejInstances:
       d: TejDim[T],
       r: Ring[T]
   ): Tej[T] =
-    Tej(r.fromInt(n))
+    Tej[T](tejNum = r.fromInt(n))
 
   implicit def intToTej(n: Int)(implicit d: TejDim[Double]): Tej[Double] =
     doubleToTej(n.toDouble)
@@ -131,20 +132,15 @@ object Tej extends TejInstances:
   implicit def floatToTej[T](
       n: Float
   )(implicit d: TejDim[Float]): Tej[Float] =
-    import spire.std.float.FloatAlgebra
-    given jd: JetDim = d.jd
     Tej(
-      n.toFloat,
-      Array.fill[Float](d.dimension)(0.0f)
+      tejNum = n.toFloat
     )
   end floatToTej
 
   implicit def doubleToTej(
       n: Double
   )(implicit d: TejDim[Double]): Tej[Double] =
-    import spire.std.double.DoubleAlgebra
-    given jd: JetDim = d.jd
-    Tej(n, Array.fill[Double](d.dimension)(0.0))
+    Tej(tejNum = n)
   end doubleToTej
 
   implicit def bigIntToTej(
@@ -155,14 +151,13 @@ object Tej extends TejInstances:
   implicit def bigDecimalToTej(
       n: BigDecimal
   )(implicit d: TejDim[BigDecimal]): Tej[BigDecimal] =
-    import spire.std.bigDecimal.BigDecimalAlgebra
-    given jd: JetDim = d.jd
-    Tej(n, Array.fill[BigDecimal](d.dimension)(0.0))
+
+    Tej(tejNum = n)
   end bigDecimalToTej
 end Tej
 
 @SerialVersionUID(0L)
-final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
+case class Tej[@sp(Float, Double) T](tejNum: T)(using
     td: TejDim[T]
 ) extends ScalaNumber
     with ScalaNumericConversions
@@ -171,15 +166,15 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
 
   import spire.syntax.order.*
 
-  def dimension: Int = j.infinitesimal.size
+  // def dimension: Int = j.infinitesimal.size
   // implicit def TejDimension: TejDim = TejDim(dimension)
-  given jd: JetDim = td.jd
+  // given jd: JetDim = td.jd
   // given ta: JetAlgebra[T] = ???
 
   final lazy val nodeId = java.util.UUID.randomUUID()
 
-  inline private def real = j.real
-  inline private def infinitesimal = j.infinitesimal
+  // inline private def real = j.real
+  // inline private def infinitesimal = j.infinitesimal
 
   def backward(using td: TejDim[T], f: Field[T]) =
     val sorted = td.dag.toposort
@@ -198,16 +193,13 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
 
   /** This is consistent with abs
     */
-  def signum(implicit r: Signed[T]): Int = j.real.signum
+  def signum(implicit r: Signed[T]): Int = tejNum.signum
 
-  def asTuple: (T, Array[T]) = (real, infinitesimal)
-
-  def isReal: Boolean = infinitesimal.forall(anyIsZero)
-  def isZero: Boolean = anyIsZero(real) && isReal
-  def isInfinitesimal: Boolean = anyIsZero(real) && !isReal
+  def isZero: Boolean = tejNum == 0
 
   def eqv(b: Tej[T])(implicit o: Eq[T]): Boolean =
-    real === b.real && ArraySupport.eqv(infinitesimal, b.infinitesimal)
+    tejNum === b.tejNum
+
   def neqv(b: Tej[T])(implicit o: Eq[T]): Boolean =
     !this.eqv(b)
 
@@ -220,14 +212,15 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
   ): Tej[T] =
     d.unary(
       this,
-      TejOpUrnary(UrnaryOps.Neg, Tej(Jet(-real, -infinitesimal)), this.nodeId)
+      TejOpUrnary(UrnaryOps.Neg, Tej(tejNum = -tejNum), this.nodeId)
     )
+  end unary_-
 
   def +(b: T)(implicit f: Field[T]): Tej[T] =
-    Tej(real + b, infinitesimal)
+    Tej(tejNum = tejNum + b)
 
   def -(b: T)(implicit f: Field[T]): Tej[T] =
-    Tej(real - b, infinitesimal)
+    Tej(tejNum = tejNum - b)
   def *(
       b: T
   )(implicit
@@ -236,11 +229,11 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       d: TejDim[T],
       ct: ClassTag[T] // Adding Numeric[T] to the implicits
   ): Tej[T] =
-    val tmp = Tej(b)
+    val tmp = Tej(tejNum = b)
     d.binary(
       this,
       tmp,
-      TejOpBinary(BinaryOps.Mul, Tej(j * tmp.j), this.nodeId, tmp.nodeId)
+      TejOpBinary(BinaryOps.Mul, tmp * this, this.nodeId, tmp.nodeId)
     )
   end *
 
@@ -248,7 +241,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       f: Field[T],
       v: VectorSpace[Array[T], T]
   ): Tej[T] =
-    Tej(real / b, infinitesimal :/ b)
+    Tej(tejNum = tejNum / b)
 
   def +(
       b: Tej[T]
@@ -260,7 +253,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Add, Tej(j + b.j), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Add, Tej[T](tejNum = tejNum + b.tejNum), this.nodeId, b.nodeId)
     )
 
   def -(
@@ -273,7 +266,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Sub, Tej(j - b.j), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Sub, Tej[T](tejNum = tejNum - b.tejNum), this.nodeId, b.nodeId)
     )
   // Multiplication rule for differentials:
   //
@@ -290,7 +283,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Mul, Tej(j * b.j), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Mul, Tej[T](tejNum = tejNum * b.tejNum), this.nodeId, b.nodeId)
     )
 
   def /(
@@ -310,7 +303,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Div, Tej(j / b.j), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Div, Tej[T](tejNum = tejNum / b.tejNum), this.nodeId, b.nodeId)
     )
 
   def /~(b: Tej[T])(implicit
@@ -398,7 +391,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Abs, Tej(j.abs), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Abs, Tej(tejNum = tejNum.abs), this.nodeId))
 
   // pow -- base is a constant, exponent (this) is a differentiable function.
   // b^(p + du) ~= b^p + b^p * log(b) du
@@ -464,7 +457,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Log, Tej(j.log), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Log, Tej[T](tejNum = t.log(tejNum)), this.nodeId))
 
   /** sqrt(a + du) ~= sqrt(a) + du / (2 sqrt(a))
     */
@@ -475,7 +468,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Sqrt, Tej(j.sqrt), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Sqrt, Tej[T](tejNum = n.sqrt(tejNum)), this.nodeId))
 
   /** acos(a + du) ~= acos(a) - 1 / sqrt(1 - a**2) du
     */
@@ -485,7 +478,8 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       t: Trig[T],
       v: VectorSpace[Array[T], T]
   ): Tej[T] =
-    Tej(j.acos)
+    ???
+    // Tej(j.acos)
 
   /** asin(a + du) ~= asin(a) - 1 / sqrt(1 - a**2) du
     */
@@ -495,7 +489,8 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       t: Trig[T],
       v: VectorSpace[Array[T], T]
   ): Tej[T] =
-    Tej(j.asin)
+    ???
+    // Tej(j.asin)
 
   /** atan(a + du) ~= atan(a) + 1 / (1 + a**2) du
     */
@@ -504,8 +499,9 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       t: Trig[T],
       v: VectorSpace[Array[T], T]
   ): Tej[T] =
-    val tmp = f.one / (f.one + real * real)
-    Tej(j.atan)
+    ???
+    // val tmp = f.one / (f.one + real * real)
+    // Tej(j.atan)
   end atan
 
   /** Defined with "this" as the y coordinate:
@@ -516,7 +512,8 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
   def atan2(
       a: Tej[T]
   )(implicit f: Field[T], t: Trig[T], v: VectorSpace[Array[T], T]): Tej[T] =
-    Tej(j.atan2(a.j))
+    ???
+    // Tej(j.atan2(a.j))
 
   /** exp(a + du) ~= exp(a) + exp(a) du
     */
@@ -527,7 +524,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       n: NRoot[T],
       r: Field[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Exp, Tej(j.exp), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Exp, Tej[T](tejNum = t.exp(tejNum)), this.nodeId))
 
   /** sin(a + du) ~= sin(a) + cos(a) du
     */
@@ -539,7 +536,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       r: Field[T]
   ): Tej[T] =
     // println("sin")
-    d.unary(this, TejOpUrnary(UrnaryOps.Sin, Tej(j.sin), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Sin, Tej(tejNum = t.sin(tejNum)), this.nodeId))
 
   /** sinh(a + du) ~= sinh(a) + cosh(a) du
     */
@@ -550,7 +547,7 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       n: NRoot[T],
       r: Field[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Cos, Tej(j.sinh), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Sinh, Tej(tejNum = t.sinh(tejNum)), this.nodeId))
 
   /** cos(a + du) ~= cos(a) - sin(a) du
     */
@@ -561,60 +558,68 @@ final case class Tej[@sp(Float, Double) T] private (j: Jet[T])(using
       v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Cos, Tej(j.cos), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Cos, Tej(tejNum = t.cos(tejNum)), this.nodeId))
 
   /** cosh(a + du) ~= cosh(a) + sinh(a) du
     */
-  def cosh(implicit t: Trig[T], v: VectorSpace[Array[T], T]): Tej[T] =
-    Tej(j.cosh)
+  def cosh(implicit
+      t: Trig[T],
+      f: Field[T],
+      n: NRoot[T],
+      v: VectorSpace[Array[T], T],
+      d: TejDim[T]
+  ): Tej[T] =
+    d.unary(this, TejOpUrnary(UrnaryOps.Cosh, Tej(tejNum = t.cosh(tejNum)), this.nodeId))
 
   /** tan(a + du) ~= tan(a) + (1 + tan(a)**2) du
     */
   def tan(implicit
       f: Field[T],
       t: Trig[T],
-      v: VectorSpace[Array[T], T]
+      n: NRoot[T],
+      v: VectorSpace[Array[T], T],
+      d: TejDim[T]
   ): Tej[T] =
-    Tej(j.tan)
+    d.unary(this, TejOpUrnary(UrnaryOps.Tan, Tej(tejNum = t.tan(tejNum)), this.nodeId))
 
   /** tanh(a + du) ~= tanh(a) + (1 - tanh(a)**2) du
     */
   def tanh(implicit
       f: Field[T],
       t: Trig[T],
-      v: VectorSpace[Array[T], T]
+      n: NRoot[T],
+      v: VectorSpace[Array[T], T],
+      d: TejDim[T]
   ): Tej[T] =
-    Tej(j.tanh)
+    d.unary(this, TejOpUrnary(UrnaryOps.Tanh, Tej(tejNum = t.tanh(tejNum)), this.nodeId))
 
   // Stuff needed by ScalaNumber
   override def floatValue: Float = doubleValue.toFloat
-  override def doubleValue: Double = anyToDouble(real)
+  override def doubleValue: Double = anyToDouble(tejNum)
   override def byteValue: Byte = longValue.toByte
   override def shortValue: Short = longValue.toShort
   override def intValue: Int = longValue.toInt
-  override def longValue: Long = anyToLong(real)
+  override def longValue: Long = anyToLong(tejNum)
   override def underlying: Object = this
-  override def isWhole: Boolean = anyIsWhole(real) && isReal
-  override def isValidInt: Boolean = anyIsValidInt(real) && isReal
+  override def isWhole: Boolean = anyIsWhole(tejNum)
+  override def isValidInt: Boolean = anyIsValidInt(tejNum)
 
   // Object stuff
   override def hashCode: Int =
-    if isReal then real.##
-    else 13 * real.## + infinitesimal.foldLeft(53)((x, y) => x + y.## * 19)
+    13 * tejNum.##
 
   override def equals(that: Any): Boolean = that match
     case that: Tej[?] => this === that
-    case that         => isReal && real == that
+    // case that         => isReal && real == that
 
   def ===(that: Tej[?]): Boolean =
-    real == that.real && dimension == that.dimension &&
-      infinitesimal.zip(that.infinitesimal).forall { case (x, y) => x == y }
+    this.tejNum == that.tejNum
 
   def =!=(that: Tej[?]): Boolean =
     !(this === that)
 
-  override def toString: String =
-    "(%s + [%s]h)".format(real.toString, infinitesimal.mkString(", "))
+  // override def toString: String =
+  //   "(%s + [%s]h)".format(real.toString, infinitesimal.mkString(", "))
 end Tej
 
 trait TejInstances:
@@ -678,7 +683,7 @@ trait TejIsEuclideanRing[@sp(Float, Double) T] extends TejIsGCDRing[T] with Eucl
 trait TejIsField[@sp(Float, Double) T] extends TejIsEuclideanRing[T] with Field[Tej[T]]:
   /* TODO: what are exactly the laws of Tej with respect to EuclideanRing ? */
   // duplicating methods because super[..].call does not work on 2.10 and 2.11
-  override def fromDouble(n: Double): Tej[T] = Tej(f.fromDouble(n))
+  override def fromDouble(n: Double): Tej[T] = Tej(tejNum = f.fromDouble(n))
   def div(a: Tej[T], b: Tej[T]): Tej[T] = a / b
 end TejIsField
 
@@ -691,8 +696,8 @@ trait TejIsTrig[@sp(Float, Double) T] extends Trig[Tej[T]]:
   implicit def t: Trig[T]
   implicit def v: VectorSpace[Array[T], T]
 
-  def e: Tej[T] = Tej(t.e)
-  def pi: Tej[T] = Tej(t.pi)
+  def e: Tej[T] = Tej[T](tejNum = t.e)
+  def pi: Tej[T] = Tej[T](tejNum = t.pi)
 
   def exp(a: Tej[T]): Tej[T] = a.exp
   def expm1(a: Tej[T]): Tej[T] = a.exp - f.one
@@ -771,11 +776,11 @@ class TejAlgebra[@sp(Float, Double) T](implicit
     with Serializable:
   inline def scalar: Field[T] = f
   inline def nroot: NRoot[T] = n
-  def timesl(a: T, w: Tej[T]): Tej[T] = Tej(a) * w
-  def dot(x: Tej[T], y: Tej[T]): T =
-    x.j.infinitesimal
-      .zip(y.j.infinitesimal)
-      .foldLeft(scalar.times(x.j.real, y.j.real)) { (xx, yy) =>
-        scalar.plus(xx, scalar.times(yy._1, yy._2))
-      }
+  def timesl(a: T, w: Tej[T]): Tej[T] = Tej(tejNum = a) * w
+  def dot(x: Tej[T], y: Tej[T]): T = ???
+  // x.tejNum.infinitesimal
+  //   .zip(y.j.infinitesimal)
+  //   .foldLeft(scalar.times(x.j.real, y.j.real)) { (xx, yy) =>
+  //     scalar.plus(xx, scalar.times(yy._1, yy._2))
+  //   }
 end TejAlgebra
