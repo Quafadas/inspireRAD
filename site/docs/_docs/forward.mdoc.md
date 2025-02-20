@@ -4,7 +4,7 @@ title: Forward Mode
 
 We've already seen that Spire provides the abillity to get the derivate of a function at a point through it's `Jet` class. Through function composition, we can find the derivate of a pretty much arbitrary function. 
 
-```scala
+```scala mdoc
 
 import spire._
 import spire.math._
