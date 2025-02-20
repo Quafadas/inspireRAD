@@ -15,8 +15,7 @@ import io.github.quafadas.spireAD.*
 
 def softmax[T](x: Array[T])(using
   t: Trig[T],    
-  f: Field[T],
-  n: NRoot[T],
+  f: Field[T],  
   ct: ClassTag[T]  
 ) = {    
   val exps = x.map(exp)

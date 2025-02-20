@@ -59,7 +59,7 @@ object Tej extends TejInstances:
       real: T
   )(implicit
       c: ClassTag[T],
-      inline d: TejDim[T]      
+      inline d: TejDim[T]
   ): Tej[T] =
     d.addToGraph(Tej[T](tejNum = real))
 
