@@ -9,6 +9,9 @@ We've already seen that Spire provides the abillity to get the derivate of a fun
 import spire._
 import spire.math._
 import spire.implicits.*
+import _root_.algebra.ring.Field
+import spire.algebra.Trig
+
 import spire.math.Jet.*
 import io.github.quafadas.spireAD.*
 
@@ -27,8 +30,8 @@ val upper = 4
 given jd: JetDim = JetDim(upper)
 val range = (1 to upper).toArray
 
-softmax(range)
-softmax(range.jetArr)
+softmax[Double](range)
+softmax[Jet[Double]](range.jetArr)
 
 
 ```
