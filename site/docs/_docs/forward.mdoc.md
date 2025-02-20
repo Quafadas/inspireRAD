@@ -15,23 +15,30 @@ import spire.algebra.Trig
 import spire.math.Jet.*
 import io.github.quafadas.spireAD.*
 
-
-def softmax[T](x: Array[T])(using
-  t: Trig[T],    
-  f: Field[T],  
-  ct: ClassTag[T]  
+def softmax[T: Trig: ClassTag](x: Array[T])(using  
+  f: Field[T]  
 ) = {    
   val exps = x.map(exp)
   val sumExps = exps.foldLeft(f.zero)(_ + _)
   exps.map(t => t  / sumExps)
 }
 
-val upper = 4
-given jd: JetDim = JetDim(upper)
+def sumSin[T: Trig: ClassTag: Field](x: Array[T]) = {    
+  x.map(sin).foldLeft(f.zero)(_ + _)  
+}
+
+val dim = 4
+given jd: JetDim = JetDim(dim)
 val range = (1 to upper).toArray.map(_.toDouble)
 
 softmax[Double](range)
 softmax[Jet[Double]](range.jetArr)
 
+sumSin(softmax[Double](range))
+sumSin(softmax[Jet[Double]](range.jetArr))
 
 ```
+
+Once you're past the (somewhat formiddable ) list of Spire's typeclasses, we can use function composition to track  the derivaties of arbitrarily complex functions. Pretty neat!
+
+This is forward mode automatic differentation. 
