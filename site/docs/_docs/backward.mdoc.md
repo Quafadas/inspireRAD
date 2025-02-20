@@ -11,6 +11,16 @@ The motivation for reverse mode differentiation, is that it is O(1).
 The implementation is fascinating from both a maths and implementation perspective. The reverse mode AD algorithm uses some cunning mathematics (not described here) and the directed (acyclic) graph of the calcualtion at that point. To use it;
 
 ```scala mdoc
+
+import spire._
+import spire.math._
+import spire.implicits.*
+import _root_.algebra.ring.Field
+import spire.algebra.Trig
+
+import spire.math.Jet.*
+import io.github.quafadas.spireAD.*
+
 def softmax[T: Trig: ClassTag](x: Array[T])(using  
   f: Field[T]  
 ) = {    
@@ -25,15 +35,15 @@ def sumSin[T: Trig: ClassTag](x: Array[T])(using
   x.map(sin).foldLeft(f.zero)(_ + _)  
 }
 
-val dim = 4
-given jd: JetDim = JetDim(dim)
+
+given jd: TejDim = TejDim()
 val range = (1 to dim).toArray.map(_.toDouble)
 
 softmax[Double](range)
 softmax[Jet[Double]](range.jetArr)
 
 sumSin(softmax[Double](range))
-sumSin(softmax[Jet[Double]](range.jetArr))
+sumSin(softmax[Tej[Double]](range.jetArr))
 ```
 
 
