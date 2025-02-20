@@ -5,7 +5,6 @@ import java.util.UUID
 import java.util as ju
 import algebra.ring.Field
 import spire.algebra.Trig
-import spire.implicits.*
 import scala.reflect.ClassTag
 import spire.algebra.NRoot
 

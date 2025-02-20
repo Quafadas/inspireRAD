@@ -1,6 +1,5 @@
 package io.github.quafadas.spireAD
 
-import scala.collection.mutable
 import java.util.UUID
 import java.util as ju
 import algebra.ring.Field
@@ -11,7 +10,6 @@ import spire.math.cos
 import spire.math.sin
 import spire.math.cosh
 import spire.math.sinh
-import spire.math.tanh
 import scala.reflect.ClassTag
 import spire.algebra.NRoot
 
