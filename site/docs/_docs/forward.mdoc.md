@@ -31,7 +31,7 @@ def sumSin[T: Trig: ClassTag: Field](x: Array[T])(using
 
 val dim = 4
 given jd: JetDim = JetDim(dim)
-val range = (1 to upper).toArray.map(_.toDouble)
+val range = (1 to dim).toArray.map(_.toDouble)
 
 softmax[Double](range)
 softmax[Jet[Double]](range.jetArr)
