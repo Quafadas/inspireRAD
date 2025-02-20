@@ -18,7 +18,7 @@ class TejSuite extends FunSuite:
 
   def assertEqualsTejToJet[T: Eq](t: Tej[T], j: Jet[T]) =
     assertEquals(t.tejNum, j.real)
-      
+
   end assertEqualsTejToJet
 
   test("jet addition") {

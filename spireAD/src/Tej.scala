@@ -9,7 +9,6 @@ import spire.syntax.vectorSpace.*
 import scala.util.chaining.*
 import scala.specialized as sp
 
-
 enum AdMode:
   case Forward, Reverse
 end AdMode
@@ -19,7 +18,7 @@ end AdMode
   *   the number of dimensions.
   */
 case class TejDim[T: Field: ClassTag: Trig: NRoot]():
-  
+
   val dag = DAG[T]()
   final val mode = AdMode.Forward
 
@@ -139,7 +138,7 @@ object Tej extends TejInstances:
       n: Double
   )(implicit d: TejDim[Double]): Tej[Double] =
     d.addToGraph(Tej(tejNum = n))
-    
+
   end doubleToTej
 
   implicit def bigIntToTej(
@@ -215,13 +214,14 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     )
   end unary_-
 
-  def +(b: T)(implicit f: Field[T],d: TejDim[T],ct: ClassTag[T],v: VectorSpace[Array[T], T]): Tej[T] =
-      val tmp = Tej(tejNum = b)
-      d.binary(
-        this,
-        tmp,
-        TejOpBinary(BinaryOps.Add, tmp * this, this.nodeId, tmp.nodeId)
-      )
+  def +(b: T)(implicit f: Field[T], d: TejDim[T], ct: ClassTag[T], v: VectorSpace[Array[T], T]): Tej[T] =
+    val tmp = Tej(tejNum = b)
+    d.binary(
+      this,
+      tmp,
+      TejOpBinary(BinaryOps.Add, tmp * this, this.nodeId, tmp.nodeId)
+    )
+  end +
 
   def -(b: T)(implicit f: Field[T]): Tej[T] =
     Tej(tejNum = tejNum - b)
