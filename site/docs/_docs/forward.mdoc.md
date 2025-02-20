@@ -23,7 +23,7 @@ def softmax[T: Trig: ClassTag](x: Array[T])(using
   exps.map(t => t  / sumExps)
 }
 
-def sumSin[T: Trig: ClassTag: Field](x: Array[T])(using  
+def sumSin[T: Trig: ClassTag](x: Array[T])(using  
   f: Field[T]  
 ) = {    
   x.map(sin).foldLeft(f.zero)(_ + _)  
