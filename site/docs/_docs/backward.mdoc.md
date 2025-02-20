@@ -8,4 +8,33 @@ However, if you look into the code for `Jet`, what you'll see, is that it's trac
 
 The motivation for reverse mode differentiation, is that it is O(1). 
 
+The implementation is fascinating from both a maths and implementation perspective. The reverse mode AD algorithm uses some cunning mathematics (not described here) and the directed (acyclic) graph of the calcualtion at that point. To use it;
+
+```scala mdoc
+def softmax[T: Trig: ClassTag](x: Array[T])(using  
+  f: Field[T]  
+) = {    
+  val exps = x.map(exp)
+  val sumExps = exps.foldLeft(f.zero)(_ + _)
+  exps.map(t => t  / sumExps)
+}
+
+def sumSin[T: Trig: ClassTag](x: Array[T])(using  
+  f: Field[T]  
+) = {    
+  x.map(sin).foldLeft(f.zero)(_ + _)  
+}
+
+val dim = 4
+given jd: JetDim = JetDim(dim)
+val range = (1 to dim).toArray.map(_.toDouble)
+
+softmax[Double](range)
+softmax[Jet[Double]](range.jetArr)
+
+sumSin(softmax[Double](range))
+sumSin(softmax[Jet[Double]](range.jetArr))
+```
+
+
 
