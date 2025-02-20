@@ -96,7 +96,7 @@ object TejMatrixTypeClasses:
         end @@
 
         override def sum(using jd: JetDim): Tej[Double] =
-          jm.raw.fold(Tej(tejNum = 0.0))(_ + _)
+          jm.raw.fold(Tej(0.0))(_ + _)
 
         override def exp: Matrix[Tej[Double]] =
           Matrix[Tej[Double]](

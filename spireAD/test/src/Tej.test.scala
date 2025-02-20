@@ -17,9 +17,8 @@ import cats.kernel.Eq
 class TejSuite extends FunSuite:
 
   def assertEqualsTejToJet[T: Eq](t: Tej[T], j: Jet[T]) =
-    assertEquals(t.j.real, j.real)
-    for (i, ji) <- t.j.infinitesimal.zip(j.infinitesimal) do assertEquals(i, ji)
-    end for
+    assertEquals(t.tejNum, j.real)
+      
   end assertEqualsTejToJet
 
   test("jet addition") {
@@ -63,64 +62,64 @@ class TejSuite extends FunSuite:
   }
 
   test("Tej addition") {
-    given jd: TejDim[Double] = TejDim(2)
-    val x: Tej[Double] = 1.0 + Tej.h[Double](0)
-    val y: Tej[Double] = 1.0 + Tej.h[Double](1)
+    given jd: TejDim[Double] = TejDim()
+    val x: Tej[Double] = 1.0
+    val y: Tej[Double] = 1.0
     // println(jd.dag.toGraphviz)
     val result = x + y
-    assertEquals(result, Tej(2.0, Array(1.0, 1.0)))
+    assertEquals(result, Tej(2.0))
   }
 
   test("Tej multiplication") {
-    given jd: TejDim[Double] = TejDim(2)
-    val x: Tej[Double] = 1.0 + Tej.h[Double](0)
-    val y: Tej[Double] = 1.0 + Tej.h[Double](1)
+    given jd: TejDim[Double] = TejDim()
+    val x: Tej[Double] = 1.0
+    val y: Tej[Double] = 5.0
     val result = x * y
-    assertEquals(result, Tej(1.0, Array(1.0, 1.0)))
+    assertEquals(result, Tej(5.0))
   }
 
   test("Tej equality") {
-    given jd: TejDim[Double] = TejDim(2)
-    val x = Tej(1.0)
-    val y = Tej(1.0)
+    given jd: TejDim[Double] = TejDim()
+    val x: Tej[Double] = 1.0
+    val y: Tej[Double] = 1.0
     assertEquals(x, y)
   }
 
   test("zero Tej") {
-    given jd: TejDim[Double] = TejDim(2)
+    given jd: TejDim[Double] = TejDim()
     val zero = Tej.zero[Double]
-    assertEquals(zero, Tej(0.0, Array(0.0, 0.0)))
+    assertEquals(zero, Tej(0.0))
   }
 
   test("sin") {
-    given td: TejDim[Double] = TejDim(1)
-    given jd: JetDim = td.jd
-    val xT = Tej(1.0)
+    given td: TejDim[Double] = TejDim()
+    given jd: JetDim = JetDim(1)
+    val xT = 1.0
     val xJ = Jet(1.0)
     def sinT[T: Trig](t: T) = sin(t)
     assertEqualsTejToJet(sinT(xT), sinT(xJ))
   }
 
   test("log") {
-    given td: TejDim[Double] = TejDim(1)
-    given jd: JetDim = td.jd
-    val xT = Tej(1.0)
+    given td: TejDim[Double] = TejDim()
+    given jd: JetDim = JetDim(1)
+    val xT = 1.0
     val xJ = Jet(1.0)
     def logT[T: Trig](t: T) = log(t)
     assertEqualsTejToJet(logT(xT), logT(xJ))
   }
 
   // test("Tej constructor doesn't compile through Jet") {
-  //   given td: TejDim[Double] = TejDim(1)
-  //   given jd: JetDim = td.jd
+  //   given td: TejDim[Double] = TejDim()
+  //   given jd: JetDim = Jetim(0)
   //   val x = Tej(Jet(1.0))
   // }
 
   test("construct digraph") {
-    given td: TejDim[Double] = TejDim(2)
+    given td: TejDim[Double] = TejDim()
 
-    val t1 = Tej(1.0) + Tej.h[Double](0)
-    val t2 = Tej(2.0) + Tej.h[Double](1)
+    val t1 = Tej(1.0)
+    val t2 = Tej(2.0)
 
     def sq[T: Field: Trig](x: T): T = x * x
 

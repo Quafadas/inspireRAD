@@ -4,14 +4,11 @@ import scala.math.*
 import scala.reflect.*
 
 import spire.algebra.*
-import spire.std.ArraySupport
 import spire.syntax.isReal.*
 import spire.syntax.vectorSpace.*
-import scala.specialized as sp
-import scala.math.Numeric.Implicits.infixNumericOps
-import spire.math.Jet
-import spire.math.JetDim
 import scala.util.chaining.*
+import scala.specialized as sp
+
 
 enum AdMode:
   case Forward, Reverse
@@ -21,9 +18,8 @@ end AdMode
   * @param dimension
   *   the number of dimensions.
   */
-case class TejDim[T: Field: ClassTag: Trig: NRoot](dimension: Int):
-  require(dimension > 0)
-  val jd = JetDim(dimension)
+case class TejDim[T: Field: ClassTag: Trig: NRoot]():
+  
   val dag = DAG[T]()
   final val mode = AdMode.Forward
 
@@ -121,7 +117,9 @@ object Tej extends TejInstances:
       d: TejDim[T],
       r: Ring[T]
   ): Tej[T] =
-    Tej[T](tejNum = r.fromInt(n))
+    d.addToGraph(
+      Tej[T](tejNum = r.fromInt(n))
+    )
 
   implicit def intToTej(n: Int)(implicit d: TejDim[Double]): Tej[Double] =
     doubleToTej(n.toDouble)
@@ -140,7 +138,8 @@ object Tej extends TejInstances:
   implicit def doubleToTej(
       n: Double
   )(implicit d: TejDim[Double]): Tej[Double] =
-    Tej(tejNum = n)
+    d.addToGraph(Tej(tejNum = n))
+    
   end doubleToTej
 
   implicit def bigIntToTej(
@@ -157,7 +156,7 @@ object Tej extends TejInstances:
 end Tej
 
 @SerialVersionUID(0L)
-case class Tej[@sp(Float, Double) T](tejNum: T)(using
+case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     td: TejDim[T]
 ) extends ScalaNumber
     with ScalaNumericConversions
@@ -216,8 +215,13 @@ case class Tej[@sp(Float, Double) T](tejNum: T)(using
     )
   end unary_-
 
-  def +(b: T)(implicit f: Field[T]): Tej[T] =
-    Tej(tejNum = tejNum + b)
+  def +(b: T)(implicit f: Field[T],d: TejDim[T],ct: ClassTag[T],v: VectorSpace[Array[T], T]): Tej[T] =
+      val tmp = Tej(tejNum = b)
+      d.binary(
+        this,
+        tmp,
+        TejOpBinary(BinaryOps.Add, tmp * this, this.nodeId, tmp.nodeId)
+      )
 
   def -(b: T)(implicit f: Field[T]): Tej[T] =
     Tej(tejNum = tejNum - b)
@@ -227,7 +231,7 @@ case class Tej[@sp(Float, Double) T](tejNum: T)(using
       f: Field[T],
       v: VectorSpace[Array[T], T],
       d: TejDim[T],
-      ct: ClassTag[T] // Adding Numeric[T] to the implicits
+      ct: ClassTag[T]
   ): Tej[T] =
     val tmp = Tej(tejNum = b)
     d.binary(
@@ -683,7 +687,7 @@ trait TejIsEuclideanRing[@sp(Float, Double) T] extends TejIsGCDRing[T] with Eucl
 trait TejIsField[@sp(Float, Double) T] extends TejIsEuclideanRing[T] with Field[Tej[T]]:
   /* TODO: what are exactly the laws of Tej with respect to EuclideanRing ? */
   // duplicating methods because super[..].call does not work on 2.10 and 2.11
-  override def fromDouble(n: Double): Tej[T] = Tej(tejNum = f.fromDouble(n))
+  override def fromDouble(n: Double): Tej[T] = Tej(f.fromDouble(n))
   def div(a: Tej[T], b: Tej[T]): Tej[T] = a / b
 end TejIsField
 
@@ -696,8 +700,8 @@ trait TejIsTrig[@sp(Float, Double) T] extends Trig[Tej[T]]:
   implicit def t: Trig[T]
   implicit def v: VectorSpace[Array[T], T]
 
-  def e: Tej[T] = Tej[T](tejNum = t.e)
-  def pi: Tej[T] = Tej[T](tejNum = t.pi)
+  def e: Tej[T] = Tej[T](t.e)
+  def pi: Tej[T] = Tej[T](t.pi)
 
   def exp(a: Tej[T]): Tej[T] = a.exp
   def expm1(a: Tej[T]): Tej[T] = a.exp - f.one
@@ -776,7 +780,7 @@ class TejAlgebra[@sp(Float, Double) T](implicit
     with Serializable:
   inline def scalar: Field[T] = f
   inline def nroot: NRoot[T] = n
-  def timesl(a: T, w: Tej[T]): Tej[T] = Tej(tejNum = a) * w
+  def timesl(a: T, w: Tej[T]): Tej[T] = Tej(a) * w
   def dot(x: Tej[T], y: Tej[T]): T = ???
   // x.tejNum.infinitesimal
   //   .zip(y.j.infinitesimal)
