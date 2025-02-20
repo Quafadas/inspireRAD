@@ -40,7 +40,7 @@ given jd: TejDim = TejDim()
 val range = (1 to dim).toArray.map(_.toDouble)
 
 softmax[Double](range)
-softmax[Jet[Double]](range.jetArr)
+softmax[Tej[Double]](range.jetArr)
 
 sumSin(softmax[Double](range))
 sumSin(softmax[Tej[Double]](range.jetArr))

@@ -18,7 +18,6 @@ extension [T: Numeric: Field](a: Array[T])
       ct: ClassTag[Double]
   ): Array[Tej[Double]] =
     a.zipWithIndex.map(d =>
-      Tej(d._1.toDouble)
-      // + Tej.h(d._2)
+      Tej(d._1.toDouble)      
     )
 end extension
