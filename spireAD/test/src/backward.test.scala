@@ -45,10 +45,10 @@ class BackwardSuite extends FunSuite:
   lazy given oJet: Ordering[Jet[Double]] = Ordering.by(_.real)
   lazy given oTTej: Ordering[Tej[Double]] = Ordering.by(_.tejNum)
 
-  def writeGraph(using td: TejDim[Double]) =
-    val graph = td.dag.toGraphviz
-    os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/experiments/tmp.dot"), graph)
-  end writeGraph
+  // def writeGraph(using td: TejDim[Double]) =
+  //   val graph = td.dag.toGraphviz
+  //   os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/experiments/tmp.dot"), graph)
+  // end writeGraph
 
   test("log softmax gradients sum to zero. Result are consistent between Tej, Jet, double") {
     val dim = 4
@@ -97,11 +97,6 @@ class BackwardSuite extends FunSuite:
     val logSoftmaxResultJ = softmax(rangeJ).foldLeft(Jet(0.0))(_ + _)
 
     val out = logSoftmaxResult.backward(range)
-
-    println(logSoftmaxResultJ)
-    println(out)
-
-    writeGraph
 
     assertEqualsDouble(res, 1.0, 0.000001)
     assertEqualsDouble(res, logSoftmaxResultJ.real, 0.0001)
