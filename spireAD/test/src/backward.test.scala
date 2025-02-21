@@ -7,11 +7,6 @@ import spire.math.*
 import spire.implicits.*
 import _root_.algebra.ring.Field
 import spire.algebra.Trig
-import spire.algebra.Order
-import scala.Numeric
-import scala.Fractional
-import _root_.algebra.ring.Ring
-import spire.compat.fractional
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 class BackwardSuite extends FunSuite:
@@ -47,23 +42,17 @@ class BackwardSuite extends FunSuite:
   //     def toDouble(x: Tej[T]): Double = x.toDouble
   //     def compare(x: Tej[T], y: Tej[T]): Int = ??? //  if x > y then 1 else if x < y then -1 else 0
   //     def div(x: Tej[T], y: Tej[T]): Tej[T] = x / y
+  lazy given oJet: Ordering[Jet[Double]] = Ordering.by(_.real)
+  lazy given oTTej: Ordering[Tej[Double]] = Ordering.by(_.tejNum)
 
-  test("Softmax") {
+  def writeGraph(using td: TejDim[Double]) =
+    val graph = td.dag.toGraphviz
+    os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/experiments/tmp.dot"), graph)
+  end writeGraph
+
+  test("log softmax gradients sum to zero. Result are consistent between Tej, Jet, double") {
     val dim = 4
     given jetd: JetDim = JetDim(dim)
-
-    val arg = new JetInstances {}
-    given argO: Order[Double] = arg.JetAlgebra[Double].o
-
-    def softmax[T: Trig: ClassTag: Ordering](x: Array[T])(using
-        f: Field[T]
-    ): Array[T] =
-      val xmax = x.fold(f.zero)((a, b) => if a > b then a else b)
-      val stabilise = x.map(x => x - xmax)
-      val exps = stabilise.map(exp)
-      val sumExps = exps.foldLeft(f.zero)(_ + _)
-      exps.map(t => t / sumExps)
-    end softmax
 
     def logSoftmax[T: Trig: ClassTag: Ordering](x: Array[T])(using f: Field[T]): Array[T] =
       val xmax = x.fold(f.zero)((a, b) => if a > b then a else b)
@@ -72,39 +61,52 @@ class BackwardSuite extends FunSuite:
       shifted.map(x => x - logSumExp)
     end logSoftmax
 
-    def sumSin[T: Trig: ClassTag](x: Array[T])(using
-        f: Field[T]
-    ) =
-      x.map(sin).foldLeft(f.zero)(_ + _)
-
-    val expectedOutput = softmax((1 to dim).toArray.map(_.toDouble))
-    val sum = expectedOutput.foldLeft(0.0)(_ + _)
-    // assertEquals(sum, 1.0, 1e-6)
-
     given jd: TejDim[Double] = TejDim()
-    // given jNF: JetIsNumericAndFractional[Jet[Double], Double] = jetIsNumericAndFractional[Jet[Double], Double]
-    // given tNF: TejIsNumericAndFractional[Tej[Double], Double] = tejIsNumericAndFractional[Jet[Double], Double]
 
     val range = (1 to dim).toArray.map(_.toDouble).tejArr
     val rangeJ = (1 to dim).toArray.map(_.toDouble).jetArr
 
-    // println(range.mkString(","))
-    given oJet: Ordering[Jet[Double]] = Ordering.by(_.real)
-    given oTTej: Ordering[Tej[Double]] = Ordering.by(_.tejNum)
-
-    val softmaxResult = logSoftmax(range).foldLeft(Tej(0.0))(_ + _)
-    val softmaxResultJ = logSoftmax(rangeJ).foldLeft(Jet(0.0))(_ + _)
-
+    val res = logSoftmax(range.toArray.map(_.toDouble)).sum
     val logSoftmaxResult = logSoftmax(range).foldLeft(Tej(0.0))(_ + _)
     val logSoftmaxResultJ = logSoftmax(rangeJ).foldLeft(Jet(0.0))(_ + _)
 
-    val graph = jd.dag.toGraphviz
-    // os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/experiments/tmp.dot"), graph)
-
-    val out = softmaxResult.backward(range)
-    // println(jd.dag.getAllNodes.mkString("\n"))
-    assertEqualsDouble(softmaxResultJ.infinitesimal.sum, 0, 0.0001)
+    val out = logSoftmaxResult.backward(range)
+    assertEqualsDouble(logSoftmaxResultJ.infinitesimal.sum, 0, 0.0001)
     assertEqualsDouble(out.map(_._2).sum, 0, 0.0001)
 
+    assertEqualsDouble(res, logSoftmaxResultJ.real, 0.0001)
+    assertEqualsDouble(res, logSoftmaxResult.tejNum, 0.0001)
   }
+
+  test("softmax gradients sum to zero. Result are consistent between Tej, Jet, double") {
+    val dim = 4
+    given jetd: JetDim = JetDim(dim)
+    given jd: TejDim[Double] = TejDim()
+
+    def softmax[T: Trig: ClassTag](x: Array[T])(using f: Field[T]): Array[T] =
+      val expValues = x.map(exp)
+      val sumExpValues = expValues.foldLeft(f.zero)(_ + _)
+      expValues.map(_ / sumExpValues)
+    end softmax
+
+    val range = (1 to dim).toArray.map(_.toDouble).tejArr
+    val rangeJ = (1 to dim).toArray.map(_.toDouble).jetArr
+
+    val res = softmax(range.toArray.map(_.toDouble)).sum
+    val logSoftmaxResult = softmax(range).foldLeft(Tej(0.0))(_ + _)
+    val logSoftmaxResultJ = softmax(rangeJ).foldLeft(Jet(0.0))(_ + _)
+
+    val out = logSoftmaxResult.backward(range)
+
+    println(logSoftmaxResultJ)
+    println(out)
+
+    writeGraph
+
+    assertEqualsDouble(res, 1.0, 0.000001)
+    assertEqualsDouble(res, logSoftmaxResultJ.real, 0.0001)
+    assertEqualsDouble(res, logSoftmaxResult.tejNum, 0.0001)
+
+  }
+
 end BackwardSuite

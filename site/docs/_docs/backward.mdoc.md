@@ -21,32 +21,30 @@ import spire.algebra.Trig
 import spire.math.Jet.*
 import io.github.quafadas.spireAD.*
 
-def softmax[T: Trig: ClassTag](x: Array[T])(using
-  f: Field[T]
-) = {
-  val exps = x.map(exp)
-  val sumExps = exps.foldLeft(f.zero)(_ + _)
-  exps.map(t => t  / sumExps)
-}
-
-def sumSin[T: Trig: ClassTag](x: Array[T])(using
-  f: Field[T]
-) = {
-  x.map(sin).foldLeft(f.zero)(_ + _)
-}
-
+def softmax[T: Trig: ClassTag](x: Array[T])(using f: Field[T]): Array[T] =
+  val expValues = x.map(exp)
+  val sumExpValues = expValues.foldLeft(f.zero)(_ + _)
+  expValues.map(_ / sumExpValues)
+end softmax
 
 given jd: TejDim[Double] = TejDim()
 val dim = 5
-val range = (1 to dim).toArray.map(_.toDouble)
+val range = (1 to dim).toArray.map(_.toDouble).tejArr
 
-sumSin(softmax[Tej[Double]](range))
-val traced : Tej[Double] = sumSin(softmax[Tej[Double]](range.tejArr))
+val traced : Tej[Double] = softmax(range).foldLeft(Tej(0.0))(_+_)
 
 /// And now we have... exaclty the same number! So yey?
 
-val t  = jd.dag.toGraphviz
-
-// traced.backward()
+traced.backward(range)
 
 ```
+`traced.backward(range)` does the backward pass, and returns a tuple of the gradient of the `traced` variable, with respect to each of the input dimensions (that you asked for in `range`).
+
+It is possible to inspect the calculation graph which is carried around in side the `TejDim` given.
+
+`jd.dag.toGraphviz` will return a string representation of the graph. If you paste the output of the calculation graph into an online graphviz editor, you'll see something like this.
+
+![backward](backward.png)
+
+To do it, it navigates the graph in reverse topological order, propagating its gradient to its child nodes in accordance with the chain rule.
+
