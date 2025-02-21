@@ -7,14 +7,14 @@ import scala.math.Numeric.Implicits.infixNumericOps
 import algebra.ring.Field
 
 extension [T: Numeric: Field](a: Array[T])
-  def jetArr(using jd: JetDim): Array[Jet[Double]] =
+  inline def jetArr(using jd: JetDim): Array[Jet[Double]] =
     import spire.implicits.DoubleAlgebra
     import spire.implicits.ArrayNormedVectorSpace
     a.zipWithIndex.map((v, i) => Jet(v.toDouble) + Jet.h[Double](i))
   end jetArr
 
-  def tejArr(using
-      jd: TejDim[Double],
+  inline def tejArr(using
+      inline jd: TejDim[Double],
       ct: ClassTag[Double],
       f: Field[Double]
   ): Array[Tej[Double]] =

@@ -12,25 +12,25 @@ import spire.math.cosh
 import spire.math.sinh
 import scala.reflect.ClassTag
 import spire.algebra.NRoot
+import scala.specialized as sp
 
-trait AdNode[T: Field]:
+trait AdNode[@sp(Float, Double) T: Field]:
   def id: UUID
   val realValue: T
   // val infinitesimal: Array[T]
   var grad: T = summon[Field[T]].zero // Gradient accumulator
   def backward(using td: TejDim[T], t: Trig[T], n: NRoot[T]): Unit
 end AdNode
-case class DebugNode[T: Field: ClassTag](msg: String) extends AdNode[T]:
+case class DebugNode[@sp(Float, Double) T: Field: ClassTag](msg: String) extends AdNode[T]:
 
   override val realValue: T = summon[Field[T]].zero
 
   override def backward(using td: TejDim[T], t: Trig[T], n: NRoot[T]): Unit = {}
 
   val n = UUID.randomUUID()
-  override inline def id: UUID = n
-  val infinitesimal: Array[T] = Array.empty
+  override def id: UUID = n
 end DebugNode
-case class TejNode[T: Field](tej: Tej[T]) extends AdNode[T]:
+case class TejNode[@sp(Float, Double) T: Field](tej: Tej[T]) extends AdNode[T]:
   override def id: UUID = tej.nodeId
 
   override val realValue: T = tej.tejNum
@@ -48,7 +48,7 @@ enum UrnaryOps:
   case Sin, Cos, Tan, Exp, Log, Sinh, Cosh, Tanh, Neg, Sqrt, Abs
 end UrnaryOps
 
-case class TejOpUrnary[T: Field](
+case class TejOpUrnary[@sp(Float, Double) T: Field](
     op: UrnaryOps,
     value: Tej[T],
     dep: UUID
@@ -89,13 +89,13 @@ enum BinaryOps:
   case Add, Sub, Mul, Div
 end BinaryOps
 
-case class TejOpBinary[T: Field](
+case class TejOpBinary[@sp(Float, Double) T: Field](
     op: BinaryOps,
     value: Tej[T],
     left: UUID,
     right: UUID
 ) extends AdNode[T]:
-  override def id: UUID = value.nodeId
+  override inline def id: UUID = value.nodeId
 
   override val realValue: T = value.tejNum
 

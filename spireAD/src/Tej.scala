@@ -19,8 +19,7 @@ end AdMode
   */
 case class TejDim[T: Field: ClassTag: Trig: NRoot]():
 
-  val dag = DAG[T]()
-  final val mode = AdMode.Forward
+  final val dag = DAG[T]()
 
   inline def addToGraph(t: Tej[T]): Tej[T] = t.tap(dag.addTejNode)
   inline def unary(input: Tej[T], op: TejOpUrnary[T]): Tej[T] =
@@ -153,9 +152,8 @@ object Tej extends TejInstances:
 end Tej
 
 @SerialVersionUID(0L)
-case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
-    td: TejDim[T]
-) extends ScalaNumber
+case class Tej[@sp(Float, Double) T] private (tejNum: T)
+    extends ScalaNumber
     with ScalaNumericConversions
     with Serializable:
   lhs =>
@@ -172,7 +170,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
   // inline private def real = j.real
   // inline private def infinitesimal = j.infinitesimal
 
-  def backward(targets: Seq[Tej[T]])(using f: Field[T], t: Trig[T], n: NRoot[T]) =
+  def backward(targets: Seq[Tej[T]])(using f: Field[T], t: Trig[T], n: NRoot[T], td: TejDim[T]) =
     val graph = td.dag
     // println(graph.toposort)
     val sorted = graph.toposort.reverse
@@ -205,7 +203,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     )
   end unary_-
 
-  def +(b: T)(implicit f: Field[T], d: TejDim[T], ct: ClassTag[T]): Tej[T] =
+  inline def +(b: T)(implicit f: Field[T], inline d: TejDim[T], ct: ClassTag[T]): Tej[T] =
     val tmp = Tej(tejNum = b)
     d.binary(
       this,
@@ -214,7 +212,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     )
   end +
 
-  def -(b: T)(implicit f: Field[T], d: TejDim[T]): Tej[T] =
+  inline def -(b: T)(implicit f: Field[T], inline d: TejDim[T]): Tej[T] =
     val tmp = Tej(tejNum = b)
     d.binary(
       this,
@@ -222,11 +220,9 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       TejOpBinary(BinaryOps.Sub, this - tmp, this.nodeId, tmp.nodeId)
     )
   end -
-  def *(
-      b: T
-  )(implicit
+  inline def *(b: T)(implicit
       f: Field[T],
-      d: TejDim[T],
+      inline d: TejDim[T],
       ct: ClassTag[T]
   ): Tej[T] =
     val tmp = Tej(tejNum = b)
@@ -237,9 +233,9 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     )
   end *
 
-  def /(b: T)(implicit
+  inline def /(b: T)(implicit
       f: Field[T],
-      d: TejDim[T]
+      inline d: TejDim[T]
   ): Tej[T] =
 
     val tmp = Tej(tejNum = b)
@@ -250,11 +246,11 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     )
   end /
 
-  def +(
+  inline def +(
       b: Tej[T]
   )(implicit
       f: Field[T],
-      d: TejDim[T]
+      inline d: TejDim[T]
   ): Tej[T] =
     d.binary(
       this,
@@ -262,7 +258,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       TejOpBinary(BinaryOps.Add, Tej[T](tejNum = tejNum + b.tejNum), this.nodeId, b.nodeId)
     )
 
-  def -(
+  inline def -(
       b: Tej[T]
   )(implicit
       f: Field[T],
@@ -278,11 +274,11 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
   //    (a + du)(b + dv) ~= ab + a dv + b du
   //
   // because du dv ~= 0
-  def *(
+  inline def *(
       b: Tej[T]
   )(implicit
       f: Field[T],
-      d: TejDim[T]
+      inline d: TejDim[T]
   ): Tej[T] =
     d.binary(
       this,
@@ -290,11 +286,11 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       TejOpBinary(BinaryOps.Mul, Tej[T](tejNum = tejNum * b.tejNum), this.nodeId, b.nodeId)
     )
 
-  def /(
+  inline def /(
       b: Tej[T]
   )(implicit
       f: Field[T],
-      d: TejDim[T]
+      inline d: TejDim[T]
   ): Tej[T] =
     // Division rule for differentials:
     //
@@ -516,9 +512,9 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
 
   /** exp(a + du) ~= exp(a) + exp(a) du
     */
-  def exp(implicit
+  inline def exp(implicit
       t: Trig[T],
-      d: TejDim[T],
+      inline d: TejDim[T],
       n: NRoot[T],
       r: Field[T]
   ): Tej[T] =

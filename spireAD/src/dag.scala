@@ -7,8 +7,9 @@ import algebra.ring.Field
 import spire.algebra.Trig
 import scala.reflect.ClassTag
 import spire.algebra.NRoot
+import scala.specialized as sp
 
-class DAG[T: Field: ClassTag: Trig: NRoot]:
+class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
   private val adjacencyList: mutable.Map[UUID, mutable.Set[UUID]] =
     mutable.Map.empty
   private val nodeMap: mutable.Map[UUID, AdNode[T]] = mutable.Map.empty
@@ -67,7 +68,7 @@ class DAG[T: Field: ClassTag: Trig: NRoot]:
     addEdge(toNode, fromNode)
   end addTedge
 
-  inline def addUrnaryEdge(
+  inline def addUrnaryEdge[@sp(Double) T: Field](
       from: Tej[T],
       to: TejOpUrnary[T]
   ): Unit =
@@ -75,7 +76,7 @@ class DAG[T: Field: ClassTag: Trig: NRoot]:
     addEdge(to, fromNode)
   end addUrnaryEdge
 
-  inline def addBinaryEdge(
+  inline def addBinaryEdge[@sp(Double) T: Field](
       left: Tej[T],
       right: Tej[T],
       to: TejOpBinary[T]
@@ -114,7 +115,7 @@ class DAG[T: Field: ClassTag: Trig: NRoot]:
 
   inline def isEmpty: Boolean = adjacencyList.isEmpty
 
-  def toposort: List[AdNode[T]] =
+  inline def toposort: List[AdNode[T]] =
     val adj = mutable.Map.empty[AdNode[T], mutable.ListBuffer[AdNode[T]]]
     val indegree = mutable.Map.empty[AdNode[T], Int].withDefaultValue(0)
 

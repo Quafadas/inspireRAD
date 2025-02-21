@@ -99,10 +99,12 @@ object spireAD extends CrossPlatform {
 
 
 object benchmark extends JmhModule with ScalaModule {
-    def scalaVersion = spireAD.jvm.scalaVersion
-    def jmhCoreVersion = "1.37"
-    override def forkArgs: T[Seq[String]] = super.forkArgs() ++ vecIncubatorFlag
-    override def moduleDeps: Seq[JavaModule] = Seq(spireAD.jvm)
+
+  def forkArgs = super.forkArgs() ++ vecIncubatorFlag ++ Seq("-Xmx4G")
+  def scalaVersion = spireAD.jvm.scalaVersion
+  def jmhCoreVersion = "1.37"
+  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ vecIncubatorFlag
+  override def moduleDeps: Seq[JavaModule] = Seq(spireAD.jvm)
 }
 
 object jsSite extends SiteJSModule {
