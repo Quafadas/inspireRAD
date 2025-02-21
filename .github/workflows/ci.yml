@@ -66,7 +66,7 @@ jobs:
         run: ./millw spireAD.${{ matrix.project }}.test
 
   publish:
-    if: github.repository == 'Quafadas/spireAD' && contains(github.ref, 'refs/tags/')
+    if: github.repository == 'Quafadas/spire_AD' && contains(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
