@@ -18,13 +18,13 @@ trait AdNode[T: Field]:
   val realValue: T
   // val infinitesimal: Array[T]
   var grad: T = summon[Field[T]].zero // Gradient accumulator
-  def backward(using td: TejDim[T]): Unit
+  def backward(using td: TejDim[T], t: Trig[T], n: NRoot[T]): Unit
 end AdNode
 case class DebugNode[T: Field: ClassTag](msg: String) extends AdNode[T]:
 
   override val realValue: T = summon[Field[T]].zero
 
-  override def backward(using td: TejDim[T]): Unit = {}
+  override def backward(using td: TejDim[T], t: Trig[T], n: NRoot[T]): Unit = {}
 
   val n = UUID.randomUUID()
   override inline def id: UUID = n
@@ -39,14 +39,16 @@ case class TejNode[T: Field](tej: Tej[T]) extends AdNode[T]:
   override def toString(): String =
     s"const \n v:$realValue g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
-  override def backward(using td: TejDim[T]): Unit = ()
+  override def backward(using td: TejDim[T], t: Trig[T], n: NRoot[T]): Unit =
+    ()
+    // println("no op" + toString())
 end TejNode
 
 enum UrnaryOps:
   case Sin, Cos, Tan, Exp, Log, Sinh, Cosh, Tanh, Neg, Sqrt, Abs
 end UrnaryOps
 
-case class TejOpUrnary[T: Field: Trig: NRoot](
+case class TejOpUrnary[T: Field](
     op: UrnaryOps,
     value: Tej[T],
     dep: UUID
@@ -59,24 +61,27 @@ case class TejOpUrnary[T: Field: Trig: NRoot](
   override def toString(): String =
     s"$op \n v:$value g: $grad \n (_id: ${value.nodeId.toString().takeRight(4)})"
 
-  override def backward(using td: TejDim[T]): Unit =
+  override def backward(using td: TejDim[T], t: Trig[T], n: NRoot[T]): Unit =
     val n = td.dag.getNode(dep)
-    op match
-      case UrnaryOps.Sin => n.grad = n.grad + this.grad * cos(n.realValue)
-      case UrnaryOps.Cos => n.grad = n.grad - this.grad * sin(n.realValue)
-      case UrnaryOps.Tan => n.grad = n.grad + this.grad / (cos(n.realValue) * cos(n.realValue))
-      case UrnaryOps.Exp => n.grad = n.grad + this.grad * n.realValue.exp
-      case UrnaryOps.Log =>
-        n.grad = n.grad + this.grad / n.realValue
-      case UrnaryOps.Sinh => n.grad = n.grad + this.grad * cosh(n.realValue)
-      case UrnaryOps.Cosh => n.grad = n.grad + this.grad * sinh(n.realValue)
-      case UrnaryOps.Tanh => n.grad = n.grad + this.grad / (cosh(n.realValue) * cosh(n.realValue))
-      case UrnaryOps.Neg  => n.grad = n.grad - this.grad
-      case UrnaryOps.Sqrt => n.grad = n.grad + this.grad / (2 * sqrt(n.realValue))
+    val update = op match
+      case UrnaryOps.Sin  => this.grad * cos(n.realValue)
+      case UrnaryOps.Cos  => -this.grad * sin(n.realValue)
+      case UrnaryOps.Tan  => this.grad / (cos(n.realValue) * cos(n.realValue))
+      case UrnaryOps.Exp  => this.grad * n.realValue.exp
+      case UrnaryOps.Log  => this.grad / n.realValue
+      case UrnaryOps.Sinh => this.grad * cosh(n.realValue)
+      case UrnaryOps.Cosh => this.grad * sinh(n.realValue)
+      case UrnaryOps.Tanh => this.grad / (cosh(n.realValue) * cosh(n.realValue))
+      case UrnaryOps.Neg  => -this.grad
+      case UrnaryOps.Sqrt => this.grad / (2 * sqrt(n.realValue))
       case _              => ???
-    end match
 
+    n.grad = n.grad + update
     // n.grad = td.dag.getNode(dep).grad + this.grad
+    // println("--->backward unary" + this.toString())
+    // println("New grad backward: " + n)
+    // println("Updated: by " + update)
+    // println("<--- end backward this node")
   end backward
 end TejOpUrnary
 
@@ -97,7 +102,7 @@ case class TejOpBinary[T: Field](
   override def toString(): String =
     s"$op \n v:$value g: $grad \n (_id: ${value.nodeId.toString().takeRight(4)})"
 
-  override def backward(using td: TejDim[T]): Unit =
+  override def backward(using td: TejDim[T], t: Trig[T], n: NRoot[T]): Unit =
     val leftN = td.dag.getNode(left)
     val rightN = td.dag.getNode(right)
     op match
@@ -116,6 +121,10 @@ case class TejOpBinary[T: Field](
         leftN.grad += this.grad / rightN.realValue
         rightN.grad -= this.grad * leftN.realValue / (rightN.realValue * rightN.realValue)
     end match
+    // println("--> backward binary" + this.toString())
+    // println("Update Left: " + leftN)
+    // println("Update Right: " + rightN)
+    // println("<--- end backward this node")
   end backward
 end TejOpBinary
 

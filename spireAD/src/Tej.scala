@@ -172,19 +172,15 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
   // inline private def real = j.real
   // inline private def infinitesimal = j.infinitesimal
 
-  def backward(using td: TejDim[T], f: Field[T]) =
-    val sorted = td.dag.toposort
-    sorted.last.grad = f.one
-
-    // println(sorted.last)
-
-    // println(
-    //   "toposorted\n Start backwards prop \n" + sorted.reverse.mkString("\n")
-    // )
-    for node <- sorted.reverse do td.dag.getNode(node.id).backward
+  def backward(targets: Seq[Tej[T]])(using f: Field[T], t: Trig[T], n: NRoot[T]) =
+    val graph = td.dag
+    // println(graph.toposort)
+    val sorted = graph.toposort.reverse
+    sorted.head.grad = f.one
+    for node <- sorted do td.dag.getNode(node.id).backward
     end for
 
-    sorted.reverse
+    for (t <- targets) yield (t, graph.getNode(t.nodeId).grad)
   end backward
 
   /** This is consistent with abs
@@ -201,9 +197,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
 
   def unary_-(implicit
       f: Field[T],
-      t: Trig[T],
-      n: NRoot[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(
@@ -212,7 +205,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     )
   end unary_-
 
-  def +(b: T)(implicit f: Field[T], d: TejDim[T], ct: ClassTag[T], v: VectorSpace[Array[T], T]): Tej[T] =
+  def +(b: T)(implicit f: Field[T], d: TejDim[T], ct: ClassTag[T]): Tej[T] =
     val tmp = Tej(tejNum = b)
     d.binary(
       this,
@@ -221,13 +214,18 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     )
   end +
 
-  def -(b: T)(implicit f: Field[T]): Tej[T] =
-    Tej(tejNum = tejNum - b)
+  def -(b: T)(implicit f: Field[T], d: TejDim[T]): Tej[T] =
+    val tmp = Tej(tejNum = b)
+    d.binary(
+      this,
+      tmp,
+      TejOpBinary(BinaryOps.Sub, this - tmp, this.nodeId, tmp.nodeId)
+    )
+  end -
   def *(
       b: T
   )(implicit
       f: Field[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T],
       ct: ClassTag[T]
   ): Tej[T] =
@@ -241,15 +239,21 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
 
   def /(b: T)(implicit
       f: Field[T],
-      v: VectorSpace[Array[T], T]
+      d: TejDim[T]
   ): Tej[T] =
-    Tej(tejNum = tejNum / b)
+
+    val tmp = Tej(tejNum = b)
+    d.binary(
+      this,
+      tmp,
+      TejOpBinary(BinaryOps.Div, this / tmp, this.nodeId, tmp.nodeId)
+    )
+  end /
 
   def +(
       b: Tej[T]
   )(implicit
       f: Field[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.binary(
@@ -262,7 +266,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       b: Tej[T]
   )(implicit
       f: Field[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.binary(
@@ -279,7 +282,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       b: Tej[T]
   )(implicit
       f: Field[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.binary(
@@ -292,7 +294,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       b: Tej[T]
   )(implicit
       f: Field[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     // Division rule for differentials:
@@ -312,7 +313,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       c: ClassTag[T],
       f: Field[T],
       r: IsReal[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T] // Added Numeric[T] to implicits
   ): Tej[T] =
     ???
@@ -390,7 +390,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       t: Trig[T],
       s: Signed[T],
       n: NRoot[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Abs, Tej(tejNum = tejNum.abs), this.nodeId))
@@ -456,7 +455,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       f: Field[T],
       t: Trig[T],
       n: NRoot[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Log, Tej[T](tejNum = t.log(tejNum)), this.nodeId))
@@ -467,7 +465,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       f: Field[T],
       n: NRoot[T],
       t: Trig[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Sqrt, Tej[T](tejNum = n.sqrt(tejNum)), this.nodeId))
@@ -521,7 +518,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     */
   def exp(implicit
       t: Trig[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T],
       n: NRoot[T],
       r: Field[T]
@@ -532,7 +528,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     */
   def sin(implicit
       t: Trig[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T],
       n: NRoot[T],
       r: Field[T]
@@ -544,7 +539,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
     */
   def sinh(implicit
       t: Trig[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T],
       n: NRoot[T],
       r: Field[T]
@@ -557,7 +551,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       f: Field[T],
       t: Trig[T],
       n: NRoot[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Cos, Tej(tejNum = t.cos(tejNum)), this.nodeId))
@@ -568,7 +561,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       t: Trig[T],
       f: Field[T],
       n: NRoot[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Cosh, Tej(tejNum = t.cosh(tejNum)), this.nodeId))
@@ -579,7 +571,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       f: Field[T],
       t: Trig[T],
       n: NRoot[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Tan, Tej(tejNum = t.tan(tejNum)), this.nodeId))
@@ -590,7 +581,6 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)(using
       f: Field[T],
       t: Trig[T],
       n: NRoot[T],
-      v: VectorSpace[Array[T], T],
       d: TejDim[T]
   ): Tej[T] =
     d.unary(this, TejOpUrnary(UrnaryOps.Tanh, Tej(tejNum = t.tanh(tejNum)), this.nodeId))

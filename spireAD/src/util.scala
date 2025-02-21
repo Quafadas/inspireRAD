@@ -15,7 +15,8 @@ extension [T: Numeric: Field](a: Array[T])
 
   def tejArr(using
       jd: TejDim[Double],
-      ct: ClassTag[Double]
+      ct: ClassTag[Double],
+      f: Field[Double]
   ): Array[Tej[Double]] =
     a.zipWithIndex.map(d => Tej(d._1.toDouble))
 end extension

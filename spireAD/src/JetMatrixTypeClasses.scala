@@ -5,9 +5,7 @@ import spire.math.*
 import spire.implicits.*
 import spire.algebra.Trig
 import _root_.algebra.ring.Field
-import spire.compat.numeric
 
-import vecxt.arrays.*
 import vecxt.matrix.Matrix
 import _root_.algebra.ring.Ring
 import narr.*
