@@ -80,7 +80,7 @@ jobs:
           jvm: temurin@17
           apps: scala-cli
 
-      - run: ./mill mill.scalalib.PublishModule/
+      - run: ./millw mill.scalalib.PublishModule/
         env:
           MILL_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           MILL_PGP_SECRET_BASE64: ${{ secrets.PGP_SECRET }}
