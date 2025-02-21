@@ -100,10 +100,9 @@ object spireAD extends CrossPlatform {
 
 object benchmark extends JmhModule with ScalaModule {
 
-  def forkArgs = super.forkArgs() ++ vecIncubatorFlag ++ Seq("-Xmx4G")
   def scalaVersion = spireAD.jvm.scalaVersion
   def jmhCoreVersion = "1.37"
-  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ vecIncubatorFlag
+  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Seq("-Xmx4G")
   override def moduleDeps: Seq[JavaModule] = Seq(spireAD.jvm)
 }
 
