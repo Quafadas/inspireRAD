@@ -83,10 +83,19 @@ object spireAD extends CrossPlatform {
     object test extends ScalaTests with SharedTests {
       def forkArgs = super.forkArgs() ++ vecIncubatorFlag
     }
+
+    object lawTests extends ScalaTests with SharedTests {
+      override def ivyDeps = super.ivyDeps() ++ Agg(
+        ivy"org.typelevel::discipline-munit::2.0.0",
+        ivy"org.typelevel::cats-laws::2.13.0",
+      )
+      def forkArgs = super.forkArgs() ++ vecIncubatorFlag
+    }
   }
   object js extends Shared with CommonJS {
     // js specific settings here
     object test extends ScalaJSTests with SharedTests {
+
         def moduleKind = ModuleKind.CommonJSModule
     }
   }
