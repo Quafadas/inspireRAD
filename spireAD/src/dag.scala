@@ -9,6 +9,8 @@ import scala.reflect.ClassTag
 import spire.algebra.NRoot
 import scala.specialized as sp
 
+import _root_.algebra.Monoid
+
 class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
   private val adjacencyList: mutable.Map[UUID, mutable.Set[UUID]] =
     mutable.Map.empty

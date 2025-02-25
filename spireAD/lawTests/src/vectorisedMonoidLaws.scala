@@ -21,19 +21,14 @@ package io.github.quafadas.spireAD
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import scala.{specialized => sp}
 import cats.kernel.Eq
-import vecxt.arrays.+
-import vecxt.arrays.*
-import vecxt.BoundsCheck.DoBoundsCheck.no
-
-import cats.kernel.{Eq, Monoid}
 import cats.kernel.laws.SemigroupLaws
 import cats.kernel.laws.IsEq
 import cats.kernel.laws.IsEqArrow
-import cats.syntax.all.catsSyntaxSemigroup
 
-trait VectorisedMonoidLaws[F[_], A] extends SemigroupLaws[F[A]] {
+import cats.data.NonEmptyList
+
+trait VectorisedMonoidLaws[F[_], A] extends SemigroupLaws[F[A]]:
   implicit override def S: VectorisedMonoid[F, A]
 
   def leftIdentity(x: F[A]): IsEq[F[A]] =
@@ -45,22 +40,24 @@ trait VectorisedMonoidLaws[F[_], A] extends SemigroupLaws[F[A]] {
   def repeat0(x: F[A]): IsEq[F[A]] =
     S.combineN(x, 0) <-> S.empty(x)
 
-    /**
-     * This law would not be valid for our vectorised monoid, which have an instance to combine.      
-     */
+    /** This law would not be valid for a "vectorised monoid", which must an instance to combine. This will throw an
+      * exception in the wild - and that is expected behaviour.
+      */
 
   // def collect0: IsEq[F[A]] =
   //   S.combineAll(Nil) <-> S.empty
 
-  def combineAll(xs: Vector[F[A]]): IsEq[F[A]] =
-    S.combineAll(xs) <-> (S.empty(xs.head) +: xs).reduce(S.combine)
+  def combineAll(xs: NonEmptyList[F[A]]): IsEq[F[A]] =
+    val head = xs.head
+    S.combineAll(xs.iterator) <-> (S.empty(head) +: head +: xs.tail).reduce(S.combine)
+  end combineAll
 
   def isId(x: F[A], eqv: Eq[F[A]]): IsEq[Boolean] =
     eqv.eqv(x, S.empty(x)) <-> S.isEmpty(x)(eqv)
+end VectorisedMonoidLaws
 
-}
-
-object VectorisedMonoidLaws {
+object VectorisedMonoidLaws:
   def apply[F[_], A](implicit ev: VectorisedMonoid[F, A]): VectorisedMonoidLaws[F, A] =
-    new VectorisedMonoidLaws[F, A] { def S: VectorisedMonoid[F, A] = ev }
-}
+    new VectorisedMonoidLaws[F, A]:
+      def S: VectorisedMonoid[F, A] = ev
+end VectorisedMonoidLaws

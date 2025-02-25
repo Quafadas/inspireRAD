@@ -11,7 +11,6 @@ import cats.kernel.Monoid
 import cats.instances.show
 import cats.Show
 
-
 // import org.scalacheck._
 // import org.scalacheck.Gen._
 // import org.scalacheck.Prop._
@@ -30,52 +29,60 @@ import cats.Show
 
 // propSameSizeArrays.check()
 
-
-
 class WeirdMonoidSuite extends DisciplineSuite:
 
   given eq: Eq[Double] = new Eq:
     def eqv(x: Double, y: Double): Boolean =
-      val tolerance = 0.000001 * math.max(math.abs(x), math.abs(y))
+      val tolerance = 0.00000001 * math.max(math.abs(x), math.abs(y))
       math.abs(x - y) <= tolerance
     end eqv
 
-  given eqArr(using eqvD: Eq[Double]): Eq[Array[Double]] = new Eq:
-    def eqv(x: Array[Double], y: Array[Double]): Boolean =
-      x.zip(y).forall((a, b) => eqvD.eqv(a, b))    
-    end eqv
-
-  given eqVec(using eqvD: Eq[Double]): Eq[Vector[Double]] = new Eq:
-    def eqv(x: Vector[Double], y: Vector[Double]): Boolean =
+  def fEq[A, F <: Iterable](using eqvD: Eq[A]) = new Eq[F[A]]:
+    def eqv(x: F[A], y: F[A]): Boolean =
       x.zip(y).forall((a, b) => eqvD.eqv(a, b))
     end eqv
 
-  // checkAll("Double", MonoidTests[Array[Double]].monoid)  
+  def arrDEqv[A](using eqvD: Eq[A]): Eq[Array[A]] = new Eq[Array[A]]:
+    def eqv(x: Array[A], y: Array[A]): Boolean =
+      x.zip(y).forall((a, b) => eqvD.eqv(a, b))
 
-  given show : Show[Array[Double]] = new Show[Array[Double]] {
-    def show(a: Array[Double]): String = a.mkString("[" , ", ", ")")
-  }
+  given eqArr: Eq[Array[Double]] = arrDEqv[Double]
+  given eqV: Eq[Vector[Double]] = fEq[Double, Vector](using eq)
+  given eqVI: Eq[Vector[Int]] = fEq[Int, Vector]
+  given eqL: Eq[List[Double]] = fEq[Double, List](using eq)
 
-  given a2:  Arbitrary[Array[Double]] = Arbitrary(
-    Gen.sized { sized =>      
-      for {
+  given a2: Arbitrary[Array[Double]] = Arbitrary(
+    Gen.sized { sized =>
+      for
         size <- Gen.const(sized + 1) // Choose a size for the array
-        array <- Gen.containerOfN[Array, Double](size, Gen.choose(-1000.0, 1000.0))
-      } yield array
+        array <- Gen.containerOfN[Array, Double](size, Gen.double)
+      yield array
     }
   )
 
-  given aV:  Arbitrary[Vector[Double]] = Arbitrary(
-    Gen.sized { sized =>      
-      for {
+  given aV: Arbitrary[Vector[Double]] = Arbitrary(
+    Gen.sized { sized =>
+      for
         size <- Gen.const(sized + 1) // Choose a size for the array
-        array <- Gen.containerOfN[Vector, Double](size, Gen.choose(-1000.0, 1000.0))
-      } yield array
+        array <- Gen.containerOfN[Vector, Double](size, Gen.double)
+      yield array
+      end for
     }
   )
 
+  given aVI: Arbitrary[Vector[Int]] = Arbitrary(
+    Gen.sized { sized =>
+      for
+        size <- Gen.const(sized + 1) // Choose a size for the array
+        array <- Gen.containerOfN[Vector, Int](size, Gen.chooseNum(Int.MinValue, Int.MaxValue))
+      yield array
+      end for
+    }
+  )
 
   import VectorisedMonoid.additiveVectorMonoid
-  checkAll("Addidditve Vector Monoid", VectorisedMonoidTests[Vector, Double].monoid)
+  checkAll("Addidditve Double Vector Monoid", VectorisedMonoidTests[Vector, Double].monoid)
+  checkAll("Addidditve Double Array Monoid", VectorisedMonoidTests[Array, Double].monoid)
+  checkAll("Addidditve Int Array Monoid", VectorisedMonoidTests[Vector, Int].monoid)
 
 end WeirdMonoidSuite
