@@ -25,6 +25,7 @@ import cats.kernel.Eq
 import cats.kernel.laws.SemigroupLaws
 import cats.kernel.laws.IsEq
 import cats.kernel.laws.IsEqArrow
+import io.github.quafadas.spireAD.VectorisedMonoid
 
 import cats.data.NonEmptyList
 
@@ -54,6 +55,7 @@ trait VectorisedMonoidLaws[F[_], A] extends SemigroupLaws[F[A]]:
 
   def isId(x: F[A], eqv: Eq[F[A]]): IsEq[Boolean] =
     eqv.eqv(x, S.empty(x)) <-> S.isEmpty(x)(eqv)
+
 end VectorisedMonoidLaws
 
 object VectorisedMonoidLaws:

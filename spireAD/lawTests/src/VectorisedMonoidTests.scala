@@ -8,6 +8,8 @@ import cats.kernel.laws.discipline.catsLawsIsEqToProp
 import cats.data.NonEmptyList
 import org.scalacheck.Gen
 
+import io.github.quafadas.spireAD.VectorisedMonoid
+
 trait VectorisedMonoidTests[F[_], A] extends SemigroupTests[F[A]]:
 
   implicit def arbitraryNonEmptyList[A: Arbitrary](using arb: Arbitrary[A]): Arbitrary[NonEmptyList[A]] =

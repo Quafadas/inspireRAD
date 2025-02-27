@@ -24,8 +24,9 @@ trait Common extends ScalaModule  with PublishModule with ScalafixModule {
   def publishVersion = VcsVersion.vcsState().format()
 
   def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"io.github.quafadas::vecxt:0.0.25",
+    ivy"io.github.quafadas::vecxt:0.0.26",
     ivy"org.typelevel::spire::0.18.0",
+    ivy"org.typelevel::cats-core::2.13.0",
   )
 
   override def scalacOptions: Target[Seq[String]] = super.scalacOptions() ++ Seq("-explain-cyclic", "-Wunused:imports")

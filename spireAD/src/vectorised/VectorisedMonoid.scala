@@ -1,5 +1,3 @@
-package io.github.quafadas.spireAD
-
 /*
  * Copyright (c) 2015 Typelevel
  *
@@ -21,38 +19,20 @@ package io.github.quafadas.spireAD
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+package io.github.quafadas.spireAD
+
 import scala.specialized as sp
 import cats.kernel.Eq
-import vecxt.arrays.+
+// import vecxt.arrays.+
 import vecxt.arrays.*
 import vecxt.BoundsCheck.DoBoundsCheck.yes
 import cats.kernel.Semigroup
-
-import algebra.ring.AdditiveMonoid
-
-object VectorisedMonoid:
-
-  given additiveArrayMonoid: VectorisedMonoid[Array, Double] = new VectorisedMonoid[Array, Double]:
-    def empty(hasDim: Array[Double]): Array[Double] = Array.fill[Double](hasDim.length)(0.0)
-    def combine(x: Array[Double], y: Array[Double]): Array[Double] = x + y
-    override def repeatedCombineN(a: Array[Double], n: Int): Array[Double] = a * n
-
-  given additiveVectorMonoid: VectorisedMonoid[Vector, Double] = new VectorisedMonoid[Vector, Double]:
-    def empty(hasDim: Vector[Double]): Vector[Double] = Vector.fill[Double](hasDim.length)(0.0)
-    def combine(x: Vector[Double], y: Vector[Double]): Vector[Double] = x.zip(y).map((a, b) => a + b)
-    override def repeatedCombineN(a: Vector[Double], n: Int): Vector[Double] = a.map(_ * n)
-
-  given additiveIntVectorMonoid: VectorisedMonoid[Vector, Int] = new VectorisedMonoid[Vector, Int]:
-    def empty(hasDim: Vector[Int]): Vector[Int] = Vector.fill[Int](hasDim.length)(0)
-    def combine(x: Vector[Int], y: Vector[Int]): Vector[Int] = x.zip(y).map((a, b) => a + b)
-    override def repeatedCombineN(a: Vector[Int], n: Int): Vector[Int] = a.map(_ * n)
-end VectorisedMonoid
 
 /** A monoid is a semigroup with an identity. A monoid is a specialization of a semigroup, so its operation must be
   * associative. Additionally, `combine(x, empty) == combine(empty, x) == x`. For example, if we have `Monoid[String]`,
   * with `combine` as string concatenation, then `empty = ""`.
   */
-trait VectorisedMonoid[F[_], @sp(Double) A: Semigroup] extends Any with cats.kernel.Semigroup[F[A]]:
+trait VectorisedMonoid[F[_], @sp(Double) A: Semigroup] extends cats.kernel.Semigroup[F[A]]:
   self =>
 
   /** Return the identity element for this monoid.
