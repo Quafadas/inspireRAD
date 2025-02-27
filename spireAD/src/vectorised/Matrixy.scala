@@ -5,7 +5,7 @@ import vecxt.BoundsCheck.BoundsCheck
 
 object Matrixy:
 
-  given doubleMatrix: Matrixy[Double] = new Matrixy[Double]:
+  given doubleMatrix: Matrixy[Matrix, Double] = new Matrixy[Matrix, Double]:
 
     extension (a: Matrix[Double])
 
@@ -22,15 +22,15 @@ object Matrixy:
 end Matrixy
 
 // This is split out, because once they are in, you are committed to matrix.
-trait Matrixy[A]:
+trait Matrixy[F[_], A]:
 
-  extension (a: Matrix[A])
+  extension (a: F[A])
 
-    inline def @@(b: Matrix[A])(using inline bc: BoundsCheck): Matrix[A]
+    inline def @@(b: F[A])(using inline bc: BoundsCheck): F[A]
 
-    inline def mapRows(f: Array[A] => Array[A])(using inline bc: BoundsCheck): Matrix[A]
+    inline def mapRows(f: Array[A] => Array[A])(using inline bc: BoundsCheck): F[A]
 
-    inline def mapRowsToScalar(f: Array[A] => A)(using inline bc: BoundsCheck): Matrix[A]
+    inline def mapRowsToScalar(f: Array[A] => A)(using inline bc: BoundsCheck): F[A]
   end extension
 
 end Matrixy
