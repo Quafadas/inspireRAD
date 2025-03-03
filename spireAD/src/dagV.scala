@@ -79,4 +79,14 @@ class DAGV[T: ClassTag, N <: VNode[?, T]]:
   def getNode(value: UUID): N =
     nodeMap(value)
 
+  def toGraphviz: String =
+    val sb = new StringBuilder
+    sb.append("digraph G {\n")
+    for (id, neighbors) <- adjacencyList do
+      for neighbor <- neighbors do sb.append(s"""  "${id.toString}" -> "${neighbor.toString}";\n""")
+    end for
+    sb.append("}\n")
+    sb.toString
+  end toGraphviz
+
 end DAGV
