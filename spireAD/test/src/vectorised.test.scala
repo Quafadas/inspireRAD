@@ -4,7 +4,7 @@ import munit.*
 import narr.*
 import vecxt.all.*
 import vecxt.BoundsCheck.DoBoundsCheck.yes
-import io.github.quafadas.spireAD.vectorised.VectorisedTrig
+import io.github.quafadas.spireAD.VectorisedTrig
 import scala.reflect.ClassTag
 // import vecxt.matrix.Matrix
 // import vecxt.MatrixHelper.*

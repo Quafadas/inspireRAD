@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD.vectorised
+package io.github.quafadas.spireAD
 
 import vecxt.all.*
 

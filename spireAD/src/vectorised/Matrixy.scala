@@ -1,20 +1,25 @@
-package io.github.quafadas.spireAD.vectorised
+package io.github.quafadas.spireAD
 
 import vecxt.matrix.Matrix
 import vecxt.BoundsCheck.BoundsCheck
 
 object Matrixy:
 
-  given doubleMatrix: Matrixy[Matrix, Double] = new Matrixy[Matrix, Double]:
+  given matOps: Matrixy[Matrix, Double] = doubleMatrix(using vecxt.BoundsCheck.DoBoundsCheck.yes)
+
+  inline def doubleMatrix(using inline bc: BoundsCheck): Matrixy[Matrix, Double] = new Matrixy[Matrix, Double]:
 
     extension (a: Matrix[Double])
 
-      inline def @@(b: Matrix[Double])(using inline bc: BoundsCheck): Matrix[Double] = vecxt.all.@@(a)(b)
+      def apply(i: Array[Int], j: Array[Int]): Matrix[Double] =
+        vecxt.all.apply(a)(i, j)
 
-      inline def mapRows(f: Array[Double] => Array[Double])(using inline bc: BoundsCheck): Matrix[Double] =
+      def @@(b: Matrix[Double]): Matrix[Double] = vecxt.all.@@(a)(b)
+
+      def mapRows(f: Array[Double] => Array[Double]): Matrix[Double] =
         vecxt.all.mapRows(a)(f)
 
-      inline def mapRowsToScalar(f: Array[Double] => Double)(using inline bc: BoundsCheck): Matrix[Double] =
+      def mapRowsToScalar(f: Array[Double] => Double): Matrix[Double] =
         vecxt.all.mapRowsToScalar(a)(f)
 
     end extension
@@ -26,11 +31,14 @@ trait Matrixy[F[_], A]:
 
   extension (a: F[A])
 
-    inline def @@(b: F[A])(using inline bc: BoundsCheck): F[A]
+    def apply(i: Array[Int], j: Array[Int]): F[A]
 
-    inline def mapRows(f: Array[A] => Array[A])(using inline bc: BoundsCheck): F[A]
+    // inline def @@(b: F[A]): F[A]
+    def @@(b: F[A]): F[A]
 
-    inline def mapRowsToScalar(f: Array[A] => A)(using inline bc: BoundsCheck): F[A]
+    def mapRows(f: Array[A] => Array[A]): F[A]
+
+    def mapRowsToScalar(f: Array[A] => A): F[A]
   end extension
 
 end Matrixy

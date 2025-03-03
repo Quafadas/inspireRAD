@@ -7,6 +7,7 @@ import vecxt.all.*
 import cats.Id
 import scala.annotation.targetName
 import scala.reflect.ClassTag
+import vecxt.BoundsCheck
 
 object VectorisedField:
 
@@ -27,52 +28,68 @@ object VectorisedField:
 
     def allOnes(x: Matrix[Double])(using ClassTag[Double]) = Matrix.ones(x.shape)
 
-    extension (a: Double) def const: Double = a
+    extension (a: Double)
+      def const: Double = a
+      def /(b: Matrix[Double]): Matrix[Double] = Matrix(b.raw.map(x => a / x), b.shape)
     end extension
 
     extension (a: Matrix[Double])
       inline def urnary_- : Matrix[Double] = vecxt.all.*(a)(-1)
       inline def +(x: Matrix[Double]): Matrix[Double] = vecxt.all.+(x)(a)
 
-      @targetName("lhs+")
+      @targetName("rhs+")
       inline def +(x: Double): Matrix[Double] = vecxt.all.+(a)(x)
 
       inline def -(y: Matrix[Double]): Matrix[Double] = vecxt.all.-(a)(y)
 
-      @targetName("lhs-")
+      @targetName("rhs-")
       inline def -(x: Double): Matrix[Double] = vecxt.all.-(a)(x)
 
       inline def *(y: Matrix[Double]): Matrix[Double] = vecxt.all.*(a)(y)
+
+      @targetName("rhs*")
+      inline def *(y: Double): Matrix[Double] = vecxt.all.*(a)(y)
       inline def /(y: Matrix[Double]): Matrix[Double] = vecxt.all./(a)(y)
+      @targetName("rhs/")
+      inline def /(y: Double): Matrix[Double] = Matrix(a.raw.map(x => x / y), a.shape)
 
     end extension
 
-    given elementwiseArrayDoubleField: VectorisedField[Array, Double] = new VectorisedField[Array, Double]:
-      def fromDouble(x: Double): Double = x
-      def zero(x: Array[Double]): Array[Double] = Array.fill[Double](x.length)(0.0)
-      def one(x: Array[Double])(using ClassTag[Double]): Array[Double] = Array.fill[Double](x.length)(1.0)
+  given elementwiseArrayDoubleField: VectorisedField[Array, Double] = new VectorisedField[Array, Double]:
+    def fromDouble(x: Double): Double = x
+    def zero(x: Array[Double]): Array[Double] = Array.fill[Double](x.length)(0.0)
+    def one(x: Array[Double])(using ClassTag[Double]): Array[Double] = Array.fill[Double](x.length)(1.0)
 
-      def allOnes(x: Array[Double])(using ClassTag[Double]) = one(x)
+    def allOnes(x: Array[Double])(using ClassTag[Double]) = one(x)
 
-      extension (a: Double) def const: Double = a
+    extension (a: Double)
+      def const: Double = a
+      def /(b: Array[Double]): Array[Double] = b.map(x => a / x)
 
-      end extension
+    end extension
 
-      extension (a: Array[Double])
-        inline def /(y: Array[Double]): Array[Double] = vecxt.arrays./(a)(y)
-        inline def urnary_- : Array[Double] = vecxt.arrays.*(a)(-1)
-        inline def +(x: Array[Double]): Array[Double] = vecxt.arrays.+(x)(a)
+    extension (a: Array[Double])
+      inline def /(y: Array[Double]): Array[Double] = vecxt.arrays./(a)(y)
 
-        @targetName("lhs+")
-        inline def +(x: Double): Array[Double] = vecxt.arrays.+(a)(x)
+      @targetName("rhs/")
+      inline def /(y: Double): Array[Double] = a.map(x => x / y)
 
-        inline def -(y: Array[Double]): Array[Double] = vecxt.arrays.-(a)(y)
-        @targetName("lhs-")
-        inline def -(x: Double): Array[Double] = vecxt.arrays.-(a)(x)
+      inline def urnary_- : Array[Double] = vecxt.arrays.*(a)(-1)
+      inline def +(x: Array[Double]): Array[Double] = vecxt.arrays.+(x)(a)
 
-        inline def *(y: Array[Double]): Array[Double] = vecxt.arrays.*(a)(y)
+      @targetName("rhs+")
+      inline def +(x: Double): Array[Double] = vecxt.arrays.+(a)(x)
 
-      end extension
+      inline def -(y: Array[Double]): Array[Double] = vecxt.arrays.-(a)(y)
+      @targetName("rhs-")
+      inline def -(x: Double): Array[Double] = vecxt.arrays.-(a)(x)
+
+      inline def *(y: Array[Double]): Array[Double] = vecxt.arrays.*(a)(y)
+
+      @targetName("rhs*")
+      inline def *(y: Double): Array[Double] = vecxt.arrays.*(a)(y)
+
+    end extension
 
 end VectorisedField
 
@@ -82,19 +99,26 @@ trait VectorisedField[F[_], @sp(Double) A]:
   def one(x: F[A])(using ClassTag[A]): F[A]
   def allOnes(x: F[A])(using ClassTag[A]): F[A]
 
-  extension (a: Double) def const: A
+  extension (a: Double)
+    def const: A
+    def /(b: F[A]): F[A]
   end extension
 
   extension (a: F[A])
     def urnary_- : F[A]
 
     def +(x: F[A]): F[A]
-    @targetName("lhs+")
+    @targetName("rhs+")
     def +(x: A): F[A]
     def -(y: F[A]): F[A]
 
     def *(y: F[A]): F[A]
+    @targetName("rhs*")
+    def *(y: A): F[A]
+
     def /(y: F[A]): F[A]
+    @targetName("rhs/")
+    def /(y: A): F[A]
   end extension
 end VectorisedField
 
