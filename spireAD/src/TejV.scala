@@ -44,7 +44,11 @@ end TejVGraph
 
 object TejV extends TejInstances:
 
-  def apply[F[_], T](t: F[T]): TejV[F, T] = new TejV(tejNum = t)
+  def apply[F[_], T](t: F[T])(using td: TejVGraph[T], f: VectorisedField[F, T], tr: VectorisedTrig[F, T]): TejV[F, T] =
+    val tn = new TejV(tejNum = t)
+    td.addToGraph(tn)
+    tn
+  end apply
 
 end TejV
 
@@ -52,13 +56,23 @@ end TejV
 final case class TejV[F[_], @sp(Float, Double) T] private (tejNum: F[T]):
   lazy val id = UUID.randomUUID()
 
-  inline def exp(using inline t: VectorisedTrig[F, T], inline f: VectorisedField[F, T], td: TejVGraph[T]) =
+  def exp(using t: VectorisedTrig[F, T], f: VectorisedField[F, T], td: TejVGraph[T]) =
     val underlying = this.tejNum.exp
-    val expd = TejV(underlying)
+    val expd = new TejV(tejNum = underlying)
     val node = UrnaryNode(UrnaryOps.Exp, underlying, expd.id, this.id)
     td.unary(node)
     expd
   end exp
+
+  def backward(wrt: Seq[TejV[F, T]])(using td: TejVGraph[T]) =
+    val graph = td.dag.toposort
+    val reversed = graph.reverse
+    reversed.foreach { node =>
+      node.backward
+    }
+    val ids = wrt.map(_.id)
+    td.dag.getAllNodes.filter(n => ids.contains(n.id)).map((n: VNode[?, T]) => (n.value, n.grad))
+  end backward
 
 end TejV
 
