@@ -3,6 +3,7 @@ package io.github.quafadas.spireAD
 import java.util.UUID
 import io.github.quafadas.spireAD.VectorisedField
 import scala.specialized as sp
+import scala.reflect.ClassTag
 
 trait VNode[F[_], T](forZeroVal: F[T], val id: UUID)(using
     vf: VectorisedField[F, T],
@@ -12,6 +13,7 @@ trait VNode[F[_], T](forZeroVal: F[T], val id: UUID)(using
   val vt2: VectorisedTrig[F, T] = vt
   val value: F[T]
   var grad: F[T] = vf.zero(forZeroVal)
+  def setGradOne(using ct: ClassTag[T]): Unit = grad = vf.allOnes(forZeroVal)
   def backward[N <: VNode[?, T]](using td: TejVGraph[T]): Unit
 end VNode
 
@@ -53,8 +55,8 @@ case class UrnaryNode[F[_], @sp(Double) T](
       // case UrnaryOps.Sin  => this.grad * n.value.cos
       // case UrnaryOps.Cos  => this.grad * n.value.sin * -1.0.const
       // case UrnaryOps.Tan  => this.grad / (cos(n.realValue) * cos(n.realValue))
-      case UrnaryOps.Exp => this.grad * value.exp
-      case UrnaryOps.Log => this.grad / value
+      case UrnaryOps.Exp => this.grad * n.value
+      case UrnaryOps.Log => this.grad / n.value
       // case UrnaryOps.Sinh => this.grad * cosh(n2.value)
       // case UrnaryOps.Cosh => this.grad * sinh(n.value)
       // case UrnaryOps.Tanh => this.grad / (cosh(n.realValue) * cosh(n.realValue))
