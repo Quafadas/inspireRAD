@@ -9,6 +9,7 @@ object VectorisedTrig:
       inline def exp: Array[Double] = vecxt.all.exp(a)
       inline def log: Array[Double] = vecxt.all.log(a)
       inline def sin: Array[Double] = vecxt.all.sin(a)
+      inline def cos: Array[Double] = vecxt.all.cos(a)
     end extension
 
   given vtm: VectorisedTrig[Matrix, Double] = new VectorisedTrig[Matrix, Double]:
@@ -16,6 +17,7 @@ object VectorisedTrig:
       inline def exp: Matrix[Double] = vecxt.all.exp(a)
       inline def log: Matrix[Double] = vecxt.all.log(a)
       inline def sin: Matrix[Double] = vecxt.all.sin(a)
+      inline def cos: Matrix[Double] = vecxt.all.cos(a)
     end extension
 
 end VectorisedTrig
@@ -27,6 +29,7 @@ trait VectorisedTrig[F[_], A]:
     def exp: F[A]
     def log: F[A]
     def sin: F[A]
+    def cos: F[A]
   end extension
 
   // def exp(a: F[A]): F[A]

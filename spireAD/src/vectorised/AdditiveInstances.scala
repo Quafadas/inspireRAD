@@ -34,7 +34,7 @@ object VectorisedField:
     end extension
 
     extension (a: Matrix[Double])
-      inline def urnary_- : Matrix[Double] = vecxt.all.*(a)(-1)
+      inline def unary_- : Matrix[Double] = Matrix(vecxt.arrays.-(a.raw), a.shape)
       inline def +(x: Matrix[Double]): Matrix[Double] = vecxt.all.+(x)(a)
 
       @targetName("rhs+")
@@ -74,7 +74,7 @@ object VectorisedField:
       @targetName("rhs/")
       inline def /(y: Double): Array[Double] = a.map(x => x / y)
 
-      inline def urnary_- : Array[Double] = vecxt.arrays.*(a)(-1)
+      inline def unary_- : Array[Double] = vecxt.arrays.*(a)(-1)
       inline def +(x: Array[Double]): Array[Double] = vecxt.arrays.+(x)(a)
 
       @targetName("rhs+")
@@ -105,7 +105,7 @@ trait VectorisedField[F[_], @sp(Double) A]:
   end extension
 
   extension (a: F[A])
-    def urnary_- : F[A]
+    def unary_- : F[A]
 
     def +(x: F[A]): F[A]
     @targetName("rhs+")
