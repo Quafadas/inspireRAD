@@ -10,6 +10,9 @@ import spire.implicits.ArrayNormedVectorSpace
 
 class DAGVSuite extends FunSuite:
 
+  import VectorisedTrig.vta
+  import VectorisedField.elementwiseArrayDoubleField
+
   given Show[Array[Double]] with
     def show(arr: Array[Double]): String = arr.mkString("[", ", ", "]")
   end given
@@ -23,7 +26,6 @@ class DAGVSuite extends FunSuite:
     // println(jetArr.mkString("\n"))
 
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
-    import VectorisedTrig.vta
 
     val tej = TejV(arr)
 
@@ -52,19 +54,10 @@ class DAGVSuite extends FunSuite:
 
   test("TejV +") {
 
-    val arr1 = Array(1.0, 2.0, 3.0)
-    val arr2 = Array(4.0, 5.0, 8.0)
-    given jd: JetDim = JetDim(3)
-    val jetArr1 = arr1.jetArr
-    val jetArr2 = arr2.jetArr
-
-    val jetArrPlus = jetArr1.zip(jetArr2).map((a, b) => a + b)
-
+    val (arr1, arr2, jetArrPlus) = prepareJetArrays(_ + _)
     // println(jetArrPlus.mkString("\n"))
 
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
-    import VectorisedTrig.vta
-    import VectorisedField.elementwiseArrayDoubleField
 
     val tej1 = TejV(arr1)
     val tej2 = TejV(arr2)
@@ -92,20 +85,9 @@ class DAGVSuite extends FunSuite:
   }
   test("TejV -") {
 
-    given jd: JetDim = JetDim(3)
-    val arr1 = Array(1.0, 2.0, 3.0)
-    val arr2 = Array(4.0, 5.0, 8.0)
-
-    val jetArr1 = arr1.jetArr
-    val jetArr2 = arr2.jetArr
-
-    val jetArrPlus = jetArr1.zip(jetArr2).map((a, b) => a - b)
-
-    // println(jetArrPlus.mkString("\n"))
+    val (arr1, arr2, jetArrPlus) = prepareJetArrays(_ - _)
 
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
-    import VectorisedTrig.vta
-    import VectorisedField.elementwiseArrayDoubleField
 
     val tej1 = TejV(arr1)
     val tej2 = TejV(arr2)
@@ -133,20 +115,11 @@ class DAGVSuite extends FunSuite:
   }
   test("TejV *") {
 
-    given jd: JetDim = JetDim(3)
-    val arr1 = Array(1.0, 2.0, 3.0)
-    val arr2 = Array(4.0, 5.0, 8.0)
-
-    val jetArr1 = arr1.jetArr
-    val jetArr2 = arr2.jetArr
-
-    val jetArrPlus = jetArr1.zip(jetArr2).map((a, b) => a * b)
+    val (arr1, arr2, jetArrPlus) = prepareJetArrays(_ * _)
 
     // println(jetArrPlus.mkString("\n"))
 
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
-    import VectorisedTrig.vta
-    import VectorisedField.elementwiseArrayDoubleField
 
     val tej1 = TejV(arr1)
     val tej2 = TejV(arr2)
@@ -172,8 +145,10 @@ class DAGVSuite extends FunSuite:
       )
     end for
   }
-  test("TejV /") {
 
+  def prepareJetArrays(
+      op: (Jet[Double], Jet[Double]) => Jet[Double]
+  ): (Array[Double], Array[Double], Array[Jet[Double]]) =
     given jd: JetDim = JetDim(3)
     val arr1 = Array(1.0, 2.0, 3.0)
     val arr2 = Array(4.0, 5.0, 8.0)
@@ -181,14 +156,17 @@ class DAGVSuite extends FunSuite:
     val jetArr1 = arr1.jetArr
     val jetArr2 = arr2.jetArr
 
-    val jetArrPlus = jetArr1.zip(jetArr2).map((a, b) => a / b)
+    val jetArrPlus = jetArr1.zip(jetArr2).map((a, b) => op(a, b))
+    (arr1, arr2, jetArrPlus)
+  end prepareJetArrays
+
+  test("TejV /") {
+
+    val (arr1, arr2, jetArrPlus) = prepareJetArrays(_ / _)
 
     // println(jetArrPlus.mkString("\n"))
 
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
-    import VectorisedTrig.vta
-    import VectorisedField.elementwiseArrayDoubleField
-
     val tej1 = TejV(arr1)
     val tej2 = TejV(arr2)
 
@@ -214,6 +192,18 @@ class DAGVSuite extends FunSuite:
         0.0000001
       )
     end for
+  }
+
+  test("Adding the same container without the Tej wqrapper") {
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = Array(1.0, 2.0, 3.0, 4.0)
+    val tej = TejV(arr)
+
+    val t2 = tej + Array(1.0, 2.0, 3.0, 4.0)
+    // TODO ???
+    // val t3 = arr + tej
+    assert(tejV.dag.toposort.size == 3)
+    assertEquals(t2.value.toSeq, Seq(2.0, 4.0, 6.0, 8.0))
   }
 
 end DAGVSuite

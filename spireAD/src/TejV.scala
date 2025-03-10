@@ -111,6 +111,13 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f:
 
     reversed.head.setGradOne
 
+    // This _may_ prevent a bunch of uncessary work. need to check.
+    // val minIndex = reversed.zipWithIndex.collect {
+    //   case (node, index) if wrt.exists(_.id == node.id) => index
+    // }.min
+
+    // println(s"minIndex: $minIndex")
+
     reversed.foreach { node =>
       node.backward
     }
