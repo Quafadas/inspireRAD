@@ -4,6 +4,20 @@ import vecxt.all.*
 
 object VectorisedTrig:
 
+  given vts: VectorisedTrig[Scalar, Double] = new VectorisedTrig[Scalar, Double]:
+
+    extension (a: Scalar[Double]) override def exp: Scalar[Double] = Scalar(Math.exp(a.scalar))
+    end extension
+
+    extension (a: Scalar[Double]) override def log: Scalar[Double] = Scalar(Math.log(a.scalar))
+    end extension
+
+    extension (a: Scalar[Double]) override def sin: Scalar[Double] = Scalar(Math.sin(a.scalar))
+    end extension
+
+    extension (a: Scalar[Double]) override def cos: Scalar[Double] = Scalar(Math.cos(a.scalar))
+    end extension
+
   given vta: VectorisedTrig[Array, Double] = new VectorisedTrig[Array, Double]:
     extension (a: Array[Double])
       inline def exp: Array[Double] = vecxt.all.exp(a)

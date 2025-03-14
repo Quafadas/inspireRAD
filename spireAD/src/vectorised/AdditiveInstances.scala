@@ -8,8 +8,45 @@ import cats.Id
 import scala.annotation.targetName
 import scala.reflect.ClassTag
 import vecxt.BoundsCheck
+import spire.math.Number
 
+final case class Scalar[T: Numeric](scalar: T)
 object VectorisedField:
+
+  given scalarField: VectorisedField[Scalar, Double] = new VectorisedField[Scalar, Double]:
+
+    extension (a: Double)
+      override def const: Double = a
+      override def /(b: Scalar[Double]): Scalar[Double] = Scalar(a / b.scalar)
+    end extension
+
+    override def fromDouble(x: Double): Double = x
+
+    override def zero(x: Scalar[Double]): Scalar[Double] = Scalar(0.0)
+
+    override def one(x: Scalar[Double])(using ClassTag[Double]): Scalar[Double] = Scalar(1.0)
+
+    override def allOnes(x: Scalar[Double])(using ClassTag[Double]): Scalar[Double] = Scalar(1.0)
+
+    extension (a: Scalar[Double])
+
+      override def unary_- : Scalar[Double] = Scalar(-a.scalar)
+
+      override def productExceptSelf(): Scalar[Double] = Scalar(1.0)
+      override def numel: Int = 1
+      override def +(x: Scalar[Double]): Scalar[Double] = Scalar(a.scalar + x.scalar)
+      @targetName("rhs+")
+      override def +(x: Double): Scalar[Double] = Scalar(a.scalar + x)
+      override def -(y: Scalar[Double]): Scalar[Double] = Scalar(a.scalar - y.scalar)
+      override def *(y: Scalar[Double]): Scalar[Double] = Scalar(a.scalar * y.scalar)
+      @targetName("rhs*")
+      override def *(y: Double): Scalar[Double] = Scalar(a.scalar * y)
+
+      override def /(y: Scalar[Double]): Scalar[Double] = Scalar(a.scalar / y.scalar)
+
+      @targetName("rhs/")
+      override def /(y: Double): Scalar[Double] = Scalar(a.scalar / y)
+    end extension
 
   given elementwiseMatrixDoubleField: VectorisedField[Matrix, Double] = new VectorisedField[Matrix, Double]:
 
@@ -34,7 +71,11 @@ object VectorisedField:
     end extension
 
     extension (a: Matrix[Double])
-      inline def unary_- : Matrix[Double] = Matrix(vecxt.arrays.-(a.raw), a.shape)
+      inline def productExceptSelf(): Matrix[Double] =
+        Matrix(vecxt.arrays.productExceptSelf(a.raw), a.shape)
+
+      def numel: Int = a.shape(0) * a.shape(1)
+      inline def unary_- : Matrix[Double] = Matrix(vecxt.arrays.unary_-(a.raw), a.shape)
       inline def +(x: Matrix[Double]): Matrix[Double] = vecxt.all.+(x)(a)
 
       @targetName("rhs+")
@@ -69,6 +110,9 @@ object VectorisedField:
     end extension
 
     extension (a: Array[Double])
+      inline def productExceptSelf(): Array[Double] = vecxt.arrays.productExceptSelf(a)
+      def numel: Int = a.length
+
       inline def /(y: Array[Double]): Array[Double] = vecxt.arrays./(a)(y)
 
       @targetName("rhs/")
@@ -106,6 +150,8 @@ trait VectorisedField[F[_], @sp(Double) A]:
 
   extension (a: F[A])
     def unary_- : F[A]
+    def productExceptSelf(): F[A]
+    def numel: Int
 
     def +(x: F[A]): F[A]
     @targetName("rhs+")

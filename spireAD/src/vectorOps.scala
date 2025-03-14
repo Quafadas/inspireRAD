@@ -7,3 +7,11 @@ end UrnaryOps
 enum BinaryOps:
   case Add, Sub, Mul, Div
 end BinaryOps
+
+enum ReductionOps:
+  case Sum, Product, Mean
+end ReductionOps
+
+enum MatrixyOps:
+  case Index, MatMul, MapRows, MapRowsToScalar
+end MatrixyOps

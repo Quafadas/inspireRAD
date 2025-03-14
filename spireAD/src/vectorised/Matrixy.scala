@@ -14,7 +14,7 @@ object Matrixy:
       def apply(i: Array[Int], j: Array[Int]): Matrix[Double] =
         vecxt.all.apply(a)(i, j)
 
-      def @@(b: Matrix[Double]): Matrix[Double] = vecxt.all.@@(a)(b)
+      def matmul(b: Matrix[Double]): Matrix[Double] = vecxt.all.@@(a)(b)
 
       def mapRows(f: Array[Double] => Array[Double]): Matrix[Double] =
         vecxt.all.mapRows(a)(f)
@@ -33,12 +33,13 @@ trait Matrixy[F[_], A]:
 
     def apply(i: Array[Int], j: Array[Int]): F[A]
 
-    // inline def @@(b: F[A]): F[A]
-    def @@(b: F[A]): F[A]
+    def matmul(b: F[A]): F[A]
+    inline def @@(b: F[A]): F[A] = matmul(b)
 
     def mapRows(f: Array[A] => Array[A]): F[A]
 
     def mapRowsToScalar(f: Array[A] => A): F[A]
+
   end extension
 
 end Matrixy

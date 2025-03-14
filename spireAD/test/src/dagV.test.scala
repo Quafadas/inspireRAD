@@ -17,6 +17,10 @@ class DAGVSuite extends FunSuite:
     def show(arr: Array[Double]): String = arr.mkString("[", ", ", "]")
   end given
 
+  given Show[Scalar[Double]] with
+    def show(arr: Scalar[Double]): String = arr.scalar.toString
+  end given
+
   test("f(x) = exp(sin(x))") {
 
     val arr = Array(1.0, 2.0, 3.0)
@@ -204,6 +208,87 @@ class DAGVSuite extends FunSuite:
     // val t3 = arr + tej
     assert(tejV.dag.toposort.size == 3)
     assertEquals(t2.value.toSeq, Seq(2.0, 4.0, 6.0, 8.0))
+  }
+
+  test("Reduction operations - sum") {
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = Array(1.0, 2.0, 3.0, 4.0)
+    val tej = TejV(arr)
+
+    val summed = tej.sum
+    // val product = tej.product
+    // val mean = tej.mean
+
+    assertEquals(summed.value.scalar, 10.0)
+    // assertEquals(product.value, 24.0)
+    // assertEquals(mean.value, 2.5)
+
+    given jd: JetDim = JetDim(4)
+    val jetArr = arr.jetArr
+
+    val jetCalc = jetArr.foldLeft(Jet(0.0))((acc, j) => acc + j)
+
+    val out = summed.backward(Set(tej))
+    val grad = out.tail.foldLeft(out.head.grad)((acc, j) => acc + j.grad)
+
+    for i <- 0 until jetArr.length do
+      assertEqualsDouble(
+        grad(i),
+        jetCalc.infinitesimal(i),
+        0.0000001
+      )
+    end for
+
+  }
+  test("Reduction operations - product") {
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = Array(1.0, 2.0, 3.0, 4.0)
+    val tej = TejV(arr)
+
+    val summed = tej.product
+    assertEqualsDouble(summed.value.scalar, 24.0, 0.0000001)
+
+    given jd: JetDim = JetDim(4)
+    val jetArr = arr.jetArr
+
+    val jetCalc = jetArr.foldLeft(Jet(1.0))((acc, j) => acc * j)
+
+    val out = summed.backward(Set(tej))
+    val grad = out.tail.foldLeft(out.head.grad)((acc, j) => acc + j.grad)
+
+    for i <- 0 until jetArr.length do
+      assertEqualsDouble(
+        grad(i),
+        jetCalc.infinitesimal(i),
+        0.0000001
+      )
+    end for
+
+  }
+
+  test("reduction operations - mean") {
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = Array(1.0, 2.0, 3.0, 4.0)
+    val tej = TejV(arr)
+
+    val summed = tej.mean
+    assertEqualsDouble(summed.value.scalar, 2.5, 0.0000001)
+
+    given jd: JetDim = JetDim(4)
+    val jetArr = arr.jetArr
+
+    val jetCalc = jetArr.foldLeft(Jet(0.0))((acc, j) => acc + j) / arr.length
+
+    val out = summed.backward(Set(tej))
+    val grad = out.tail.foldLeft(out.head.grad)((acc, j) => acc + j.grad)
+    for i <- 0 until jetArr.length do
+      assertEqualsDouble(
+        grad(i),
+        jetCalc.infinitesimal(i),
+        0.0000001
+      )
+    end for
+
   }
 
 end DAGVSuite

@@ -40,6 +40,39 @@ case class VConstNode[F[_], T](value: F[T], idIn: UUID)(using
 
 end VConstNode
 
+case class ReductionNode[F[_], T](
+    value: F[T],
+    thisId: UUID,
+    depId: UUID,
+    op: ReductionOps
+)(using
+    vf: VectorisedField[F, T],
+    vt: VectorisedTrig[F, T],
+    sh: Show[F[T]],
+    ct: ClassTag[T]
+) extends VNode[F, T](value, thisId):
+
+  override def backward[N <: VNode[?, T]](using td: TejVGraph[T]): Unit =
+    val n = td.dag.getNode(depId)
+    op match
+      case ReductionOps.Sum =>
+        n.grad = n.vf2.+(n.grad)(n.vf2.allOnes(n.grad))
+
+      case ReductionOps.Product =>
+        val pes = n.vf2.productExceptSelf(n.value)()
+        n.grad = n.vf2.+(n.grad)(pes)
+
+      case ReductionOps.Mean =>
+        n.grad = n.vf2.+(n.grad)(n.vf2./(n.vf2.allOnes(n.grad))(n.vf2.fromDouble(n.vf2.numel(n.value))))
+
+    end match
+  end backward
+
+  override def graphShow: String =
+    s"ReductionNode (id: ${depId.toString().takeRight(4)}, value: ${value.show}, grad: ${grad.show})"
+
+end ReductionNode
+
 case class UrnaryNode[F[_], @sp(Double) T](
     op: UrnaryOps,
     value: F[T],

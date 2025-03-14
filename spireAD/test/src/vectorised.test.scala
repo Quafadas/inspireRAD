@@ -30,7 +30,7 @@ class MatrixTCjSuite extends FunSuite:
 
   }
 
-  test("Matrix Typelcasses") {
+  test("Matrix Typelcasses 2") {
     import VectorisedTrig.vtm
     import VectorisedField.elementwiseMatrixDoubleField
 

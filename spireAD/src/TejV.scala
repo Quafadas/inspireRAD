@@ -10,6 +10,7 @@ import scala.util.chaining.*
 import scala.specialized as sp
 import java.util.UUID
 import cats.Show
+import vecxt.matrix.Matrix
 
 case class TejVGraph[T: ClassTag]():
 
@@ -23,6 +24,17 @@ case class TejVGraph[T: ClassTag]():
     val n = VConstNode(t.value, t.id)
     dag.addNode(n)
   end addToGraph
+
+  inline def reduction[F[_]](tv: TejV[F, T], op: ReductionOps, depId: UUID)(using
+      f: VectorisedField[F, T],
+      tr: VectorisedTrig[F, T],
+      sh: Show[F[T]],
+      ct: ClassTag[T]
+  ): Unit =
+    val node = ReductionNode[F, T](tv.value, tv.id, depId, op)
+    dag.addNode(node)
+    dag.addEdge(depId, tv.id)
+  end reduction
 
   inline def unary[F[_]](tv: TejV[F, T], op: UrnaryOps, depId: UUID)(using
       f: VectorisedField[F, T],
@@ -58,6 +70,15 @@ object TejV extends TejInstances:
   )(using td: TejVGraph[T], f: VectorisedField[F, T], tr: VectorisedTrig[F, T], sh: Show[F[T]]): TejV[F, T] =
     new TejV(value = t).tap(td.addToGraph)
   end apply
+
+  private def createDontAddToGraph[F[_], T](
+      t: F[T]
+  )(using
+      f: VectorisedField[F, T],
+      tr: VectorisedTrig[F, T],
+      sh: Show[F[T]]
+  ): TejV[F, T] =
+    new TejV(t)
 
   implicit def autoTejV[F[_], T](anF: F[T])(using
       c: ClassTag[T],
@@ -105,6 +126,44 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f:
     new TejV(lhs.value / rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
   end /
 
+  def sum(using
+      td: TejVGraph[T],
+      rd: Reductions[F, T],
+      r: Numeric[T],
+      vfScalar: VectorisedField[Scalar, T],
+      vfTrig: VectorisedTrig[Scalar, T],
+      sh: Show[Scalar[T]],
+      ct: ClassTag[T]
+  ): TejV[Scalar, T] =
+    val newT = TejV.createDontAddToGraph(Scalar(value.sum))
+    println(newT)
+    newT.tap(td.reduction(_, ReductionOps.Sum, lhs.id))
+  end sum
+
+  def product(using
+      td: TejVGraph[T],
+      rd: Reductions[F, T],
+      n: Numeric[T],
+      vfScalar: VectorisedField[Scalar, T],
+      sh: Show[Scalar[T]],
+      vfTrig: VectorisedTrig[Scalar, T],
+      ct: ClassTag[T]
+  ): TejV[Scalar, T] =
+    TejV.createDontAddToGraph(Scalar(value.product)).tap(td.reduction(_, ReductionOps.Product, lhs.id))
+  end product
+
+  def mean(using
+      td: TejVGraph[T],
+      rd: Reductions[F, T],
+      n: Numeric[T],
+      vfScalar: VectorisedField[Scalar, T],
+      sh: Show[Scalar[T]],
+      vfTrig: VectorisedTrig[Scalar, T],
+      ct: ClassTag[T]
+  ): TejV[Scalar, T] =
+    TejV.createDontAddToGraph(Scalar(value.mean)).tap(td.reduction(_, ReductionOps.Mean, lhs.id))
+  end mean
+
   def backward[G[_]](wrt: Set[TejV[G, T]])(using td: TejVGraph[T], ct: ClassTag[T]) =
     val graph = td.dag.toposort
     val reversed = graph.reverse
@@ -124,6 +183,18 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f:
     val ids = wrt.map(_.id)
     td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
   end backward
+
+  def @@(rhs: TejV[F, T])(using
+      f: VectorisedField[F, T],
+      t: VectorisedTrig[F, T],
+      td: TejVGraph[T],
+      sh: Show[F[T]],
+      ev: F[T] <:< Matrix[T],
+      matTc: Matrixy[F, T]
+  ): TejV[F, T] =
+    val newmat = matTc.@@(value)(rhs.value)
+    new TejV(newmat) // .tap(td.binary(lhs.id, rhs.id, _, BinaryOps.MatMul))
+  end @@
 
 end TejV
 
