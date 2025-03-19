@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 import spire.algebra.NRoot
 import scala.specialized as sp
 
-class DAGV[T: ClassTag, N <: VNode[?, T]]:
+class DAGV[T: ClassTag, N <: VDimChangeNode[?, ?, T]]:
   private val adjacencyList: mutable.Map[UUID, mutable.Set[UUID]] =
     mutable.Map.empty
   private val nodeMap: mutable.Map[UUID, N] = mutable.Map.empty

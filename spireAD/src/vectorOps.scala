@@ -12,8 +12,9 @@ enum ReductionOps:
   case Sum, Product, Mean
 end ReductionOps
 
-enum ParameterisedReductionOps:
-  case Index, Update
+enum ParameterisedReductionOps[N](val parameter: TupleDim[N]):
+  case Index[N](override val parameter: TupleDim[N]) extends ParameterisedReductionOps(parameter)
+  case Update[N](override val parameter: TupleDim[N]) extends ParameterisedReductionOps(parameter)
 end ParameterisedReductionOps
 
 enum MatrixyBinaryOps:

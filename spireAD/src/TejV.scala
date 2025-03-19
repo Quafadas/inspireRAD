@@ -88,7 +88,7 @@ case class TejVGraph[T: ClassTag]():
   inline def reductionWithParams[F[_]](
       tv: TejV[F, T],
       depId: UUID,
-      op: ParameterisedReductionOps,
+      op: ParameterisedReductionOps[InferDimension[F]],
       param: TupleDim[InferDimension[F]]
   )(using
       f: VectorisedField[F, T],
@@ -248,7 +248,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ev: F[T] <:< Matrix[T],
       matTc: Matrixy[Matrix, T]
   ): TejV[Array, T] =
-    val newmat = value.asInstanceOf[Matrix[T]].mapRowsToScalar(fct)
+    val newmat = matTc.mapRowsToScalar(value)(fct)
     new TejV(newmat)
   end mapRowsToScalar
 
