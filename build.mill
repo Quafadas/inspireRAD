@@ -24,7 +24,7 @@ trait Common extends ScalaModule  with PublishModule with ScalafixModule {
   def publishVersion = VcsVersion.vcsState().format()
 
   def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"io.github.quafadas::vecxt:0.0.26-15-5236e3",
+    ivy"io.github.quafadas::vecxt:0.0.26-16-82aacd",
     ivy"org.typelevel::spire::0.18.0",
     ivy"org.typelevel::cats-core::2.13.0",
   )

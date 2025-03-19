@@ -12,6 +12,12 @@ import java.util.UUID
 import cats.Show
 import vecxt.matrix.Matrix
 
+type NumDim[F[_]] <: Int =
+  F[?] match
+    case Array[?]  => 1
+    case Matrix[?] => 2
+    case _         => 0
+
 case class TejVGraph[T: ClassTag]():
 
   final val dag = DAGV[T, VNode[?, T]]()
@@ -61,6 +67,41 @@ case class TejVGraph[T: ClassTag]():
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
   end binary
+
+  inline def matrixy(
+      lhs: UUID,
+      rhs: UUID,
+      tv: TejV[Matrix, T],
+      op: MatrixyBinaryOps
+  )(using
+      vf: VectorisedField[Matrix, T],
+      tr: VectorisedTrig[Matrix, T],
+      mty: Matrixy[Matrix, T],
+      sh: Show[Matrix[T]]
+  ): Unit =
+    val node = MatrixyNode[T](op, tv.value, tv.id, lhs, rhs)
+    dag.addNode(node)
+    dag.addEdge(lhs, tv.id)
+    dag.addEdge(rhs, tv.id)
+  end matrixy
+
+  inline def reductionWithParams[F[_]](
+      tv: TejV[F, T],
+      depId: UUID,
+      op: ParameterisedReductionOps,
+      param: TupleDim[InferDimension[F]]
+  )(using
+      f: VectorisedField[F, T],
+      tr: VectorisedTrig[F, T],
+      red: Reductions[F, T, InferDimension[F]],
+      sh: Show[F[T]],
+      ct: ClassTag[T]
+  ): Unit =
+    val node = ReductionWithParams[F, T](op, tv.value, tv.id, depId, param)
+    dag.addNode(node)
+    dag.addEdge(depId, tv.id)
+  end reductionWithParams
+
 end TejVGraph
 
 object TejV extends TejInstances:
@@ -92,8 +133,10 @@ object TejV extends TejInstances:
 end TejV
 
 @SerialVersionUID(0L)
-final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f: VectorisedField[F, T], sh: Show[F[T]])
-    extends Serializable:
+final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
+    f: VectorisedField[F, T],
+    sh: Show[F[T]]
+) extends Serializable:
   lhs =>
   lazy val id = UUID.randomUUID()
 
@@ -128,7 +171,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f:
 
   def sum(using
       td: TejVGraph[T],
-      rd: Reductions[F, T],
+      rd: Reductions[F, T, NumDim[F]],
       r: Numeric[T],
       vfScalar: VectorisedField[Scalar, T],
       vfTrig: VectorisedTrig[Scalar, T],
@@ -142,7 +185,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f:
 
   def product(using
       td: TejVGraph[T],
-      rd: Reductions[F, T],
+      rd: Reductions[F, T, NumDim[F]],
       n: Numeric[T],
       vfScalar: VectorisedField[Scalar, T],
       sh: Show[Scalar[T]],
@@ -154,7 +197,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f:
 
   def mean(using
       td: TejVGraph[T],
-      rd: Reductions[F, T],
+      rd: Reductions[F, T, NumDim[F]],
       n: Numeric[T],
       vfScalar: VectorisedField[Scalar, T],
       sh: Show[Scalar[T]],
@@ -184,17 +227,61 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using f:
     td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
   end backward
 
-  def @@(rhs: TejV[F, T])(using
-      f: VectorisedField[F, T],
-      t: VectorisedTrig[F, T],
+  def @@(rhs: TejV[Matrix, T])(using
+      f: VectorisedField[Matrix, T],
+      t: VectorisedTrig[Matrix, T],
       td: TejVGraph[T],
-      sh: Show[F[T]],
+      sh: Show[Matrix[T]],
       ev: F[T] <:< Matrix[T],
-      matTc: Matrixy[F, T]
-  ): TejV[F, T] =
+      matTc: Matrixy[Matrix, T]
+  ): TejV[Matrix, T] =
     val newmat = matTc.@@(value)(rhs.value)
-    new TejV(newmat) // .tap(td.binary(lhs.id, rhs.id, _, BinaryOps.MatMul))
+    new TejV(newmat).tap(mval => td.matrixy(lhs.id, rhs.id, mval, MatrixyBinaryOps.MatMul))
   end @@
+
+  def mapRowsToScalar(fct: (Array[T] => T))(using
+      f: VectorisedField[Array, T],
+      t: VectorisedTrig[Array, T],
+      td: TejVGraph[T],
+      shm: Show[Matrix[T]],
+      sha: Show[Array[T]],
+      ev: F[T] <:< Matrix[T],
+      matTc: Matrixy[Matrix, T]
+  ): TejV[Array, T] =
+    val newmat = value.asInstanceOf[Matrix[T]].mapRowsToScalar(fct)
+    new TejV(newmat)
+  end mapRowsToScalar
+
+  def mapRows(fct: (Array[T] => Array[T]))(using
+      f: VectorisedField[Array, T],
+      t: VectorisedTrig[Array, T],
+      vfm: VectorisedField[Matrix, T],
+      td: TejVGraph[T],
+      shm: Show[Matrix[T]],
+      sha: Show[Array[T]],
+      ev: F[T] <:< Matrix[T],
+      matTc: Matrixy[Matrix, T]
+  ): TejV[Matrix, T] =
+    val newmat = value.asInstanceOf[Matrix[T]].mapRows(fct)
+    new TejV(newmat)
+  end mapRows
+
+  def apply(i: Array[(Int, Int)])(using
+      td: TejVGraph[T],
+      rd: Reductions[Matrix, T, 2],
+      vf: VectorisedField[Matrix, T],
+      vt: VectorisedTrig[F, T],
+      vfa: VectorisedField[Array, T],
+      ev: F[T] <:< Matrix[T],
+      matTc: Matrixy[Matrix, T],
+      ct: ClassTag[T],
+      sh: Show[Matrix[T]],
+      ord: Numeric[T]
+  ): TejV[Matrix, T] =
+    val newT = value.asInstanceOf[Matrix[T]]
+    val newT2 = matTc.apply(newT)(i)
+    new TejV[Matrix, T](newT)
+  end apply
 
 end TejV
 

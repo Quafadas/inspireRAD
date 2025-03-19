@@ -1,7 +1,7 @@
 package io.github.quafadas.spireAD
 
 enum UrnaryOps:
-  case Sin, Cos, Tan, Exp, Log, Sinh, Cosh, Tanh, Neg, Sqrt, Abs
+  case Sin, Cos, Tan, Exp, Log, Sinh, Cosh, Tanh, Neg, Sqrt, Abs, Index
 end UrnaryOps
 
 enum BinaryOps:
@@ -12,6 +12,10 @@ enum ReductionOps:
   case Sum, Product, Mean
 end ReductionOps
 
-enum MatrixyOps:
-  case Index, MatMul, MapRows, MapRowsToScalar
-end MatrixyOps
+enum ParameterisedReductionOps:
+  case Index, Update
+end ParameterisedReductionOps
+
+enum MatrixyBinaryOps:
+  case MatMul
+end MatrixyBinaryOps

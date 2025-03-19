@@ -2,6 +2,7 @@ package io.github.quafadas.spireAD
 
 import vecxt.matrix.Matrix
 import vecxt.BoundsCheck.BoundsCheck
+import scala.reflect.ClassTag
 
 object Matrixy:
 
@@ -11,16 +12,22 @@ object Matrixy:
 
     extension (a: Matrix[Double])
 
-      def apply(i: Array[Int], j: Array[Int]): Matrix[Double] =
-        vecxt.all.apply(a)(i, j)
+      override def apply(
+          i: Array[(Int, Int)]
+      ): Matrix[Double] =
+        val ct = summon[ClassTag[Double]]
+        vecxt.MatrixInstance.apply(a)(i)(using bc, ct)
+      end apply
 
       def matmul(b: Matrix[Double]): Matrix[Double] = vecxt.all.@@(a)(b)
 
       def mapRows(f: Array[Double] => Array[Double]): Matrix[Double] =
         vecxt.all.mapRows(a)(f)
 
-      def mapRowsToScalar(f: Array[Double] => Double): Matrix[Double] =
-        vecxt.all.mapRowsToScalar(a)(f)
+      def mapRowsToScalar(f: Array[Double] => Double): Array[Double] =
+        vecxt.all.mapRowsToScalar(a)(f).raw
+
+      def transpose: Matrix[Double] = vecxt.all.transpose(a)
 
     end extension
 
@@ -31,14 +38,17 @@ trait Matrixy[F[_], A]:
 
   extension (a: F[A])
 
-    def apply(i: Array[Int], j: Array[Int]): F[A]
+    // def apply(i: Array[Int], j: Array[Int]): F[A]
+    def apply(i: Array[(Int, Int)]): F[A]
 
     def matmul(b: F[A]): F[A]
     inline def @@(b: F[A]): F[A] = matmul(b)
 
     def mapRows(f: Array[A] => Array[A]): F[A]
 
-    def mapRowsToScalar(f: Array[A] => A): F[A]
+    def mapRowsToScalar(f: Array[A] => A): Array[A]
+
+    def transpose: F[A]
 
   end extension
 

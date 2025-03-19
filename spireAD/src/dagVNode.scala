@@ -1,12 +1,11 @@
 package io.github.quafadas.spireAD
 
 import java.util.UUID
-import io.github.quafadas.spireAD.VectorisedField
 import scala.specialized as sp
 import scala.reflect.ClassTag
 import cats.Show
 import cats.syntax.all.toShow
-import scala.math.Numeric.Implicits.infixNumericOps
+import vecxt.matrix.Matrix
 
 trait VNode[F[_], T](forZeroVal: F[T], val id: UUID)(using
     vf: VectorisedField[F, T],
@@ -28,10 +27,6 @@ case class VConstNode[F[_], T](value: F[T], idIn: UUID)(using
     vt: VectorisedTrig[F, T],
     sh: Show[F[T]]
 ) extends VNode[F, T](value, idIn):
-  // var grad: F[T] = vf.zero(value)
-
-  override def toString(): String =
-    s"const \n v:$value g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
     s"VConstNode (id: ${idIn.toString().takeRight(4)}, const: value: ${value.show}, grad: ${grad.show})"
@@ -39,6 +34,32 @@ case class VConstNode[F[_], T](value: F[T], idIn: UUID)(using
   override def backward[N <: VNode[?, T]](using td: TejVGraph[T]): Unit = ()
 
 end VConstNode
+
+case class MatrixyNode[T](
+    op: MatrixyBinaryOps,
+    value: Matrix[T],
+    thisId: UUID,
+    left: UUID,
+    right: UUID
+)(using
+    vf: VectorisedField[Matrix, T],
+    vt: VectorisedTrig[Matrix, T],
+    maty: Matrixy[Matrix, T],
+    sh: Show[Matrix[T]]
+) extends VNode[Matrix, T](value, thisId):
+
+  override def graphShow: String =
+    s"MatNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show})"
+
+  override def backward[N <: VNode[?, T]](using td: TejVGraph[T]): Unit =
+    op match
+      case MatrixyBinaryOps.MatMul =>
+        val leftN = td.dag.getNode(left).asInstanceOf[MatrixyNode[T]]
+        val rightN = td.dag.getNode(right).asInstanceOf[MatrixyNode[T]]
+        leftN.grad = vf.+(leftN.grad)(maty.matmul(this.grad)(rightN.value.transpose))
+        rightN.grad = vf.+(rightN.grad)(maty.matmul(rightN.value.transpose)(this.grad))
+
+end MatrixyNode
 
 case class ReductionNode[F[_], T](
     value: F[T],
@@ -73,6 +94,38 @@ case class ReductionNode[F[_], T](
 
 end ReductionNode
 
+case class ReductionWithParams[F[_], @sp(Double) T](
+    op: ParameterisedReductionOps,
+    value: F[T],
+    thisId: UUID,
+    depId: UUID,
+    singleParam: TupleDim[InferDimension[F]]
+)(using
+    vf: VectorisedField[F, T],
+    vt: VectorisedTrig[F, T],
+    reduction: Reductions[F, T, InferDimension[F]],
+    sh: Show[F[T]]
+) extends VNode[F, T](value, thisId):
+
+  override def graphShow: String =
+    s"ReductionWithParams (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
+
+  override def backward[N <: VNode[?, T]](using td: TejVGraph[T]): Unit =
+    val n = td.dag.getNode(depId).asInstanceOf[VNode[F, T]]
+    op match
+      case ParameterisedReductionOps.Index =>
+        val newGrad = vf.zero(value)
+        newGrad(singleParam) = grad(singleParam)
+        n.grad = newGrad
+
+      case ParameterisedReductionOps.Update => ???
+
+    end match
+
+  end backward
+
+end ReductionWithParams
+
 case class UrnaryNode[F[_], @sp(Double) T](
     op: UrnaryOps,
     value: F[T],
@@ -104,6 +157,7 @@ case class UrnaryNode[F[_], @sp(Double) T](
       // case UrnaryOps.Tan  => this.grad / (cos(n.realValue) * cos(n.realValue))
       case UrnaryOps.Exp => this.grad * n.value.exp
       case UrnaryOps.Log => this.grad / n.value
+
       // case UrnaryOps.Sinh => this.grad * cosh(n2.value)
       // case UrnaryOps.Cosh => this.grad * sinh(n.value)
       // case UrnaryOps.Tanh => this.grad / (cosh(n.realValue) * cosh(n.realValue))
