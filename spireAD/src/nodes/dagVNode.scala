@@ -62,35 +62,3 @@ case class ReductionNode[F[_], T](
     s"ReductionNode (id: ${depId.toString().takeRight(4)}, value: ${value.show}, grad: ${grad.show})"
 
 end ReductionNode
-
-case class ReductionWithParams[F[_], @sp(Double) T](
-    op: ParameterisedReductionOps[InferDimension[F]],
-    value1: F[T],
-    thisId: UUID,
-    depId: UUID,
-    singleParam: TupleDim[InferDimension[F]]
-)(using
-    vf: VectorisedField[F, T],
-    vt: VectorisedTrig[F, T],
-    reduction: Reductions[F, T, InferDimension[F]],
-    sh: Show[F[T]]
-) extends VNode[F, T](value1, thisId):
-
-  override def graphShow: String =
-    s"ReductionWithParams (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
-
-  override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-    val n = td.dag.getNode(depId).asInstanceOf[VNode[F, T]]
-    op match
-      case ParameterisedReductionOps.Index(p) =>
-        val newGrad = vf.zero(value)
-        newGrad(singleParam) = grad(singleParam)
-        n.grad = newGrad
-
-      case ParameterisedReductionOps.Update(p) => ???
-
-    end match
-
-  end backward
-
-end ReductionWithParams

@@ -20,7 +20,7 @@ type NumDim[F[_]] <: Int =
 
 case class TejVGraph[T: ClassTag]():
 
-  final val dag = DAGV[T, VNode[?, T]]()
+  final val dag = DAGV[T, VDimChangeNode[?, ?, T]]()
 
   inline def addToGraph[F[_]](t: TejV[F, T])(using
       vf: VectorisedField[F, T],
@@ -85,19 +85,24 @@ case class TejVGraph[T: ClassTag]():
     dag.addEdge(rhs, tv.id)
   end matrixy
 
-  inline def reductionWithParams[F[_]](
+  inline def reductionWithParams[F[_], G[_]](
       tv: TejV[F, T],
       depId: UUID,
       op: ParameterisedReductionOps[InferDimension[F]],
-      param: TupleDim[InferDimension[F]]
+      param: TupleDim[InferDimension[G]]
   )(using
+      fs: Field[T],
       f: VectorisedField[F, T],
+      g: VectorisedField[G, T],
       tr: VectorisedTrig[F, T],
-      red: Reductions[F, T, InferDimension[F]],
-      sh: Show[F[T]],
+      redF: Reductions[F, T, InferDimension[F]],
+      redG: Reductions[G, T, InferDimension[G]],
+      shF: Show[F[T]],
+      shG: Show[G[T]],
       ct: ClassTag[T]
   ): Unit =
-    val node = ReductionWithParams[F, T](op, tv.value, tv.id, depId, param)
+    val someG = dag.getNode(depId).asInstanceOf[VNode[G, T]].value
+    val node = ReductionWithParams[F, G, T](op, tv.value, tv.id, depId, param, someG)
     dag.addNode(node)
     dag.addEdge(depId, tv.id)
   end reductionWithParams

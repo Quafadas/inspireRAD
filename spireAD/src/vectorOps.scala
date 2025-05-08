@@ -14,8 +14,12 @@ end ReductionOps
 
 enum ParameterisedReductionOps[N](val parameter: TupleDim[N]):
   case Index[N](override val parameter: TupleDim[N]) extends ParameterisedReductionOps(parameter)
-  case Update[N](override val parameter: TupleDim[N]) extends ParameterisedReductionOps(parameter)
+
 end ParameterisedReductionOps
+
+enum ParameterisedUpdateOps[N](val parameter: TupleDim[N]):
+  case Update[N](override val parameter: TupleDim[N]) extends ParameterisedUpdateOps(parameter)
+end ParameterisedUpdateOps
 
 enum MatrixyBinaryOps:
   case MatMul

@@ -1,11 +1,12 @@
-import $ivy.`com.github.lolgab::mill-crossplatform::0.2.4`
+package build
+
 import $ivy.`io.github.quafadas:millSite_mill0.12_2.13:0.0.38`
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import $ivy.`com.lihaoyi::mill-contrib-jmh:`
 import $ivy.`com.goyeau::mill-scalafix::0.4.2`
 
+
 import de.tobiasroeser.mill.vcs.version._
-import com.github.lolgab.mill.crossplatform._
 import mill._, mill.scalalib._, mill.scalajslib._, mill.scalanativelib._
 import io.github.quafadas.millSite._
 import mill._, scalalib._, publish._
@@ -16,10 +17,19 @@ import mill.util.Jvm
 import mill.api.Result
 import com.goyeau.mill.scalafix.ScalafixModule
 
+import $packages._
+
+object Config {
+  val scalaVersion = "3.6.4"
+  val oslib =  ivy"com.lihaoyi::os-lib:0.11.3"
+  val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
+
+}
+
 //  mill --import ivy:com.lihaoyi::mill-contrib-bloop: mill.contrib.bloop.Bloop/install
 // mill mill.scalalib.scalafmt.ScalafmtModule/
 trait Common extends ScalaModule  with PublishModule with ScalafixModule {
-  def scalaVersion = "3.6.2"
+  def scalaVersion = Config.scalaVersion
 
   def publishVersion = VcsVersion.vcsState().format()
 
@@ -30,7 +40,9 @@ trait Common extends ScalaModule  with PublishModule with ScalafixModule {
   )
 
   override def scalacOptions: Target[Seq[String]] = super.scalacOptions() ++ Seq("-explain-cyclic", "-Wunused:imports")
+}
 
+trait PublishModule extends mill.scalalib.PublishModule {
   override def pomSettings = T {
     PomSettings(
       description = "Reverse mode automatic differentiation based on Spire",
@@ -47,7 +59,7 @@ trait Common extends ScalaModule  with PublishModule with ScalafixModule {
 
 }
 
-val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
+
 
 trait CommonJS extends ScalaJSModule {
   def scalaJSVersion = "1.18.2"
@@ -66,63 +78,63 @@ trait CommonTests extends TestModule.Munit {
   )
 }
 
+// object spireAD extends CrossPlatform {
+//   trait Shared extends CrossPlatformScalaModule with Common {
+//     // common `core` settings here
+//     trait SharedTests extends CommonTests {
+//       // common `core` test settings here
+//     }
+//   }
+//   object jvm extends Shared {
+//     override def javacOptions: T[Seq[String]] = super.javacOptions() ++ vecIncubatorFlag
+//     def forkArgs = super.forkArgs() ++ vecIncubatorFlag
+//     def ivyDeps = super.ivyDeps() ++ Agg(
+//
+//     )
 
-object spireAD extends CrossPlatform {
-  trait Shared extends CrossPlatformScalaModule with Common {
-    // common `core` settings here
-    trait SharedTests extends CommonTests {
-      // common `core` test settings here
-    }
-  }
-  object jvm extends Shared {
-    override def javacOptions: T[Seq[String]] = super.javacOptions() ++ vecIncubatorFlag
-    def forkArgs = super.forkArgs() ++ vecIncubatorFlag
-    def ivyDeps = super.ivyDeps() ++ Agg(
-      ivy"com.lihaoyi::os-lib:0.11.3"
-    )
+//     object test extends ScalaTests with SharedTests {
+//       def forkArgs = super.forkArgs() ++ vecIncubatorFlag
+//     }
 
-    object test extends ScalaTests with SharedTests {
-      def forkArgs = super.forkArgs() ++ vecIncubatorFlag
-    }
+//     object lawTests extends ScalaTests with SharedTests {
+//       override def ivyDeps = super.ivyDeps() ++ Agg(
+//         ivy"org.typelevel::discipline-munit::2.0.0",
+//         ivy"org.typelevel::cats-laws::2.13.0",
+//       )
+//       def forkArgs = super.forkArgs() ++ vecIncubatorFlag
+//     }
+//   }
+//   object js extends Shared with CommonJS {
+//     // js specific settings here
+//     object test extends ScalaJSTests with SharedTests {
 
-    object lawTests extends ScalaTests with SharedTests {
-      override def ivyDeps = super.ivyDeps() ++ Agg(
-        ivy"org.typelevel::discipline-munit::2.0.0",
-        ivy"org.typelevel::cats-laws::2.13.0",
-      )
-      def forkArgs = super.forkArgs() ++ vecIncubatorFlag
-    }
-  }
-  object js extends Shared with CommonJS {
-    // js specific settings here
-    object test extends ScalaJSTests with SharedTests {
+//         def moduleKind = ModuleKind.CommonJSModule
+//     }
+//   }
 
-        def moduleKind = ModuleKind.CommonJSModule
-    }
-  }
+//   // object native extends Shared with CommonNative {
+//   //   // native specific settings here
+//   //   object test extends ScalaNativeTests with SharedTests
+//   // }
+// }
 
-  // object native extends Shared with CommonNative {
-  //   // native specific settings here
-  //   object test extends ScalaNativeTests with SharedTests
-  // }
-}
 
 
 object benchmark extends JmhModule with ScalaModule {
 
-  def scalaVersion = spireAD.jvm.scalaVersion
+  def scalaVersion = build.spireAD.jvm.scalaVersion
   def jmhCoreVersion = "1.37"
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Seq("-Xmx4G")
-  override def moduleDeps: Seq[JavaModule] = Seq(spireAD.jvm)
+  override def moduleDeps: Seq[JavaModule] = Seq(build.spireAD.jvm)
 }
 
 object jsSite extends SiteJSModule {
 
-  override def moduleDeps = Seq(spireAD.js)
-  override def scalaVersion = spireAD.js.scalaVersion
-  override def scalaJSVersion = spireAD.js.scalaJSVersion
+  override def moduleDeps = Seq(build.spireAD.js)
+  override def scalaVersion = Config.scalaVersion
+  override def scalaJSVersion = build.spireAD.js.scalaJSVersion
 
-  override def scalaJsCompilerVersion: String = "3.6.2"
+  override def scalaJsCompilerVersion: String = Config.scalaVersion
 
 
   // override def allScalacOptions: T[Seq[String]] = super.allScalacOptions`() ++ Seq("-experimental", "-language:experimental.namedTuples")
@@ -150,9 +162,9 @@ object site extends SiteModule {
 
   override val jsSiteModule = jsSite
   // override def pathToImportMap = Some(PathRef(T.workspace / "importmap.json"))
-  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ vecIncubatorFlag
-  def scalaVersion = spireAD.jvm.scalaVersion
-  override def moduleDeps = Seq(spireAD.jvm)
+  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Config.vecIncubatorFlag
+  def scalaVersion = build.spireAD.jvm.scalaVersion
+  override def moduleDeps = Seq(build.spireAD.jvm)
   override def scalaDocOptions = super.scalaDocOptions
 
   override def scalacOptions: T[Seq[String]] = super.scalacOptions() ++ Seq("-experimental", "-language:experimental.namedTuples")

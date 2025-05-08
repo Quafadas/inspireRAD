@@ -1,0 +1,12 @@
+package build.scripts
+
+import build.Config
+import mill._, scalalib._
+
+object `package` extends RootModule with build.Common with ScalaModule {
+  def scalaVersion = Config.scalaVersion
+  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Config.vecIncubatorFlag
+
+  def moduleDeps = Seq(build.spireAD.jvm)
+
+}
