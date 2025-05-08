@@ -1,0 +1,15 @@
+package build.benchmark
+
+import $ivy.`com.lihaoyi::mill-contrib-jmh:`
+
+import mill._, scalalib._, publish._
+import contrib.jmh.JmhModule
+
+
+object `package` extends RootModule with JmhModule with ScalaModule {
+
+  def scalaVersion = build.spireAD.jvm.scalaVersion
+  def jmhCoreVersion = "1.37"
+  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Seq("-Xmx4G")
+  override def moduleDeps: Seq[JavaModule] = Seq(build.spireAD.jvm)
+}
