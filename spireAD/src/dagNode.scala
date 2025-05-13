@@ -44,10 +44,6 @@ case class TejNode[@sp(Float, Double) T: Field](tej: Tej[T]) extends AdNode[T]:
     // println("no op" + toString())
 end TejNode
 
-enum UrnaryOps:
-  case Sin, Cos, Tan, Exp, Log, Sinh, Cosh, Tanh, Neg, Sqrt, Abs
-end UrnaryOps
-
 case class TejOpUrnary[@sp(Float, Double) T: Field](
     op: UrnaryOps,
     value: Tej[T],
@@ -84,10 +80,6 @@ case class TejOpUrnary[@sp(Float, Double) T: Field](
     // println("<--- end backward this node")
   end backward
 end TejOpUrnary
-
-enum BinaryOps:
-  case Add, Sub, Mul, Div
-end BinaryOps
 
 case class TejOpBinary[@sp(Float, Double) T: Field](
     op: BinaryOps,

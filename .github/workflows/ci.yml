@@ -51,7 +51,7 @@ jobs:
           node-version: 18
           cache: npm
       - name: formatCheck
-        run: ./millw mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
+        run: ./mill mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
 
       - if: matrix.project == 'js'
         run: npm install
@@ -60,10 +60,10 @@ jobs:
 
       - name: scalaJSLink
         if: matrix.project == 'js'
-        run: ./millw spireAD.${{ matrix.project }}.fastLinkJS
+        run: ./mill spireAD.${{ matrix.project }}.fastLinkJS
 
       - name: Test
-        run: ./millw spireAD.${{ matrix.project }}.test
+        run: ./mill spireAD.${{ matrix.project }}.test
 
   publish:
     if: github.repository == 'Quafadas/spire_AD' && contains(github.ref, 'refs/tags/')
@@ -80,7 +80,7 @@ jobs:
           jvm: temurin@17
           apps: scala-cli
 
-      - run: ./millw mill.scalalib.PublishModule/ --sonatypeUri https://s01.oss.sonatype.org/service/local
+      - run: ./mill mill.scalalib.PublishModule/ --sonatypeUri https://s01.oss.sonatype.org/service/local
         env:
           MILL_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           MILL_PGP_SECRET_BASE64: ${{ secrets.PGP_SECRET }}
@@ -102,7 +102,7 @@ jobs:
           fetch-tags: true
 
       - name: Generate static site
-        run: ./millw site.publishDocs
+        run: ./mill site.publishDocs
 
       - name: Setup Pages
         uses: actions/configure-pages@main
