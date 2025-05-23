@@ -3,23 +3,26 @@ package io.github.quafadas.spireAD
 import scala.specialized as sp
 import vecxt.arrays.*
 import cats.kernel.Semigroup
+import narr.*
+import vecxt.all.*
+import vecxt.arrays./
 
 object VectorisedMultiplicativeMonoids:
 
-  given multiplicativeArrayMonoid: VectorisedMultiplicativeGroup[Array, Double] =
-    new VectorisedMultiplicativeGroup[Array, Double]:
+  given multiplicativeArrayMonoid: VectorisedMultiplicativeGroup[NArray, Double] =
+    new VectorisedMultiplicativeGroup[NArray, Double]:
       import vecxt.BoundsCheck.DoBoundsCheck.yes
-      def empty(hasDim: Array[Double]): Array[Double] = Array.fill[Double](hasDim.length)(1.0)
-      def combine(x: Array[Double], y: Array[Double]): Array[Double] = vecxt.arrays.*(x)(y)
+      def empty(hasDim: NArray[Double]): NArray[Double] = NArray.fill[Double](hasDim.length)(1.0)
+      def combine(x: NArray[Double], y: NArray[Double]): NArray[Double] = vecxt.arrays.*(x)(y)
 
       // Members declared in io.github.quafadas.spireAD.VectorisedMultiplicativeGroup
-      def inverse(a: Array[Double]): Array[Double] = a.map(x => 1 / x)
+      def inverse(a: NArray[Double]): NArray[Double] = vecxt.arrays./(1.0)(a)
 
-      extension (a: Array[Double])
+      extension (a: NArray[Double])
         inline def product: Double = vecxt.arrays.product(a)
-        inline def *(b: Array[Double]): Array[Double] = vecxt.arrays.*(a)(b)
-        inline def /(b: Array[Double]): Array[Double] = vecxt.arrays./(a)(b)
-        inline def reciprocal: Array[Double] = a.map(x => 1 / x)
+        inline def *(b: NArray[Double]): NArray[Double] = vecxt.arrays.*(a)(b)
+        inline def /(b: NArray[Double]): NArray[Double] = vecxt.arrays./(a)(b)
+        inline def reciprocal: NArray[Double] = vecxt.arrays./(1.0)(a)
       end extension
 
       // Members declared in io.github.quafadas.spireAD.VectorisedAdditiveSemigroup

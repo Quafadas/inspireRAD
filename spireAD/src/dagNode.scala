@@ -33,7 +33,7 @@ end DebugNode
 case class TejNode[@sp(Float, Double) T: Field](tej: Tej[T]) extends AdNode[T]:
   override def id: UUID = tej.nodeId
 
-  override val realValue: T = tej.tejNum
+  override val realValue: T = tej.value
   // override val infinitesimal: Array[T] = tej.j.infinitesimal
 
   override def toString(): String =
@@ -51,7 +51,7 @@ case class TejOpUrnary[@sp(Float, Double) T: Field](
 ) extends AdNode[T]:
   override def id: UUID = value.nodeId
 
-  override val realValue: T = value.tejNum
+  override val realValue: T = value.value
   // override val infinitesimal: Array[T] = value
 
   override def toString(): String =
@@ -89,7 +89,7 @@ case class TejOpBinary[@sp(Float, Double) T: Field](
 ) extends AdNode[T]:
   override inline def id: UUID = value.nodeId
 
-  override val realValue: T = value.tejNum
+  override val realValue: T = value.value
 
   override def toString(): String =
     s"$op \n v:$value g: $grad \n (_id: ${value.nodeId.toString().takeRight(4)})"

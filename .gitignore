@@ -13,7 +13,7 @@ tags
 metals.sbt
 sbt-launch.jar
 .scala-build
-
+.vscode/mcp.json
 # npm
 node_modules/
 

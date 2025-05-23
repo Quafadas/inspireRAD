@@ -1,6 +1,7 @@
 package io.github.quafadas.spireAD
 
 import vecxt.all.*
+import narr.*
 
 object VectorisedTrig:
 
@@ -18,12 +19,12 @@ object VectorisedTrig:
     extension (a: Scalar[Double]) override def cos: Scalar[Double] = Scalar(Math.cos(a.scalar))
     end extension
 
-  given vta: VectorisedTrig[Array, Double] = new VectorisedTrig[Array, Double]:
-    extension (a: Array[Double])
-      inline def exp: Array[Double] = vecxt.all.exp(a)
-      inline def log: Array[Double] = vecxt.all.log(a)
-      inline def sin: Array[Double] = vecxt.all.sin(a)
-      inline def cos: Array[Double] = vecxt.all.cos(a)
+  given vta: VectorisedTrig[NArray, Double] = new VectorisedTrig[NArray, Double]:
+    extension (a: NArray[Double])
+      inline def exp: NArray[Double] = vecxt.all.exp(a)
+      inline def log: NArray[Double] = vecxt.all.log(a)
+      inline def sin: NArray[Double] = vecxt.all.sin(a)
+      inline def cos: NArray[Double] = vecxt.all.cos(a)
     end extension
 
   given vtm: VectorisedTrig[Matrix, Double] = new VectorisedTrig[Matrix, Double]:

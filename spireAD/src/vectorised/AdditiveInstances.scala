@@ -9,6 +9,7 @@ import scala.annotation.targetName
 import scala.reflect.ClassTag
 import vecxt.BoundsCheck
 import spire.math.Number
+import narr.*
 
 final case class Scalar[T: Numeric](scalar: T)
 object VectorisedField:
@@ -67,15 +68,15 @@ object VectorisedField:
 
     extension (a: Double)
       def const: Double = a
-      def /(b: Matrix[Double]): Matrix[Double] = Matrix(b.raw.map(x => a / x), b.shape)
+      def /(b: Matrix[Double]): Matrix[Double] = Matrix[Double](vecxt.arrays./(a)(b.raw), b.shape)
     end extension
 
     extension (a: Matrix[Double])
       inline def productExceptSelf(): Matrix[Double] =
-        Matrix(vecxt.arrays.productExceptSelf(a.raw), a.shape)
+        Matrix[Double](vecxt.arrays.productExceptSelf(a.raw), a.shape)
 
       def numel: Int = a.shape(0) * a.shape(1)
-      inline def unary_- : Matrix[Double] = Matrix(vecxt.arrays.unary_-(a.raw), a.shape)
+      inline def unary_- : Matrix[Double] = Matrix[Double](vecxt.arrays.unary_-(a.raw), a.shape)
       inline def +(x: Matrix[Double]): Matrix[Double] = vecxt.all.+(x)(a)
 
       @targetName("rhs+")
@@ -92,46 +93,46 @@ object VectorisedField:
       inline def *(y: Double): Matrix[Double] = vecxt.all.*(a)(y)
       inline def /(y: Matrix[Double]): Matrix[Double] = vecxt.all./(a)(y)
       @targetName("rhs/")
-      inline def /(y: Double): Matrix[Double] = Matrix(a.raw.map(x => x / y), a.shape)
+      inline def /(y: Double): Matrix[Double] = Matrix[Double](vecxt.arrays./(a.raw)(y), a.shape)
 
     end extension
 
-  given elementwiseArrayDoubleField: VectorisedField[Array, Double] = new VectorisedField[Array, Double]:
+  given elementwiseArrayDoubleField: VectorisedField[NArray, Double] = new VectorisedField[NArray, Double]:
     def fromDouble(x: Double): Double = x
-    def zero(x: Array[Double]): Array[Double] = Array.fill[Double](x.length)(0.0)
-    def one(x: Array[Double])(using ClassTag[Double]): Array[Double] = Array.fill[Double](x.length)(1.0)
+    def zero(x: NArray[Double]): NArray[Double] = NArray.fill[Double](x.length)(0.0)
+    def one(x: NArray[Double])(using ClassTag[Double]): NArray[Double] = NArray.fill[Double](x.length)(1.0)
 
-    def allOnes(x: Array[Double])(using ClassTag[Double]) = one(x)
+    def allOnes(x: NArray[Double])(using ClassTag[Double]) = one(x)
 
     extension (a: Double)
       def const: Double = a
-      def /(b: Array[Double]): Array[Double] = b.map(x => a / x)
+      def /(b: NArray[Double]): NArray[Double] = vecxt.arrays./(a)(b)
 
     end extension
 
-    extension (a: Array[Double])
-      inline def productExceptSelf(): Array[Double] = vecxt.arrays.productExceptSelf(a)
+    extension (a: NArray[Double])
+      inline def productExceptSelf(): NArray[Double] = vecxt.arrays.productExceptSelf(a)
       def numel: Int = a.length
 
-      inline def /(y: Array[Double]): Array[Double] = vecxt.arrays./(a)(y)
+      inline def /(y: NArray[Double]): NArray[Double] = vecxt.arrays./(a)(y)
 
       @targetName("rhs/")
-      inline def /(y: Double): Array[Double] = a.map(x => x / y)
+      inline def /(y: Double): NArray[Double] = vecxt.arrays./(a)(y)
 
-      inline def unary_- : Array[Double] = vecxt.arrays.*(a)(-1)
-      inline def +(x: Array[Double]): Array[Double] = vecxt.arrays.+(x)(a)
+      inline def unary_- : NArray[Double] = vecxt.arrays.*(a)(-1)
+      inline def +(x: NArray[Double]): NArray[Double] = vecxt.arrays.+(x)(a)
 
       @targetName("rhs+")
-      inline def +(x: Double): Array[Double] = vecxt.arrays.+(a)(x)
+      inline def +(x: Double): NArray[Double] = vecxt.arrays.+(a)(x)
 
-      inline def -(y: Array[Double]): Array[Double] = vecxt.arrays.-(a)(y)
+      inline def -(y: NArray[Double]): NArray[Double] = vecxt.arrays.-(a)(y)
       @targetName("rhs-")
-      inline def -(x: Double): Array[Double] = vecxt.arrays.-(a)(x)
+      inline def -(x: Double): NArray[Double] = vecxt.arrays.-(a)(x)
 
-      inline def *(y: Array[Double]): Array[Double] = vecxt.arrays.*(a)(y)
+      inline def *(y: NArray[Double]): NArray[Double] = vecxt.arrays.*(a)(y)
 
       @targetName("rhs*")
-      inline def *(y: Double): Array[Double] = vecxt.arrays.*(a)(y)
+      inline def *(y: Double): NArray[Double] = vecxt.arrays.*(a)(y)
 
     end extension
 
@@ -184,18 +185,18 @@ object VectorisedAdditiveMonoids:
       inline def -(b: Matrix[Double]): Matrix[Double] = vecxt.all.-(a)(b)
     end extension
 
-  given additiveArrayMonoid: VectorisedAdditiveGroup[Array, Double] = new VectorisedAdditiveGroup[Array, Double]:
-    def empty(hasDim: Array[Double]): Array[Double] = Array.fill[Double](hasDim.length)(0.0)
-    def combine(x: Array[Double], y: Array[Double]): Array[Double] = vecxt.arrays.+(x)(y)
-    override def repeatedCombineN(a: Array[Double], n: Int): Array[Double] = a * n
+  given additiveArrayMonoid: VectorisedAdditiveGroup[NArray, Double] = new VectorisedAdditiveGroup[NArray, Double]:
+    def empty(hasDim: NArray[Double]): NArray[Double] = NArray.fill[Double](hasDim.length)(0.0)
+    def combine(x: NArray[Double], y: NArray[Double]): NArray[Double] = vecxt.arrays.+(x)(y)
+    override def repeatedCombineN(a: NArray[Double], n: Int): NArray[Double] = a * n
     // Members declared in io.github.quafadas.spireAD.VectorisedAdditiveGroup
-    def inverse(a: Array[Double]): Array[Double] = negate(a)
+    def inverse(a: NArray[Double]): NArray[Double] = negate(a)
 
-    extension (a: Array[Double])
-      inline def negate: Array[Double] = a * -1
+    extension (a: NArray[Double])
+      inline def negate: NArray[Double] = a * -1
       inline def sum: Double = vecxt.arrays.sum(a)
-      inline def +(b: Array[Double]): Array[Double] = vecxt.arrays.+(a)(b)
-      inline def -(b: Array[Double]): Array[Double] = vecxt.arrays.-(a)(b)
+      inline def +(b: NArray[Double]): NArray[Double] = vecxt.arrays.+(a)(b)
+      inline def -(b: NArray[Double]): NArray[Double] = vecxt.arrays.-(a)(b)
     end extension
 
     // Members declared in io.github.quafadas.spireAD.VectorisedAdditiveSemigroup

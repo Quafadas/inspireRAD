@@ -17,7 +17,7 @@ import cats.kernel.Eq
 class TejSuite extends FunSuite:
 
   def assertEqualsTejToJet[T: Eq](t: Tej[T], j: Jet[T]) =
-    assertEquals(t.tejNum, j.real)
+    assertEquals(t.value, j.real)
 
   end assertEqualsTejToJet
 

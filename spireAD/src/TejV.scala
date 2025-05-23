@@ -11,6 +11,7 @@ import scala.specialized as sp
 import java.util.UUID
 import cats.Show
 import vecxt.matrix.Matrix
+import narr.*
 
 type NumDim[F[_]] <: Int =
   F[?] match
@@ -244,26 +245,26 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(newmat).tap(mval => td.matrixy(lhs.id, rhs.id, mval, MatrixyBinaryOps.MatMul))
   end @@
 
-  def mapRowsToScalar(fct: (Array[T] => T))(using
-      f: VectorisedField[Array, T],
-      t: VectorisedTrig[Array, T],
+  def mapRowsToScalar(fct: (NArray[T] => T))(using
+      f: VectorisedField[NArray, T],
+      t: VectorisedTrig[NArray, T],
       td: TejVGraph[T],
       shm: Show[Matrix[T]],
-      sha: Show[Array[T]],
+      sha: Show[NArray[T]],
       ev: F[T] <:< Matrix[T],
       matTc: Matrixy[Matrix, T]
-  ): TejV[Array, T] =
+  ): TejV[NArray, T] =
     val newmat = matTc.mapRowsToScalar(value)(fct)
     new TejV(newmat)
   end mapRowsToScalar
 
-  def mapRows(fct: (Array[T] => Array[T]))(using
-      f: VectorisedField[Array, T],
-      t: VectorisedTrig[Array, T],
+  def mapRows(fct: (NArray[T] => NArray[T]))(using
+      f: VectorisedField[NArray, T],
+      t: VectorisedTrig[NArray, T],
       vfm: VectorisedField[Matrix, T],
       td: TejVGraph[T],
       shm: Show[Matrix[T]],
-      sha: Show[Array[T]],
+      sha: Show[NArray[T]],
       ev: F[T] <:< Matrix[T],
       matTc: Matrixy[Matrix, T]
   ): TejV[Matrix, T] =
@@ -271,12 +272,12 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(newmat)
   end mapRows
 
-  def apply(i: Array[(Int, Int)])(using
+  def apply(i: NArray[(Int, Int)])(using
       td: TejVGraph[T],
       rd: Reductions[Matrix, T, 2],
       vf: VectorisedField[Matrix, T],
       vt: VectorisedTrig[F, T],
-      vfa: VectorisedField[Array, T],
+      vfa: VectorisedField[NArray, T],
       ev: F[T] <:< Matrix[T],
       matTc: Matrixy[Matrix, T],
       ct: ClassTag[T],

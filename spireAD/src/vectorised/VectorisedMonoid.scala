@@ -24,8 +24,6 @@ package io.github.quafadas.spireAD
 import scala.specialized as sp
 import cats.kernel.Eq
 // import vecxt.arrays.+
-import vecxt.arrays.*
-import vecxt.BoundsCheck.DoBoundsCheck.yes
 import cats.kernel.Semigroup
 
 /** A monoid is a semigroup with an identity. A monoid is a specialization of a semigroup, so its operation must be

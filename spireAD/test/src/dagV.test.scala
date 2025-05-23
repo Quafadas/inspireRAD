@@ -7,6 +7,7 @@ import spire.math.*
 import spire.implicits.DoubleAlgebra
 import cats.Show
 import spire.implicits.ArrayNormedVectorSpace
+import narr.*
 
 class DAGVSuite extends FunSuite:
 

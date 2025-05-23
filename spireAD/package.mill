@@ -23,7 +23,8 @@ object `package` extends RootModule {
   object jvm extends SharedModule with ScalaModule with build.PublishModule {
     override def ivyDeps = T {
       super.ivyDeps() ++ Agg(
-        Config.oslib
+        Config.oslib,
+        ivy"io.github.quafadas::vecxtensions::0.0.29-DIRTY2920174"
       )
     }
 
@@ -39,11 +40,12 @@ object `package` extends RootModule {
   }
 
    object test extends Module {
-    object js extends SharedTest with build.CommonJS {
-      override def moduleDeps = Seq(build.spireAD.js)
+    // object js extends SharedTest with build.CommonJS with TestScalaJSModule {
+    //   override def moduleDeps = Seq(build.spireAD.js)
 
-    }
+    // }
     object jvm extends SharedTest {
+
       override def moduleDeps = Seq(build.spireAD.jvm)
     }
   }

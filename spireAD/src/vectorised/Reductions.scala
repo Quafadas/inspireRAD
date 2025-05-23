@@ -7,9 +7,9 @@ import narr.native.NArray
 
 object Reductions:
 
-  given vta: Reductions[Array, Double, 1] = new Reductions[Array, Double, 1]:
+  given vta: Reductions[NArray, Double, 1] = new Reductions[NArray, Double, 1]:
 
-    extension (a: Array[Double])
+    extension (a: NArray[Double])
 
       override def apply(i: Tuple1[Int]): Double = a(i.head)
       override def update(i: Tuple1[Int], scalar: Double): Unit = a(i.head) = scalar
@@ -18,7 +18,7 @@ object Reductions:
       inline def mean: Double = vecxt.all.mean(a)
       inline def sum: Double = vecxt.all.sum(a)
 
-      // def apply(i: Array[Tuple1[Int]]): Array[Double] =
+      // def apply(i: NArray[Tuple1[Int]]): NArray[Double] =
 
       //   val newArr = NArray.fill(a.length)(0.0)
       //   i.foreach { idx =>
@@ -67,13 +67,13 @@ type TupleDim[N] <: Tuple = N match
 
 type InferDimension[F[_]] = F[?] match
   case Scalar[?] => 0
-  case Array[?]  => 1
+  case NArray[?] => 1
   case Matrix[?] => 2
   case _         => -1
 end InferDimension
 
 type DimDown[N, T] = N match
-  case 2 => Array[T]
+  case 2 => NArray[T]
   case 1 => Scalar
   case _ => Scalar
 end DimDown

@@ -51,7 +51,7 @@ object Tej extends TejInstances:
       s: Semiring[T],
       r: Ring[T]
   ): Tej[T] =
-    d.addToGraph(Tej[T](tejNum = s.zero))
+    d.addToGraph(Tej[T](value = s.zero))
 
   // From real.
   inline def apply[@sp(Float, Double) T](
@@ -60,7 +60,7 @@ object Tej extends TejInstances:
       c: ClassTag[T],
       inline d: TejDim[T]
   ): Tej[T] =
-    d.addToGraph(Tej[T](tejNum = real))
+    d.addToGraph(Tej[T](value = real))
 
   // // From real, to compute k-th partial derivative.
   // inline def apply[@sp(Float, Double) T](a: T, k: Int)(implicit
@@ -97,14 +97,14 @@ object Tej extends TejInstances:
       inline d: TejDim[T],
       r: Ring[T]
   ): Tej[T] =
-    d.addToGraph(Tej[T](tejNum = r.one))
+    d.addToGraph(Tej[T](value = r.one))
 
   def zero[@sp(Float, Double) T](implicit
       c: ClassTag[T],
       d: TejDim[T],
       s: Ring[T]
   ): Tej[T] =
-    d.addToGraph(Tej[T](tejNum = s.zero))
+    d.addToGraph(Tej[T](value = s.zero))
 
   def fromInt[@sp(Float, Double) T](
       n: Int
@@ -114,7 +114,7 @@ object Tej extends TejInstances:
       r: Ring[T]
   ): Tej[T] =
     d.addToGraph(
-      Tej[T](tejNum = r.fromInt(n))
+      Tej[T](value = r.fromInt(n))
     )
 
   implicit def intToTej(n: Int)(implicit d: TejDim[Double]): Tej[Double] =
@@ -127,14 +127,14 @@ object Tej extends TejInstances:
       n: Float
   )(implicit d: TejDim[Float]): Tej[Float] =
     Tej(
-      tejNum = n.toFloat
+      value = n.toFloat
     )
   end floatToTej
 
   implicit def doubleToTej(
       n: Double
   )(implicit d: TejDim[Double]): Tej[Double] =
-    d.addToGraph(Tej(tejNum = n))
+    d.addToGraph(Tej(value = n))
 
   end doubleToTej
 
@@ -147,12 +147,12 @@ object Tej extends TejInstances:
       n: BigDecimal
   )(implicit d: TejDim[BigDecimal]): Tej[BigDecimal] =
 
-    Tej(tejNum = n)
+    Tej(value = n)
   end bigDecimalToTej
 end Tej
 
 @SerialVersionUID(0L)
-case class Tej[@sp(Float, Double) T] private (tejNum: T)
+case class Tej[@sp(Float, Double) T] private (value: T)
     extends ScalaNumber
     with ScalaNumericConversions
     with Serializable:
@@ -183,12 +183,12 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
 
   /** This is consistent with abs
     */
-  def signum(implicit r: Signed[T]): Int = tejNum.signum
+  def signum(implicit r: Signed[T]): Int = value.signum
 
-  def isZero: Boolean = tejNum == 0
+  def isZero: Boolean = value == 0
 
   def eqv(b: Tej[T])(implicit o: Eq[T]): Boolean =
-    tejNum === b.tejNum
+    value === b.value
 
   def neqv(b: Tej[T])(implicit o: Eq[T]): Boolean =
     !this.eqv(b)
@@ -199,12 +199,12 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
   ): Tej[T] =
     d.unary(
       this,
-      TejOpUrnary(UrnaryOps.Neg, Tej(tejNum = -tejNum), this.nodeId)
+      TejOpUrnary(UrnaryOps.Neg, Tej(value = -value), this.nodeId)
     )
   end unary_-
 
   inline def +(b: T)(implicit f: Field[T], inline d: TejDim[T], ct: ClassTag[T]): Tej[T] =
-    val tmp = Tej(tejNum = b)
+    val tmp = Tej(value = b)
     d.binary(
       this,
       tmp,
@@ -213,7 +213,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
   end +
 
   inline def -(b: T)(implicit f: Field[T], inline d: TejDim[T]): Tej[T] =
-    val tmp = Tej(tejNum = b)
+    val tmp = Tej(value = b)
     d.binary(
       this,
       tmp,
@@ -225,7 +225,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       inline d: TejDim[T],
       ct: ClassTag[T]
   ): Tej[T] =
-    val tmp = Tej(tejNum = b)
+    val tmp = Tej(value = b)
     d.binary(
       this,
       tmp,
@@ -238,7 +238,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       inline d: TejDim[T]
   ): Tej[T] =
 
-    val tmp = Tej(tejNum = b)
+    val tmp = Tej(value = b)
     d.binary(
       this,
       tmp,
@@ -255,7 +255,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Add, Tej[T](tejNum = tejNum + b.tejNum), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Add, Tej[T](value = value + b.value), this.nodeId, b.nodeId)
     )
 
   inline def -(
@@ -267,7 +267,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Sub, Tej[T](tejNum = tejNum - b.tejNum), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Sub, Tej[T](value = value - b.value), this.nodeId, b.nodeId)
     )
   // Multiplication rule for differentials:
   //
@@ -283,7 +283,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Mul, Tej[T](tejNum = tejNum * b.tejNum), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Mul, Tej[T](value = value * b.value), this.nodeId, b.nodeId)
     )
 
   inline def /(
@@ -302,7 +302,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
     d.binary(
       this,
       b,
-      TejOpBinary(BinaryOps.Div, Tej[T](tejNum = tejNum / b.tejNum), this.nodeId, b.nodeId)
+      TejOpBinary(BinaryOps.Div, Tej[T](value = value / b.value), this.nodeId, b.nodeId)
     )
 
   def /~(b: Tej[T])(implicit
@@ -388,7 +388,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Abs, Tej(tejNum = tejNum.abs), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Abs, Tej(value = value.abs), this.nodeId))
 
   // pow -- base is a constant, exponent (this) is a differentiable function.
   // b^(p + du) ~= b^p + b^p * log(b) du
@@ -453,7 +453,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Log, Tej[T](tejNum = t.log(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Log, Tej[T](value = t.log(value)), this.nodeId))
 
   /** sqrt(a + du) ~= sqrt(a) + du / (2 sqrt(a))
     */
@@ -463,7 +463,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       t: Trig[T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Sqrt, Tej[T](tejNum = n.sqrt(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Sqrt, Tej[T](value = n.sqrt(value)), this.nodeId))
 
   /** acos(a + du) ~= acos(a) - 1 / sqrt(1 - a**2) du
     */
@@ -518,7 +518,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       r: Field[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Exp, Tej[T](tejNum = t.exp(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Exp, Tej[T](value = t.exp(value)), this.nodeId))
 
   /** sin(a + du) ~= sin(a) + cos(a) du
     */
@@ -529,7 +529,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       r: Field[T]
   ): Tej[T] =
     // println("sin")
-    d.unary(this, TejOpUrnary(UrnaryOps.Sin, Tej(tejNum = t.sin(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Sin, Tej(value = t.sin(value)), this.nodeId))
 
   /** sinh(a + du) ~= sinh(a) + cosh(a) du
     */
@@ -539,7 +539,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       r: Field[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Sinh, Tej(tejNum = t.sinh(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Sinh, Tej(value = t.sinh(value)), this.nodeId))
 
   /** cos(a + du) ~= cos(a) - sin(a) du
     */
@@ -549,7 +549,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Cos, Tej(tejNum = t.cos(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Cos, Tej(value = t.cos(value)), this.nodeId))
 
   /** cosh(a + du) ~= cosh(a) + sinh(a) du
     */
@@ -559,7 +559,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Cosh, Tej(tejNum = t.cosh(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Cosh, Tej(value = t.cosh(value)), this.nodeId))
 
   /** tan(a + du) ~= tan(a) + (1 + tan(a)**2) du
     */
@@ -569,7 +569,7 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Tan, Tej(tejNum = t.tan(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Tan, Tej(value = t.tan(value)), this.nodeId))
 
   /** tanh(a + du) ~= tanh(a) + (1 - tanh(a)**2) du
     */
@@ -579,29 +579,29 @@ case class Tej[@sp(Float, Double) T] private (tejNum: T)
       n: NRoot[T],
       d: TejDim[T]
   ): Tej[T] =
-    d.unary(this, TejOpUrnary(UrnaryOps.Tanh, Tej(tejNum = t.tanh(tejNum)), this.nodeId))
+    d.unary(this, TejOpUrnary(UrnaryOps.Tanh, Tej(value = t.tanh(value)), this.nodeId))
 
   // Stuff needed by ScalaNumber
   override def floatValue: Float = doubleValue.toFloat
-  override def doubleValue: Double = anyToDouble(tejNum)
+  override def doubleValue: Double = anyToDouble(value)
   override def byteValue: Byte = longValue.toByte
   override def shortValue: Short = longValue.toShort
   override def intValue: Int = longValue.toInt
-  override def longValue: Long = anyToLong(tejNum)
+  override def longValue: Long = anyToLong(value)
   override def underlying: Object = this
-  override def isWhole: Boolean = anyIsWhole(tejNum)
-  override def isValidInt: Boolean = anyIsValidInt(tejNum)
+  override def isWhole: Boolean = anyIsWhole(value)
+  override def isValidInt: Boolean = anyIsValidInt(value)
 
   // Object stuff
   override def hashCode: Int =
-    13 * tejNum.##
+    13 * value.##
 
   override def equals(that: Any): Boolean = that match
     case that: Tej[?] => this === that
     // case that         => isReal && real == that
 
   def ===(that: Tej[?]): Boolean =
-    this.tejNum == that.tejNum
+    this.value == that.value
 
   def =!=(that: Tej[?]): Boolean =
     !(this === that)
@@ -639,11 +639,11 @@ trait TejIsRing[@sp(Float, Double) T] extends Ring[Tej[T]]:
 
   override def minus(a: Tej[T], b: Tej[T]): Tej[T] = a - b
   def negate(a: Tej[T]): Tej[T] = -a
-  def one: Tej[T] = Tej.one[T](c, d, f)
+  def one: Tej[T] = Tej.one[T](using c, d, f)
   def plus(a: Tej[T], b: Tej[T]): Tej[T] = a + b
   override def pow(a: Tej[T], b: Int): Tej[T] = a.pow(b)
   override def times(a: Tej[T], b: Tej[T]): Tej[T] = a * b
-  def zero: Tej[T] = Tej.zero(c, d, f)
+  def zero: Tej[T] = Tej.zero(using c, d, f)
 
   override def fromInt(n: Int): Tej[T] = Tej.fromInt[T](n)
 end TejIsRing

@@ -3,17 +3,51 @@ package io.github.quafadas.spireAD
 import vecxt.matrix.Matrix
 import vecxt.BoundsCheck.BoundsCheck
 import scala.reflect.ClassTag
+import narr.*
+import spire.*
+import spire.implicits.*
+import vecxt.all.*
+import vecxtensions.SpireExt.*
+import spire.math.JetDim
+import spire.math.Jet
+import scala.annotation.nowarn
 
 object Matrixy:
 
+  @nowarn
+  inline def doubleJetIsMatrixy(using inline bc: BoundsCheck, jd: JetDim): Matrixy[Matrix, Jet[Double]] =
+    new Matrixy[Matrix, Jet[Double]]:
+
+      extension (a: Matrix[Jet[Double]])
+
+        override def apply(
+            i: NArray[(Int, Int)]
+        ): Matrix[Jet[Double]] =
+          val ct = summon[ClassTag[Jet[Double]]]
+          vecxt.MatrixInstance.apply(a)(i)(using bc, ct)
+        end apply
+
+        def matmul(b: Matrix[Jet[Double]]): Matrix[Jet[Double]] = a.@@@(b)
+
+        def mapRows(f: NArray[Jet[Double]] => NArray[Jet[Double]]): Matrix[Jet[Double]] =
+          vecxt.all.mapRows(a)(f)
+
+        def mapRowsToScalar(f: NArray[Jet[Double]] => Jet[Double]): NArray[Jet[Double]] =
+          vecxt.all.mapRowsToScalar(a)(f).raw
+
+        def transpose: Matrix[Jet[Double]] = vecxt.all.transpose(a)
+
+      end extension
+
   given matOps: Matrixy[Matrix, Double] = doubleMatrix(using vecxt.BoundsCheck.DoBoundsCheck.yes)
 
+  @nowarn
   inline def doubleMatrix(using inline bc: BoundsCheck): Matrixy[Matrix, Double] = new Matrixy[Matrix, Double]:
 
     extension (a: Matrix[Double])
 
       override def apply(
-          i: Array[(Int, Int)]
+          i: NArray[(Int, Int)]
       ): Matrix[Double] =
         val ct = summon[ClassTag[Double]]
         vecxt.MatrixInstance.apply(a)(i)(using bc, ct)
@@ -21,10 +55,10 @@ object Matrixy:
 
       def matmul(b: Matrix[Double]): Matrix[Double] = vecxt.all.@@(a)(b)
 
-      def mapRows(f: Array[Double] => Array[Double]): Matrix[Double] =
+      def mapRows(f: NArray[Double] => NArray[Double]): Matrix[Double] =
         vecxt.all.mapRows(a)(f)
 
-      def mapRowsToScalar(f: Array[Double] => Double): Array[Double] =
+      def mapRowsToScalar(f: NArray[Double] => Double): NArray[Double] =
         vecxt.all.mapRowsToScalar(a)(f).raw
 
       def transpose: Matrix[Double] = vecxt.all.transpose(a)
@@ -38,15 +72,15 @@ trait Matrixy[F[_], A]:
 
   extension (a: F[A])
 
-    // def apply(i: Array[Int], j: Array[Int]): F[A]
-    def apply(i: Array[(Int, Int)]): F[A]
+    // def apply(i: NArray[Int], j: NArray[Int]): F[A]
+    def apply(i: NArray[(Int, Int)]): F[A]
 
     def matmul(b: F[A]): F[A]
     inline def @@(b: F[A]): F[A] = matmul(b)
 
-    def mapRows(f: Array[A] => Array[A]): F[A]
+    def mapRows(f: NArray[A] => NArray[A]): F[A]
 
-    def mapRowsToScalar(f: Array[A] => A): Array[A]
+    def mapRowsToScalar(f: NArray[A] => A): NArray[A]
 
     def transpose: F[A]
 

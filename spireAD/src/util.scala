@@ -5,9 +5,10 @@ import spire.math.Jet
 import scala.reflect.ClassTag
 import scala.math.Numeric.Implicits.infixNumericOps
 import algebra.ring.Field
+import narr.*
 
-extension [T: Numeric: Field](a: Array[T])
-  inline def jetArr(using jd: JetDim): Array[Jet[Double]] =
+extension [T: Numeric: Field](a: NArray[T])
+  inline def jetArr(using jd: JetDim): NArray[Jet[Double]] =
     import spire.implicits.DoubleAlgebra
     import spire.implicits.ArrayNormedVectorSpace
     a.zipWithIndex.map((v, i) => Jet(v.toDouble) + Jet.h[Double](i))
@@ -17,6 +18,6 @@ extension [T: Numeric: Field](a: Array[T])
       inline jd: TejDim[Double],
       ct: ClassTag[Double],
       f: Field[Double]
-  ): Array[Tej[Double]] =
+  ): NArray[Tej[Double]] =
     a.zipWithIndex.map(d => Tej(d._1.toDouble))
 end extension

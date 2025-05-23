@@ -8,6 +8,7 @@ import spire.implicits.*
 import _root_.algebra.ring.Field
 import spire.algebra.Trig
 import scala.math.Ordering.Implicits.infixOrderingOps
+import narr.*
 
 class BackwardSuite extends FunSuite:
 
@@ -43,7 +44,7 @@ class BackwardSuite extends FunSuite:
   //     def compare(x: Tej[T], y: Tej[T]): Int = ??? //  if x > y then 1 else if x < y then -1 else 0
   //     def div(x: Tej[T], y: Tej[T]): Tej[T] = x / y
   lazy given oJet: Ordering[Jet[Double]] = Ordering.by(_.real)
-  lazy given oTTej: Ordering[Tej[Double]] = Ordering.by(_.tejNum)
+  lazy given oTTej: Ordering[Tej[Double]] = Ordering.by(_.value)
 
   // def writeGraph(using td: TejDim[Double]) =
   //   val graph = td.dag.toGraphviz
@@ -75,7 +76,7 @@ class BackwardSuite extends FunSuite:
     assertEqualsDouble(out.map(_._2).sum, 0, 0.0001)
 
     assertEqualsDouble(res, logSoftmaxResultJ.real, 0.0001)
-    assertEqualsDouble(res, logSoftmaxResult.tejNum, 0.0001)
+    assertEqualsDouble(res, logSoftmaxResult.value, 0.0001)
   }
 
   test("softmax gradients sum to zero. Result are consistent between Tej, Jet, double") {
@@ -100,7 +101,7 @@ class BackwardSuite extends FunSuite:
 
     assertEqualsDouble(res, 1.0, 0.000001)
     assertEqualsDouble(res, logSoftmaxResultJ.real, 0.0001)
-    assertEqualsDouble(res, logSoftmaxResult.tejNum, 0.0001)
+    assertEqualsDouble(res, logSoftmaxResult.value, 0.0001)
 
   }
 

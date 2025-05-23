@@ -31,7 +31,6 @@ class MatrixTCjSuite extends FunSuite:
   }
 
   test("Matrix Typelcasses 2") {
-    import VectorisedTrig.vtm
     import VectorisedField.elementwiseMatrixDoubleField
 
     val m = Matrix.fromRows[Double](
@@ -39,9 +38,7 @@ class MatrixTCjSuite extends FunSuite:
       NArray(1.5, 3.0)
     )
 
-    def plusOne[V[_], T](m: V[T])(using f: VectorisedField[V, T]): V[T] =
-      m + 1.0.const
-    end plusOne
+    def plusOne[V[_], T](m: V[T])(using f: VectorisedField[V, T]): V[T] = m + 1.0.const
 
     assertEquals(plusOne(m).raw.toSeq, NArray(2.5, 2.5, 3.0, 4.0).toSeq)
 

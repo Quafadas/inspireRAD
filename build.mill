@@ -17,9 +17,10 @@ import com.goyeau.mill.scalafix.ScalafixModule
 import $packages._
 
 object Config {
-  val scalaVersion = "3.6.4"
+  val scalaVersion = "3.7.0"
   val oslib =  ivy"com.lihaoyi::os-lib:0.11.3"
   val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
+  val vecxt = ivy"io.github.quafadas::vecxt::0.0.29-DIRTY2920174"
 
 }
 
@@ -31,7 +32,7 @@ trait Common extends ScalaModule  with PublishModule with ScalafixModule {
   def publishVersion = VcsVersion.vcsState().format()
 
   def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"io.github.quafadas::vecxt:0.0.26-16-82aacd",
+    Config.vecxt,
     ivy"org.typelevel::spire::0.18.0",
     ivy"org.typelevel::cats-core::2.13.0",
   )
@@ -57,7 +58,7 @@ trait PublishModule extends mill.scalalib.PublishModule {
 }
 
 trait CommonJS extends ScalaJSModule {
-  def scalaJSVersion = "1.18.2"
+  def scalaJSVersion = "1.19.0"
   def ivyDeps = super.ivyDeps() ++ Seq(ivy"org.scala-js:scalajs-java-securerandom_sjs1_2.13:1.0.0")
   // def moduleKind = ModuleKind.
 }
@@ -68,6 +69,7 @@ trait CommonNative extends ScalaNativeModule {
 }
 
 trait CommonTests extends TestModule.Munit {
+  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Config.vecIncubatorFlag
   def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"org.scalameta::munit::1.1.0",
   )
