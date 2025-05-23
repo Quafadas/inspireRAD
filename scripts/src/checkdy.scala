@@ -77,9 +77,6 @@ end given
 
   given jd: JetDim = JetDim(16)
 
-  import VectorisedTrig.vtm
-  import VectorisedField.elementwiseMatrixDoubleField
-  import Matrixy.matOps
   import VectorisedField.jetNumeric
 
   given vf: VectorisedField[Array, Jet[Double]] = VectorisedField.elementwiseArrayJetField
