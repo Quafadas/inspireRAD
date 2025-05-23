@@ -4,8 +4,40 @@ import scala.reflect.ClassTag
 import vecxt.BoundsCheck
 import vecxt.all.*
 import narr.native.NArray
+import spire.math.Jet
+import spire.math.JetDim
+import spire.implicits.*
 
 object Reductions:
+
+  def vtmJet(using jd: JetDim): Reductions[Matrix, Jet[Double], 2] = new Reductions[Matrix, Jet[Double], 2]:
+
+    extension (a: Matrix[Jet[Double]])
+
+      override def update(i: (Int, Int), scalar: Jet[Double]): Unit =
+        vecxt.MatrixInstance.update(a)(i, scalar)(using BoundsCheck.DoBoundsCheck.yes)
+
+      def mean: Jet[Double] = a.raw.foldLeft(Jet.zero[Double])(_ + _) / Jet(a.raw.length.toDouble)
+      def product: Jet[Double] = a.raw.foldLeft(Jet.one[Double])(_ * _)
+      inline def sum: Jet[Double] = a.raw.foldLeft(Jet.zero[Double])(_ + _)
+
+      inline def apply(i: (Int, Int)): Jet[Double] =
+        vecxt.MatrixInstance.apply(a)(i)(using BoundsCheck.DoBoundsCheck.yes)
+
+    end extension
+
+  def vtaJet(using jd: JetDim): Reductions[NArray, Jet[Double], 1] = new Reductions[NArray, Jet[Double], 1]:
+
+    extension (a: NArray[Jet[Double]])
+
+      override def apply(i: Tuple1[Int]): Jet[Double] = a(i.head)
+      override def update(i: Tuple1[Int], scalar: Jet[Double]): Unit = a(i.head) = scalar
+
+      override def product: Jet[Double] = a.foldLeft(Jet.one[Double])(_ * _)
+      inline def mean: Jet[Double] = sum / Jet(a.length.toDouble)
+      inline def sum: Jet[Double] = a.foldLeft(Jet.zero[Double])(_ + _)
+
+    end extension
 
   given vta: Reductions[NArray, Double, 1] = new Reductions[NArray, Double, 1]:
 
@@ -17,15 +49,6 @@ object Reductions:
       override def product: Double = vecxt.all.product(a)
       inline def mean: Double = vecxt.all.mean(a)
       inline def sum: Double = vecxt.all.sum(a)
-
-      // def apply(i: NArray[Tuple1[Int]]): NArray[Double] =
-
-      //   val newArr = NArray.fill(a.length)(0.0)
-      //   i.foreach { idx =>
-      //     newArr(idx.head) = a(idx.head)
-      //   }
-      //   newArr
-      // end apply
 
     end extension
 

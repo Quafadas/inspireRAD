@@ -11,6 +11,7 @@ import vecxtensions.SpireExt.*
 import spire.math.JetDim
 import spire.math.Jet
 import scala.annotation.nowarn
+import vecxt.RowCol
 
 object Matrixy:
 
@@ -21,10 +22,17 @@ object Matrixy:
       extension (a: Matrix[Jet[Double]])
 
         override def apply(
-            i: NArray[(Int, Int)]
+            indexes: NArray[(Int, Int)]
         ): Matrix[Jet[Double]] =
-          val ct = summon[ClassTag[Jet[Double]]]
-          vecxt.MatrixInstance.apply(a)(i)(using bc, ct)
+          val newMat = Matrix[Jet[Double]](a.shape, Array.fill(a.raw.length)(0.0).jetArr)
+          var i = 0
+          while i < indexes.length do
+            val rc: RowCol = indexes(i)
+            val nextEntry = vecxt.MatrixInstance.apply(a)(rc)
+            newMat(indexes(i)) = nextEntry
+            i += 1
+          end while
+          newMat
         end apply
 
         def matmul(b: Matrix[Jet[Double]]): Matrix[Jet[Double]] = a.@@@(b)
@@ -38,6 +46,8 @@ object Matrixy:
         def transpose: Matrix[Jet[Double]] = vecxt.all.transpose(a)
 
       end extension
+    end new
+  end doubleJetIsMatrixy
 
   given matOps: Matrixy[Matrix, Double] = doubleMatrix(using vecxt.BoundsCheck.DoBoundsCheck.yes)
 

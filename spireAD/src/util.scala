@@ -14,6 +14,12 @@ extension [T: Numeric: Field](a: NArray[T])
     a.zipWithIndex.map((v, i) => Jet(v.toDouble) + Jet.h[Double](i))
   end jetArr
 
+  inline def jetArr(idxStart: Int = 0)(using jd: JetDim): NArray[Jet[Double]] =
+    import spire.implicits.DoubleAlgebra
+    import spire.implicits.ArrayNormedVectorSpace
+    a.zipWithIndex.map((v, i) => Jet(v.toDouble) + Jet.h[Double](i + idxStart))
+  end jetArr
+
   inline def tejArr(using
       inline jd: TejDim[Double],
       ct: ClassTag[Double],

@@ -2,8 +2,42 @@ package io.github.quafadas.spireAD
 
 import vecxt.all.*
 import narr.*
+import spire.math.JetDim
+import spire.math.Jet
+import spire.implicits.*
+import io.github.quafadas.spireAD.VectorisedField.jetNumeric
+import vecxt.BoundsCheck.DoBoundsCheck.no
 
 object VectorisedTrig:
+
+  given vtaJet(using jd: JetDim): VectorisedTrig[Array, Jet[Double]] = new VectorisedTrig[Array, Jet[Double]]:
+    extension (a: Array[Jet[Double]])
+      override def exp: Array[Jet[Double]] = a.map(_.exp)
+      override def log: Array[Jet[Double]] = a.map(_.log)
+      override def sin: Array[Jet[Double]] = a.map(_.sin)
+      override def cos: Array[Jet[Double]] = a.map(_.cos)
+    end extension
+
+  given vtmJet(using jd: JetDim): VectorisedTrig[Matrix, Jet[Double]] = new VectorisedTrig[Matrix, Jet[Double]]:
+    extension (a: Matrix[Jet[Double]])
+      override def exp: Matrix[Jet[Double]] = Matrix(a.raw.map(_.exp), a.shape)
+      override def log: Matrix[Jet[Double]] = Matrix(a.raw.map(_.log), a.shape)
+      override def sin: Matrix[Jet[Double]] = Matrix(a.raw.map(_.sin), a.shape)
+      override def cos: Matrix[Jet[Double]] = Matrix(a.raw.map(_.cos), a.shape)
+    end extension
+  given vtj(using jd: JetDim): VectorisedTrig[Scalar, Jet[Double]] = new VectorisedTrig[Scalar, Jet[Double]]:
+
+    extension (a: Scalar[Jet[Double]]) override def exp: Scalar[Jet[Double]] = Scalar(a.scalar.exp)
+    end extension
+
+    extension (a: Scalar[Jet[Double]]) override def log: Scalar[Jet[Double]] = Scalar(a.scalar.log)
+    end extension
+
+    extension (a: Scalar[Jet[Double]]) override def sin: Scalar[Jet[Double]] = Scalar(a.scalar.sin)
+    end extension
+
+    extension (a: Scalar[Jet[Double]]) override def cos: Scalar[Jet[Double]] = Scalar(a.scalar.cos)
+    end extension
 
   given vts: VectorisedTrig[Scalar, Double] = new VectorisedTrig[Scalar, Double]:
 
