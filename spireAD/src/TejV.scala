@@ -4,12 +4,11 @@ import scala.math.*
 import scala.reflect.*
 
 import spire.algebra.*
-import spire.syntax.isReal.*
-import spire.syntax.vectorSpace.*
 import scala.util.chaining.*
 import scala.specialized as sp
 import java.util.UUID
 import cats.Show
+import cats.syntax.show.toShow
 import vecxt.matrix.Matrix
 import narr.*
 
@@ -75,7 +74,8 @@ case class TejVGraph[T: ClassTag]():
       tv: TejV[Matrix, T],
       op: MatrixyBinaryOps
   )(using
-      vf: VectorisedField[Matrix, T],
+      vfM: VectorisedField[Matrix, T],
+      vfA: VectorisedField[Array, T],
       tr: VectorisedTrig[Matrix, T],
       mty: Matrixy[Matrix, T],
       sh: Show[Matrix[T]]
@@ -107,6 +107,25 @@ case class TejVGraph[T: ClassTag]():
     dag.addNode(node)
     dag.addEdge(depId, tv.id)
   end reductionWithParams
+
+  inline def rowReduction(
+      tv: TejV[Array, T],
+      depId: UUID,
+      op: ReductionOps,
+      rowGrads: Array[T]
+  )(using
+      gfa: VectorisedField[Array, T],
+
+      tr: VectorisedTrig[Array, T],
+      f2: Field[T],
+      shF: Show[Array[T]],
+      shG: Show[Matrix[T]],
+      ct: ClassTag[T]
+  ): Unit =
+    val node = RowReductionNode(op, tv.value, tv.id, depId, rowGrads)
+    dag.addNode(node)
+    dag.addEdge(depId, tv.id)
+  end rowReduction
 
 end TejVGraph
 
@@ -171,9 +190,15 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(lhs.value * rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Mul))
   end *
 
-  def /(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]) =
+  def /(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]): TejV[F, T] =
     new TejV(lhs.value / rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
   end /
+
+  def div(rhs: TejV[Scalar,T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]): TejV[F, T] =
+
+    val newVal = f./(lhs.value)(rhs.value.scalar )
+    new TejV(newVal).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
+  end div
 
   def sum(using
       td: TejVGraph[T],
@@ -185,7 +210,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ct: ClassTag[T]
   ): TejV[Scalar, T] =
     val newT = TejV.createDontAddToGraph(Scalar(value.sum))
-    println(newT)
+    // println(newT)
     newT.tap(td.reduction(_, ReductionOps.Sum, lhs.id))
   end sum
 
@@ -235,6 +260,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
 
   def @@(rhs: TejV[Matrix, T])(using
       f: VectorisedField[Matrix, T],
+      f2: VectorisedField[Array, T],
       t: VectorisedTrig[Matrix, T],
       td: TejVGraph[T],
       sh: Show[Matrix[T]],
@@ -245,20 +271,43 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(newmat).tap(mval => td.matrixy(lhs.id, rhs.id, mval, MatrixyBinaryOps.MatMul))
   end @@
 
-  def mapRowsToScalar(fct: (NArray[T] => T))(using
+  def mapRowsToScalar(fct: ReductionOps)(using
       f: VectorisedField[NArray, T],
       t: VectorisedTrig[NArray, T],
+      rd: Reductions[NArray, T, 1],
       td: TejVGraph[T],
+      f2: Field[T],
       shm: Show[Matrix[T]],
       sha: Show[NArray[T]],
       ev: F[T] <:< Matrix[T],
-      matTc: Matrixy[Matrix, T]
+      matTc: Matrixy[Matrix, T],
+      ct: ClassTag[T]
   ): TejV[NArray, T] =
-    val newmat = matTc.mapRowsToScalar(value)(fct)
-    new TejV(newmat)
+    val rowfct = fct match
+      case ReductionOps.Sum =>
+        ((row: NArray[T]) => row.sum)
+      case ReductionOps.Product =>
+        ((row: NArray[T]) => row.product)
+      case ReductionOps.Mean =>
+        ((row: NArray[T]) => row.mean)
+
+    val newmat = matTc.mapRowsToScalar(value)(rowfct)
+
+    // println(newmat.show)
+
+    new TejV(newmat).tap(
+      newVal => td.rowReduction(
+        newVal,
+        lhs.id,
+        fct,
+        newVal.value
+      )
+    )
+
+
   end mapRowsToScalar
 
-  def mapRows(fct: (NArray[T] => NArray[T]))(using
+  def mapRows(fct: TejV[Array, T] => TejV[Array, T])(using
       f: VectorisedField[NArray, T],
       t: VectorisedTrig[NArray, T],
       vfm: VectorisedField[Matrix, T],
@@ -268,8 +317,10 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ev: F[T] <:< Matrix[T],
       matTc: Matrixy[Matrix, T]
   ): TejV[Matrix, T] =
-    val newmat = value.asInstanceOf[Matrix[T]].mapRows(fct)
-    new TejV(newmat)
+    // Backpropogation on this method is not implemented.
+    ???
+    // val newmat = value.asInstanceOf[Matrix[T]].mapRows(fct)
+    // new TejV(newmat)
   end mapRows
 
   def apply(i: NArray[(Int, Int)])(using

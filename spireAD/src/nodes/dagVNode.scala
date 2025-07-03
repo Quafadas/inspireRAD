@@ -1,7 +1,6 @@
 package io.github.quafadas.spireAD
 
 import java.util.UUID
-import scala.specialized as sp
 import scala.reflect.ClassTag
 import cats.Show
 import cats.syntax.all.toShow

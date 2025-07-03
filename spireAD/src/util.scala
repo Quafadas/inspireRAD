@@ -25,5 +25,6 @@ extension [T: Numeric: Field](a: NArray[T])
       ct: ClassTag[Double],
       f: Field[Double]
   ): NArray[Tej[Double]] =
-    a.zipWithIndex.map(d => Tej(d._1.toDouble))
+    a.map(d => Tej(d.toDouble))
+
 end extension

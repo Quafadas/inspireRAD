@@ -8,8 +8,8 @@
       "name": "test",
       "type": "scala",
       "request": "launch",
-      "testClass": "io.github.quafadas.spireAD.DAGVSuite",
-      "buildTarget": "spireAD.jvm.test",
+      "buildTarget": "scripts",
+      "mainClass": "checkefy",
       "args": [
         "bar"
       ],

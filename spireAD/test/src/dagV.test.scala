@@ -8,11 +8,35 @@ import spire.implicits.DoubleAlgebra
 import cats.Show
 import spire.implicits.ArrayNormedVectorSpace
 import narr.*
+import vecxt.MatrixHelper.fromRows
+import vecxt.matrix.Matrix
+import vecxt.all.mapRowsToScalar
+import vecxt.all.printMat
+import cats.syntax.show.toShow
+import vecxt.all.row
+import vecxt.matrix.Matrix.apply
 
 class DAGVSuite extends FunSuite:
 
   import VectorisedTrig.vta
   import VectorisedField.elementwiseArrayDoubleField
+
+  given Show[Matrix[Double]] with
+    def show(arr: Matrix[Double]): String = vecxt.all.printMat(arr)
+  end given
+
+  given smj: Show[Matrix[Jet[Double]]] = new Show[Matrix[Jet[Double]]]:
+    def show(arr: Matrix[Jet[Double]]): String =
+      val rows =
+        for i <- 0 until arr.rows
+        yield arr
+          .row(i)
+          .map(s => s.toString().reverse.padTo(10, ' ').reverse)
+          .mkString(" | ")
+      val footer = ("-" * (rows.head.length))
+      (rows :+ footer).mkString("\n")
+    end show
+
 
   given Show[Array[Double]] with
     def show(arr: Array[Double]): String = arr.mkString("[", ", ", "]")
@@ -289,6 +313,137 @@ class DAGVSuite extends FunSuite:
         0.0000001
       )
     end for
+
+  }
+
+  test("Row reductions - sum") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = vecxt.all.Matrix.fromRows(
+      Array(1.0, 2.0, 3.0),
+      Array(5.0, 6.0, 7.0),
+      Array(9.0, 10.0, 11.0)
+    )
+    val tej = TejV(arr)
+
+    val summed = tej.mapRowsToScalar(ReductionOps.Sum)
+    assertEqualsDouble(summed.value(0), 6.0, 0.000001)
+    assertEqualsDouble(summed.value(1), 18.0, 0.000001)
+    assertEqualsDouble(summed.value(2), 30.0, 0.000001)
+
+    // given jd: JetDim = JetDim(9)
+    // val jetArr = arr.raw.jetArr
+
+    // val jetMat = Matrix[Jet[Double]](
+    //   arr.shape,
+    //   jetArr
+    // )
+
+    // val jetCalc = jetMat.mapRowsToScalar(
+    //   row => row.foldLeft(Jet(0.0))((acc, j) => acc + j)
+    // )
+
+    val out = summed.backward(Set(tej))
+
+    val tejGrad = out.head.grad
+
+    for i <- 0 until tejGrad.raw.length do
+      assertEqualsDouble(
+        tejGrad.raw(i),
+        1.0,
+        0.0000001
+      )
+    end for
+
+  }
+
+  test("Row reductions - mean") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = vecxt.all.Matrix.fromRows(
+      Array(1.0, 2.0, 3.0),
+      Array(5.0, 6.0, 7.0),
+      Array(9.0, 10.0, 11.0)
+    )
+    val tej = TejV(arr)
+
+    val summed = tej.mapRowsToScalar(ReductionOps.Mean)
+    assertEqualsDouble(summed.value(0), 2.0, 0.000001)
+    assertEqualsDouble(summed.value(1), 6.0, 0.000001)
+    assertEqualsDouble(summed.value(2), 10.0, 0.000001)
+
+    // given jd: JetDim = JetDim(9)
+    // val jetArr = arr.raw.jetArr
+
+    // val jetMat = Matrix[Jet[Double]](
+    //   arr.shape,
+    //   jetArr
+    // )
+
+    // val jetCalc = jetMat.mapRowsToScalar(
+    //   row => row.foldLeft(Jet(0.0))((acc, j) => acc + j)
+    // )
+
+    val out = summed.backward(Set(tej))
+
+    val tejGrad = out.head.grad
+
+    for i <- 0 until tejGrad.raw.length do
+      assertEqualsDouble(
+        tejGrad.raw(i),
+        0.33333333,
+        0.0000001
+      )
+    end for
+
+  }
+
+  test("Row reductions - product") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = vecxt.all.Matrix.fromRows(
+      Array(1.0, 2.0, 3.0),
+      Array(5.0, 6.0, 7.0),
+      Array(9.0, 10.0, 11.0)
+    )
+    val tej = TejV(arr)
+
+    val summed = tej.mapRowsToScalar(ReductionOps.Product)
+    assertEqualsDouble(summed.value(0), 6.0, 0.000001)
+    assertEqualsDouble(summed.value(1), 210.0, 0.000001)
+    assertEqualsDouble(summed.value(2), 990.0, 0.000001)
+
+    given jd: JetDim = JetDim(9)
+    val jetArr = arr.raw.jetArr
+
+    val jetMat = Matrix[Jet[Double]](
+      arr.shape,
+      jetArr
+    )
+
+    val jetCalc = jetMat.mapRowsToScalar(
+      row => row.foldLeft(Jet(1.0))((acc, j) => acc * j)
+    )
+
+    // println(jetCalc.show)
+
+    val out = summed.backward(Set(tej))
+
+    val tejGrad = out.head.grad
+
+    // println(tejGrad.show)
+
+    assertEqualsDouble(
+      tejGrad.raw(0),
+      6.0,
+      0.0000001
+    )
+
+    assertEqualsDouble(
+      tejGrad.raw.last,
+      90.0,
+      0.0000001
+    )
 
   }
 

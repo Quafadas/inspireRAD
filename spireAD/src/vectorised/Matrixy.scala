@@ -49,6 +49,40 @@ object Matrixy:
     end new
   end doubleJetIsMatrixy
 
+  // @nowarn
+  // inline def doubleTejIsMatrixy(using inline bc: BoundsCheck, jd: TejDim[Double]): Matrixy[Matrix, Tej[Double]] =
+  //   new Matrixy[Matrix, Tej[Double]]:
+
+  //     extension (a: Matrix[Tej[Double]])
+
+  //       override def apply(
+  //           indexes: NArray[(Int, Int)]
+  //       ): Matrix[Tej[Double]] =
+  //         val newMat = Matrix[Tej[Double]](a.shape, Array.fill(a.raw.length)(0.0).tejArr)
+  //         var i = 0
+  //         while i < indexes.length do
+  //           val rc: RowCol = indexes(i)
+  //           val nextEntry = vecxt.MatrixInstance.apply(a)(rc)
+  //           newMat(indexes(i)) = nextEntry
+  //           i += 1
+  //         end while
+  //         newMat
+  //       end apply
+
+  //       def matmul(b: Matrix[Tej[Double]]): Matrix[Tej[Double]] = a.@@@(b)
+
+  //       def mapRows(f: NArray[Tej[Double]] => NArray[Tej[Double]]): Matrix[Tej[Double]] =
+  //         vecxt.all.mapRows(a)(f)
+
+  //       def mapRowsToScalar(f: NArray[Tej[Double]] => Tej[Double]): NArray[Tej[Double]] =
+  //         vecxt.all.mapRowsToScalar(a)(f).raw
+
+  //       def transpose: Matrix[Tej[Double]] = vecxt.all.transpose(a)
+
+  //     end extension
+  //   end new
+  // end doubleTejIsMatrixy
+
   given matOps: Matrixy[Matrix, Double] = doubleMatrix(using vecxt.BoundsCheck.DoBoundsCheck.yes)
 
   @nowarn

@@ -17,10 +17,12 @@ import com.goyeau.mill.scalafix.ScalafixModule
 import $packages._
 
 object Config {
-  val scalaVersion = "3.7.0"
+  val scalaVersion = "3.7.1"
   val oslib =  ivy"com.lihaoyi::os-lib:0.11.3"
   val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
-  val vecxt = ivy"io.github.quafadas::vecxt::0.0.29-DIRTY2920174"
+  val vecxtV = "0.0.31"
+  val vecxt = ivy"io.github.quafadas::vecxt::$vecxtV"
+  val scalaJs = "1.19.0"
 
 }
 
@@ -58,7 +60,7 @@ trait PublishModule extends mill.scalalib.PublishModule {
 }
 
 trait CommonJS extends ScalaJSModule {
-  def scalaJSVersion = "1.19.0"
+  def scalaJSVersion = Config.scalaJs
   def ivyDeps = super.ivyDeps() ++ Seq(ivy"org.scala-js:scalajs-java-securerandom_sjs1_2.13:1.0.0")
   // def moduleKind = ModuleKind.
 }

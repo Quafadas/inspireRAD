@@ -24,14 +24,14 @@ object `package` extends RootModule {
     override def ivyDeps = T {
       super.ivyDeps() ++ Agg(
         Config.oslib,
-        ivy"io.github.quafadas::vecxtensions::0.0.29-DIRTY2920174"
+        ivy"io.github.quafadas::vecxtensions::${build.Config.vecxtV}"
       )
     }
 
   }
 
   object js extends SharedModule with ScalaJSModule with build.PublishModule {
-    def scalaJSVersion = "1.19.0"
+    def scalaJSVersion = build.Config.scalaJs
     override def ivyDeps = super.ivyDeps() ++
       Agg(
         ivy"org.scala-js::scalajs-dom::2.8.0",

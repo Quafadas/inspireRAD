@@ -29,7 +29,7 @@ object VectorisedField:
     override def times(x: Jet[Double], y: Jet[Double]): Jet[Double] = x * y
     override def negate(x: Jet[Double]): Jet[Double] = -x
     override def zero: Jet[Double] = Jet.zero[Double]
-    override def abs(x: Jet[Double]): Jet[Double] = x.abs // You'll need to implement abs on Jet
+    override def abs(x: Jet[Double]): Jet[Double] = x.abs
     override def signum(x: Jet[Double]): Int = ???
 
     // Comparison operations
@@ -42,6 +42,29 @@ object VectorisedField:
     override def toLong(x: Jet[Double]): Long = ???
     override def toFloat(x: Jet[Double]): Float = ???
     override def toDouble(x: Jet[Double]): Double = ???
+
+  given tejNumeric(using jd: TejDim[Double]): Numeric[Tej[Double]] = new Numeric[Tej[Double]]:
+
+    override def parseString(str: String): Option[Tej[Double]] = ???
+
+    override def plus(x: Tej[Double], y: Tej[Double]): Tej[Double] = x + y
+    override def minus(x: Tej[Double], y: Tej[Double]): Tej[Double] = x - y
+    override def times(x: Tej[Double], y: Tej[Double]): Tej[Double] = x * y
+    override def negate(x: Tej[Double]): Tej[Double] = -x
+    override def zero: Tej[Double] = Tej.zero[Double]
+    override def abs(x: Tej[Double]): Tej[Double] = x.abs
+    override def signum(x: Tej[Double]): Int = ???
+
+    // Comparison operations
+    override def compare(x: Tej[Double], y: Tej[Double]): Int = ???
+
+    // Conversion operations
+    override def fromInt(n: Int): Tej[Double] = Tej(n.toDouble)
+
+    override def toInt(x: Tej[Double]): Int = ???
+    override def toLong(x: Tej[Double]): Long = ???
+    override def toFloat(x: Tej[Double]): Float = ???
+    override def toDouble(x: Tej[Double]): Double = ???
 
   def scalarJetField(using jd: JetDim): VectorisedField[Scalar, Jet[Double]] = new VectorisedField[Scalar, Jet[Double]]:
     extension (a: Double)
@@ -73,6 +96,38 @@ object VectorisedField:
       override def /(y: Scalar[Jet[Double]]): Scalar[Jet[Double]] = Scalar(a.scalar / y.scalar)
       @targetName("rhs/")
       override def /(y: Jet[Double]): Scalar[Jet[Double]] = Scalar(a.scalar / y)
+    end extension
+
+  def scalarTejField(using jd: TejDim[Double]): VectorisedField[Scalar, Tej[Double]] = new VectorisedField[Scalar, Tej[Double]]:
+    extension (a: Double)
+      override def const: Tej[Double] = Tej(a)
+      override def /(b: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(Tej(a) / b.scalar)
+    end extension
+
+    override def fromDouble(x: Double): Tej[Double] = Tej(x)
+
+    override def zero(x: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(Tej.zero[Double])
+
+    override def one(x: Scalar[Tej[Double]])(using ClassTag[Tej[Double]]): Scalar[Tej[Double]] = Scalar(Tej.one[Double])
+
+    override def allOnes(x: Scalar[Tej[Double]])(using ClassTag[Tej[Double]]): Scalar[Tej[Double]] = Scalar(
+      Tej.one[Double]
+    )
+
+    extension (a: Scalar[Tej[Double]])
+      override def unary_- : Scalar[Tej[Double]] = Scalar(-a.scalar)
+      override def productExceptSelf(): Scalar[Tej[Double]] = Scalar(Tej.one[Double])
+      override def numel: Int = 1
+      override def +(x: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(a.scalar + x.scalar)
+      @targetName("rhs+")
+      override def +(x: Tej[Double]): Scalar[Tej[Double]] = Scalar(a.scalar + x)
+      override def -(y: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(a.scalar - y.scalar)
+      override def *(y: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(a.scalar * y.scalar)
+      @targetName("rhs*")
+      override def *(y: Tej[Double]): Scalar[Tej[Double]] = Scalar(a.scalar * y)
+      override def /(y: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(a.scalar / y.scalar)
+      @targetName("rhs/")
+      override def /(y: Tej[Double]): Scalar[Tej[Double]] = Scalar(a.scalar / y)
     end extension
 
   def elementwiseMatrixJetField(using jd: JetDim): VectorisedField[Matrix, Jet[Double]] =
@@ -132,7 +187,9 @@ object VectorisedField:
 
       extension (a: Double)
         def const: Jet[Double] = Jet(a)
-        def /(b: NArray[Jet[Double]]): NArray[Jet[Double]] = b.map(_ / a)
+        def /(b: NArray[Jet[Double]]): NArray[Jet[Double]] =
+          val ja = Jet(a)
+          b.map((bb: Jet[Double]) => ja/ bb)
       end extension
 
       extension (a: NArray[Jet[Double]])
@@ -152,6 +209,40 @@ object VectorisedField:
         inline def *(y: NArray[Jet[Double]]): NArray[Jet[Double]] = a.zip(y).map((a, b) => a * b)
         @targetName("rhs*")
         inline def *(y: Jet[Double]): NArray[Jet[Double]] = a.map(_ * y)
+      end extension
+
+  def elementwiseArrayJetField(using jd: TejDim[Double]): VectorisedField[NArray, Tej[Double]] =
+    new VectorisedField[NArray, Tej[Double]]:
+      def fromDouble(x: Double): Tej[Double] = Tej(x)
+      def zero(x: NArray[Tej[Double]]): NArray[Tej[Double]] = NArray.fill[Tej[Double]](x.length)(Tej.zero[Double])
+      def one(x: NArray[Tej[Double]])(using ClassTag[Tej[Double]]): NArray[Tej[Double]] =
+        NArray.fill[Tej[Double]](x.length)(Tej.one[Double])
+      def allOnes(x: NArray[Tej[Double]])(using ClassTag[Tej[Double]]) = one(x)
+
+      extension (a: Double)
+        def const: Tej[Double] = Tej(a)
+        def /(b: NArray[Tej[Double]]): NArray[Tej[Double]] =
+          val constA = Tej(a)
+          b.map(constA / _)
+      end extension
+
+      extension (a: NArray[Tej[Double]])
+        inline def productExceptSelf(): NArray[Tej[Double]] = ???
+
+        def numel: Int = a.length
+        inline def /(y: NArray[Tej[Double]]): NArray[Tej[Double]] = a.zip(y).map((ai, bi) => ai / bi)
+        @targetName("rhs/")
+        inline def /(y: Tej[Double]): NArray[Tej[Double]] = a.map(_ / y)
+        inline def unary_- : NArray[Tej[Double]] = a.map(_ - 1.0)
+        inline def +(x: NArray[Tej[Double]]): NArray[Tej[Double]] = a.zip(x).map((a, b) => a + b)
+        @targetName("rhs+")
+        inline def +(x: Tej[Double]): NArray[Tej[Double]] = a.map(_ + x)
+        inline def -(y: NArray[Tej[Double]]): NArray[Tej[Double]] = a.zip(y).map((a, b) => a - b)
+        @targetName("rhs-")
+        inline def -(x: Tej[Double]): NArray[Tej[Double]] = a.map(_ - x)
+        inline def *(y: NArray[Tej[Double]]): NArray[Tej[Double]] = a.zip(y).map((a, b) => a * b)
+        @targetName("rhs*")
+        inline def *(y: Tej[Double]): NArray[Tej[Double]] = a.map(_ * y)
       end extension
 
   given scalarField: VectorisedField[Scalar, Double] = new VectorisedField[Scalar, Double]:
@@ -227,11 +318,11 @@ object VectorisedField:
       @targetName("rhs-")
       inline def -(x: Double): Matrix[Double] = vecxt.all.-(a)(x)
 
-      inline def *(y: Matrix[Double]): Matrix[Double] = vecxt.all.*(a)(y)
+      inline def *(y: Matrix[Double]): Matrix[Double] = vecxt.all.hadamard(a)(y)
 
       @targetName("rhs*")
       inline def *(y: Double): Matrix[Double] = vecxt.all.*(a)(y)
-      inline def /(y: Matrix[Double]): Matrix[Double] = vecxt.all./(a)(y)
+      inline def /(y: Matrix[Double]): Matrix[Double] = vecxt.all./:/(a)(y)
       @targetName("rhs/")
       inline def /(y: Double): Matrix[Double] = Matrix[Double](vecxt.arrays./(a.raw)(y), a.shape)
 
