@@ -5,47 +5,55 @@ import scala.specialized as sp
 import cats.syntax.show.*
 import cats.Show
 import scala.reflect.ClassTag
+import algebra.ring.Field
 
-case class BinaryNode[F[_], @sp(Double) T](
+case class BinaryScalarNode[F[_], @sp(Double) T](
     op: BinaryOps,
     value1: F[T],
     thisId: UUID,
     left: UUID,
-    right: UUID
+    right: UUID,
+    scalar: T
 )(using
     vf: VectorisedField[F, T],
+    // vf2: VectorisedField[Scalar, T],
     vt: VectorisedTrig[F, T],
-    sh: Show[F[T]]
+    rd: Reductions[F, T, 1],
+    n: Numeric[T],
+    f: Field[T],
+    sh: Show[F[T]],
+    ct: ClassTag[T]
 ) extends VNode[F, T](value1, thisId):
 
   override def toString(): String =
     s"$op \n v:$value1 g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"BinaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
+    s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
 
-  override def setGradOne(using ct: ClassTag[T]): Unit =
-    grad = vf.allOnes(value1)
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val leftN = td.dag.getNode(left).asInstanceOf[VNode[F, T]]
-    val rightN = td.dag.getNode(right).asInstanceOf[VNode[F, T]]
+    val rightN = td.dag.getNode(right)
+    val rvf = rightN.vf2
     op match
       case BinaryOps.Add =>
-        leftN.grad += leftN.grad + this.grad
-        rightN.grad += rightN.grad + this.grad
+        ???
 
       case BinaryOps.Sub =>
-        leftN.grad += this.grad
-        rightN.grad -= this.grad
+        ???
 
       case BinaryOps.Mul =>
-        leftN.grad += this.grad * rightN.value
-        rightN.grad += this.grad * leftN.value
+        ???
 
       case BinaryOps.Div =>
-        leftN.grad += this.grad / rightN.value
-        rightN.grad -= this.grad * leftN.value / (rightN.value * rightN.value)
+
+        leftN.grad += vf./(grad)(scalar)
+        val argy = vf1.*(leftN.value)(grad).sum
+        val simpler = f.times(scalar, f.times(scalar, f.fromInt(-1)))
+        val nearly = f.div(argy, simpler)
+        rightN.grad = rvf.+(rightN.grad)(nearly)
+
 
     end match
     // println("--> backward binary" + this.toString())
@@ -53,4 +61,4 @@ case class BinaryNode[F[_], @sp(Double) T](
     // println("Update Right: " + rightN)
     // println("<--- end backward this node")
   end backward
-end BinaryNode
+

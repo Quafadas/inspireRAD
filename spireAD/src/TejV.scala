@@ -22,6 +22,12 @@ case class TejVGraph[T: ClassTag]():
 
   final val dag = DAGV[T, VDimChangeNode[?, ?, T]]()
 
+  def resetGrads(using ct: ClassTag[T]) =
+    dag.getAllNodes.foreach { node =>
+      node.setGradZero
+    }
+  end resetGrads
+
   inline def addToGraph[F[_]](t: TejV[F, T])(using
       vf: VectorisedField[F, T],
       vt: VectorisedTrig[F, T],
@@ -67,6 +73,28 @@ case class TejVGraph[T: ClassTag]():
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
   end binary
+
+  inline def scalar[F[_]](
+      lhs: UUID,
+      rhs: UUID,
+      tv: TejV[F, T],
+      op: BinaryOps,
+      scalar: T
+  )(using
+      vf: VectorisedField[F, T],
+      tr: VectorisedTrig[F, T],
+      f: Field[T],
+      rd: Reductions[F, T, 1],
+      ct: ClassTag[T],
+      n: Numeric[T],
+
+      sh: Show[F[T]]
+  ): Unit =
+    val node = BinaryScalarNode[F, T](op, tv.value, tv.id, lhs, rhs, scalar)
+    dag.addNode(node)
+    dag.addEdge(lhs, tv.id)
+    dag.addEdge(rhs, tv.id)
+  end scalar
 
   inline def matrixy(
       lhs: UUID,
@@ -115,7 +143,6 @@ case class TejVGraph[T: ClassTag]():
       rowGrads: Array[T]
   )(using
       gfa: VectorisedField[Array, T],
-
       tr: VectorisedTrig[Array, T],
       f2: Field[T],
       shF: Show[Array[T]],
@@ -190,14 +217,24 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(lhs.value * rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Mul))
   end *
 
-  def /(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]): TejV[F, T] =
+  def /(
+      rhs: TejV[F, T]
+  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]): TejV[F, T] =
     new TejV(lhs.value / rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
   end /
 
-  def div(rhs: TejV[Scalar,T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]): TejV[F, T] =
-
-    val newVal = f./(lhs.value)(rhs.value.scalar )
-    new TejV(newVal).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
+  def div(rhs: TejV[Scalar, T])(using
+      f: VectorisedField[F, T],
+      t: VectorisedTrig[F, T],
+      td: TejVGraph[T],
+      sh: Show[F[T]],
+      fi: Field[T],
+      ct: ClassTag[T],
+      n: Numeric[T],
+      red: Reductions[F, T, 1]
+  ): TejV[F, T] =
+    val newVal = f./(lhs.value)(rhs.value.scalar)
+    new TejV(newVal).tap(td.scalar(lhs.id, rhs.id, _, BinaryOps.Div, rhs.value.scalar))
   end div
 
   def sum(using
@@ -271,6 +308,8 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(newmat).tap(mval => td.matrixy(lhs.id, rhs.id, mval, MatrixyBinaryOps.MatMul))
   end @@
 
+  // TODO: revisit this, it should be a TejV[Array, T] => TejV[Scalar, T]
+  // Instead of exposing graph internals.
   def mapRowsToScalar(fct: ReductionOps)(using
       f: VectorisedField[NArray, T],
       t: VectorisedTrig[NArray, T],
@@ -295,15 +334,14 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
 
     // println(newmat.show)
 
-    new TejV(newmat).tap(
-      newVal => td.rowReduction(
+    new TejV(newmat).tap(newVal =>
+      td.rowReduction(
         newVal,
         lhs.id,
         fct,
         newVal.value
       )
     )
-
 
   end mapRowsToScalar
 
@@ -318,9 +356,19 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       matTc: Matrixy[Matrix, T]
   ): TejV[Matrix, T] =
     // Backpropogation on this method is not implemented.
-    ???
-    // val newmat = value.asInstanceOf[Matrix[T]].mapRows(fct)
-    // new TejV(newmat)
+    // ???
+    val mat = value.asInstanceOf[Matrix[T]]
+    val listIds = scala.collection.mutable.ListBuffer.empty[(UUID, UUID)]
+    val newmat = mat.mapRows(row =>
+      val oldRow = TejV(row)(using td, f, t, sha)
+      val rowV = fct(oldRow)
+      listIds.addOne(
+        (oldRow.id, rowV.id)
+      )
+      rowV.value
+    )
+
+    new TejV(newmat)
   end mapRows
 
   def apply(i: NArray[(Int, Int)])(using

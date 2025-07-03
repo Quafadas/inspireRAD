@@ -30,6 +30,10 @@ case class ReductionWithParams[F[_], G[_], @sp(Double) T](
 
   def setGradOne(using ct: ClassTag[T]): Unit = gf.allOnes(grad)
 
+  def setGradZero(using ct: ClassTag[T]): Unit = {
+    grad = gf.zero(grad)
+  }
+
   override def graphShow: String =
     s"ReductionWithParams (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
 

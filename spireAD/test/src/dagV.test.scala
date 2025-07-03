@@ -12,6 +12,7 @@ import vecxt.MatrixHelper.fromRows
 import vecxt.matrix.Matrix
 import vecxt.all.mapRowsToScalar
 import vecxt.all.printMat
+import vecxt.all.printArr
 import cats.syntax.show.toShow
 import vecxt.all.row
 import vecxt.matrix.Matrix.apply
@@ -396,6 +397,38 @@ class DAGVSuite extends FunSuite:
       )
     end for
 
+  }
+
+  test("Scalar division".only) {
+
+    given td: TejVGraph[Double] = TejVGraph[Double]()
+
+    val j = TejV(Scalar(2.0))
+    val arr = TejV(Array(1.0, 2.0, 3.0, 4.0))
+
+    val res = arr.div(j)
+
+    assertEqualsDouble(res.value(0), 0.5, 0.000001)
+    assertEqualsDouble(res.value(1), 1.0, 0.000001)
+    assertEqualsDouble(res.value(2), 1.5, 0.000001)
+    assertEqualsDouble(res.value(3), 2.0, 0.000001)
+
+    val out = res.backward(Set(arr ))
+
+    val tejGrad = out.head.grad
+
+    for i <- 0 until tejGrad.length do
+      assertEqualsDouble(
+        tejGrad(i),
+        0.5,
+        0.0000001
+      )
+    end for
+
+    td.dag.resetGrads
+
+    val gradJ = res.backward(Set(j)).head.grad
+    assertEqualsDouble(gradJ.scalar, -2.5, 0.000001)
   }
 
   test("Row reductions - product") {

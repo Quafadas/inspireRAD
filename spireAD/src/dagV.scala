@@ -15,6 +15,11 @@ class DAGV[T: ClassTag, N <: VDimChangeNode[?, ?, T]]:
   private val nodeMap: mutable.Map[UUID, N] = mutable.Map.empty
   private val reverseNodeMap: mutable.Map[N, UUID] = mutable.Map.empty
 
+  def resetGrads(using ct: ClassTag[T]): Unit =
+    nodeMap.values.foreach { node =>
+      node.setGradZero
+    }
+
   def addNode(node: N): Unit =
     if !adjacencyList.contains(node.id) then
       adjacencyList(node.id) = mutable.Set.empty

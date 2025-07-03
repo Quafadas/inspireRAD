@@ -22,6 +22,9 @@ case class MapRowsToScalar[F[_], G[_], T](
   var grad: G[T] = vf2.zero(incoming)
   def graphShow: String = "MapRowsToScalar"
   def setGradOne(using ct: ClassTag[T]): Unit = grad = vf2.allOnes(incoming)
+  def setGradZero(using ct: ClassTag[T]): Unit = {
+      grad = vf2.zero(incoming)
+    }
   def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[G, T]]
 

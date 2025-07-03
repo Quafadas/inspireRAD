@@ -28,6 +28,9 @@ case class MatrixyNode[T](
   override def graphShow: String =
     s"MatNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show})"
 
+  // def setGradOne(using ct: ClassTag[T]): Unit =
+  //   grad = vf.allOnes(grad)
+
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     op match
       case MatrixyBinaryOps.MatMul =>
@@ -37,6 +40,36 @@ case class MatrixyNode[T](
         rightN.grad = vf.+(rightN.grad)(maty.matmul(rightN.value.transpose)(this.grad))
 
 end MatrixyNode
+
+// case class MapRowsNode[T](
+//     op: MatrixyBinaryOps,
+//     value1: Matrix[T],
+//     thisId: UUID,
+//     in: UUID,
+//     out: UUID,
+//     rowTransforms: Seq[(UUID, UUID)]
+// )(using
+//     vf: VectorisedField[Matrix, T],
+//     vfa: VectorisedField[Array, T],
+//     vt: VectorisedTrig[Matrix, T],
+//     maty: Matrixy[Matrix, T],
+//     sh: Show[Matrix[T]]
+// ) extends VNode[Matrix, T](value1, thisId):
+//   val vfa1 = vfa
+//   override def graphShow: String =
+//     s"MapRowsNodeStart (id: ${thisId.toString().takeRight(4)})" +
+//     s"MapRowsNodeEnd (id: ${thisId.toString().takeRight(4)})"
+
+
+//   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
+//     op match
+//       case MatrixyBinaryOps.MatMul =>
+//         val leftN = td.dag.getNode(left).asInstanceOf[MatrixyNode[T]]
+//         val rightN = td.dag.getNode(right).asInstanceOf[MatrixyNode[T]]
+//         leftN.grad = vf.+(leftN.grad)(maty.matmul(this.grad)(rightN.value.transpose))
+//         rightN.grad = vf.+(rightN.grad)(maty.matmul(rightN.value.transpose)(this.grad))
+
+
 
 case class RowReductionNode[T](
     op: ReductionOps,
@@ -58,6 +91,9 @@ case class RowReductionNode[T](
 
   def setGradOne(using ct: ClassTag[T]): Unit =
     grad = gfa.allOnes(grad)
+
+  def setGradZero(using ct: ClassTag[T]): Unit =
+    grad = gfa.zero(grad)
 
   override def graphShow: String =
     s"RowReductionNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show})"
