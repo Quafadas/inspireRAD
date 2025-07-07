@@ -589,4 +589,41 @@ class DAGVSuite extends FunSuite:
   // }
 
 
+  test("select elements".only) {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val mat = Matrix.fromRows(
+      Array(1.0, 2.0, 3.0, 4.0),
+      Array(1.0, 2.0, 3.0, 4.0) + 4.0,
+    )
+
+    val tej = TejV(mat)
+
+    val indices = NArray((0, 0), (1, 1), (0, 1), (1, 3))
+
+    val matGrad = Matrix.fromRows(
+      Array(1.0, 2.0, 0, 0),
+      Array(0, 6.0, 0, 8.0),
+    )
+
+    val graph = tej(indices)
+
+    val gradBack = graph.backward(Set(tej))
+    val gradCalculated = gradBack.head.grad
+
+    for i <- 0 until mat.shape(0) do
+      for j <- 0 until mat.shape(1) do
+          assertEqualsDouble(
+            gradCalculated(i, j),
+            matGrad(i, j),
+            0.0000001
+          )
+      end for
+    end for
+
+
+
+
+  }
+
 end DAGVSuite

@@ -187,6 +187,23 @@ case class TejVGraph[T: ClassTag]():
   // ): Unit =
   //   ???
 
+  def selectIndicies(
+      tv: TejV[Matrix, T],
+      indicies: NArray[(Int, Int)],
+      incomingId: UUID
+  )(using
+      f: VectorisedField[Matrix, T],
+      m: Matrixy[Matrix, T],
+      tr: VectorisedTrig[Matrix, T],
+      sh: Show[Matrix[T]],
+      ct: ClassTag[T]
+  ): Unit =
+    val node = SelectIndiciesNode( tv.value, tv.id, incomingId, indicies)
+    dag.addNode(node)
+    dag.addEdge(incomingId, tv.id)
+
+  end selectIndicies
+
 end TejVGraph
 
 object TejV extends TejInstances:
@@ -445,7 +462,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       td: TejVGraph[T],
       rd: Reductions[Matrix, T, 2],
       vf: VectorisedField[Matrix, T],
-      vt: VectorisedTrig[F, T],
+      vt: VectorisedTrig[Matrix, T],
       vfa: VectorisedField[NArray, T],
       ev: F[T] <:< Matrix[T],
       matTc: Matrixy[Matrix, T],
@@ -455,7 +472,9 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
   ): TejV[Matrix, T] =
     val newT = value.asInstanceOf[Matrix[T]]
     val newT2 = matTc.apply(newT)(i)
-    new TejV[Matrix, T](newT)
+    new TejV[Matrix, T](newT).tap( tv =>
+      td.selectIndicies(tv, i, lhs.id)
+    )
   end apply
 
 end TejV
