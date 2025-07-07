@@ -227,11 +227,11 @@ object VectorisedField:
       @targetName("rhs-")
       inline def -(x: Double): Matrix[Double] = vecxt.all.-(a)(x)
 
-      inline def *(y: Matrix[Double]): Matrix[Double] = vecxt.all.*(a)(y)
+      inline def *(y: Matrix[Double]): Matrix[Double] = vecxt.all.hadamard(a)(y)
 
       @targetName("rhs*")
       inline def *(y: Double): Matrix[Double] = vecxt.all.*(a)(y)
-      inline def /(y: Matrix[Double]): Matrix[Double] = vecxt.all./(a)(y)
+      inline def /(y: Matrix[Double]): Matrix[Double] = vecxt.all./:/(a)(y)
       @targetName("rhs/")
       inline def /(y: Double): Matrix[Double] = Matrix[Double](vecxt.arrays./(a.raw)(y), a.shape)
 
