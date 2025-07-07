@@ -20,7 +20,7 @@ object Config {
   val scalaVersion = "3.7.0"
   val oslib =  ivy"com.lihaoyi::os-lib:0.11.3"
   val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
-  val vecxt = ivy"io.github.quafadas::vecxt::0.0.29-DIRTY2920174"
+  val vecxt = ivy"io.github.quafadas::vecxt::0.0.31"
 
 }
 
