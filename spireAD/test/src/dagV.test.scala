@@ -15,7 +15,9 @@ import vecxt.all.printMat
 import vecxt.all.printArr
 import cats.syntax.show.toShow
 import vecxt.all.row
+import vecxt.MatrixInstance.apply
 import vecxt.matrix.Matrix.apply
+import vecxt.all.mapRows
 
 class DAGVSuite extends FunSuite:
 
@@ -399,7 +401,7 @@ class DAGVSuite extends FunSuite:
 
   }
 
-  test("Scalar division".only) {
+  test("Scalar division") {
 
     given td: TejVGraph[Double] = TejVGraph[Double]()
 
@@ -479,5 +481,112 @@ class DAGVSuite extends FunSuite:
     )
 
   }
+  test("Row reductions - normalise".only) {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = vecxt.all.Matrix.fromRows(
+      Array(1.0, 2.0, 3.0),
+      Array(5.0, 6.0, 7.0),
+      Array(9.0, 10.0, 11.0)
+    )
+    val tej = TejV(arr)
+
+    val summed = tej.normaliseRows
+    val mat = summed.value
+    assertEqualsDouble(mat(0, 0), 1.0 / 6.0, 0.000001)
+    assertEqualsDouble(mat(1, 1),  6 / 18.0 , 0.000001)
+    assertEqualsDouble(mat(2, 2), 11.0 / 30.0, 0.000001)
+
+    given jd: JetDim = JetDim(9)
+    val jetArr = arr.raw.jetArr
+
+    val jetMat = Matrix[Jet[Double]](
+      arr.shape,
+      jetArr
+    )
+
+    val jetCalc = jetMat.mapRowsToScalar(
+      row => row.foldLeft(Jet(1.0))((acc, j) => acc * j)
+    )
+
+    // println(jetCalc.show)
+
+    val out = summed.backward(Set(tej))
+    os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/") / "graph.viz", tejV.dag.toGraphviz)
+
+    val tejGrad = out.head.grad
+
+    // println(tejGrad.show)
+
+    assertEqualsDouble(
+      tejGrad.raw(0),
+      6.0,
+      0.0000001
+    )
+
+    assertEqualsDouble(
+      tejGrad.raw.last,
+      90.0,
+      0.0000001
+    )
+
+  }
+
+
+  // I don't think this can ever work.
+  // Because if you do something like normalisation - e.g. row /  row.sum , the row.sum _is not an indepant constant_. Normalisation needs the jacobian gradient.
+  // test("map rows".only) {
+  //   import vecxt.BoundsCheck.DoBoundsCheck.yes
+  //   given tejV: TejVGraph[Double] = TejVGraph[Double]()
+  //   val arr = vecxt.all.Matrix.fromRows(
+  //     Array(1.0, 2.0, 3.0),
+  //     Array(5.0, 6.0, 7.0),
+  //     Array(9.0, 10.0, 11.0)
+  //   )
+  //   val tej = TejV(arr)
+
+  //   val normalised = tej.mapRows(row => row.div(row.sum) )
+  //   val out = normalised.sum
+  //   val mat = normalised.value
+  //   assertEqualsDouble(mat.raw(0), 0.16666667, 0.000001)
+
+  //   given jd: JetDim = JetDim(9)
+  //   val jetArr = arr.raw.jetArr
+
+  //   val jetMat = Matrix[Jet[Double]](
+  //     arr.shape,
+  //     jetArr
+  //   )
+
+  //   val jetCalc = jetMat.mapRows{row =>
+  //     row.map(j => j / row.foldLeft(Jet(0.0))((acc, j) => acc + j))
+  //   }
+
+
+
+
+  //   val backward = out.backward(Set(tej))
+
+  //   println(os.pwd)
+  //   os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/") / "graph.viz", tejV.dag.toGraphviz)
+  //   println(mat.printMat)
+
+  //   println(jetCalc.show)
+
+  //   val tejGrad = backward.head.grad
+
+  //   // println(tejGrad.show)
+
+  //   for i <- 0 until tejGrad.raw.length do
+  //     assertEqualsDouble(
+  //       tejGrad.raw(i),
+  //       2.0,
+  //       0.0000001
+  //     )
+  //   end for
+
+
+  // }
+
 
 end DAGVSuite
