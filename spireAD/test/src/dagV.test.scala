@@ -434,7 +434,7 @@ class DAGVSuite extends FunSuite:
     assertEqualsDouble(gradJ.scalar, -2.5, 0.000001)
   }
 
-  test("Scalar clampMin".only) {
+  test("Scalar clampMin") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given td: TejVGraph[Double] = TejVGraph[Double]()
         
