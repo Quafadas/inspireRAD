@@ -23,6 +23,7 @@ class DAGVSuite extends FunSuite:
 
   import VectorisedTrig.vta
   import VectorisedField.elementwiseArrayDoubleField
+  import Reductions.vtm
 
   given Show[Matrix[Double]] with
     def show(arr: Matrix[Double]): String = vecxt.all.printMat(arr)
@@ -70,7 +71,7 @@ class DAGVSuite extends FunSuite:
       )
     end for
 
-    val out = fct.backward(Set(tej))
+    val out: Set[VNode[Array, Double]] = fct.backward(Set(tej))
 
     assert(out.size == 1)
     // println(out.head.grad.mkString("\n"))
@@ -103,10 +104,10 @@ class DAGVSuite extends FunSuite:
       )
     end for
 
-    val out = tejPlus.backward(Set(tej1, tej2))
+    val out: Set[VNode[Array, Double]] = tejPlus.backward[Array](Set(tej1, tej2))
 
     assert(out.size == 2)
-    val grad = out.head.grad + out.last.grad
+    val grad: Array[Double] = out.head.grad + out.last.grad
 
     for i <- 0 until arr1.length do
       assertEquals(
@@ -133,7 +134,7 @@ class DAGVSuite extends FunSuite:
       )
     end for
 
-    val out = tejPlus.backward(Set(tej1, tej2))
+    val out = tejPlus.backward[Array](Set(tej1, tej2))
 
     assert(out.size == 2)
     val grad = out.head.grad + out.last.grad
@@ -165,7 +166,7 @@ class DAGVSuite extends FunSuite:
       )
     end for
 
-    val out = tejPlus.backward(Set(tej1, tej2))
+    val out = tejPlus.backward[Array](Set(tej1, tej2))
 
     assert(out.size == 2)
     val grad = out.head.grad + out.last.grad
@@ -212,7 +213,7 @@ class DAGVSuite extends FunSuite:
       )
     end for
 
-    val out = tejPlus.backward(Set(tej1, tej2))
+    val out = tejPlus.backward[Array](Set(tej1, tej2))
 
     assert(out.size == 2)
     val grad = out.head.grad + out.last.grad
@@ -256,7 +257,7 @@ class DAGVSuite extends FunSuite:
 
     val jetCalc = jetArr.foldLeft(Jet(0.0))((acc, j) => acc + j)
 
-    val out = summed.backward(Set(tej))
+    val out = summed.backward[Array](Set(tej))
     val grad = out.tail.foldLeft(out.head.grad)((acc, j) => acc + j.grad)
 
     for i <- 0 until jetArr.length do
@@ -281,7 +282,7 @@ class DAGVSuite extends FunSuite:
 
     val jetCalc = jetArr.foldLeft(Jet(1.0))((acc, j) => acc * j)
 
-    val out = summed.backward(Set(tej))
+    val out = summed.backward[Array](Set(tej))
     val grad = out.tail.foldLeft(out.head.grad)((acc, j) => acc + j.grad)
 
     for i <- 0 until jetArr.length do
@@ -307,7 +308,7 @@ class DAGVSuite extends FunSuite:
 
     val jetCalc = jetArr.foldLeft(Jet(0.0))((acc, j) => acc + j) / arr.length
 
-    val out = summed.backward(Set(tej))
+    val out = summed.backward[Array](Set(tej))
     val grad = out.tail.foldLeft(out.head.grad)((acc, j) => acc + j.grad)
     for i <- 0 until jetArr.length do
       assertEqualsDouble(
@@ -346,7 +347,7 @@ class DAGVSuite extends FunSuite:
     //   row => row.foldLeft(Jet(0.0))((acc, j) => acc + j)
     // )
 
-    val out = summed.backward(Set(tej))
+    val out = summed.backward[Matrix](Set(tej))
 
     val tejGrad = out.head.grad
 
@@ -387,7 +388,7 @@ class DAGVSuite extends FunSuite:
     //   row => row.foldLeft(Jet(0.0))((acc, j) => acc + j)
     // )
 
-    val out = summed.backward(Set(tej))
+    val out = summed.backward[Matrix](Set(tej))
 
     val tejGrad = out.head.grad
 
@@ -415,7 +416,7 @@ class DAGVSuite extends FunSuite:
     assertEqualsDouble(res.value(2), 1.5, 0.000001)
     assertEqualsDouble(res.value(3), 2.0, 0.000001)
 
-    val out = res.backward(Set(arr ))
+    val out = res.backward[Array](Set(arr ))
 
     val tejGrad = out.head.grad
 
@@ -429,7 +430,7 @@ class DAGVSuite extends FunSuite:
 
     td.dag.resetGrads
 
-    val gradJ = res.backward(Set(j)).head.grad
+    val gradJ = res.backward[Scalar](Set(j)).head.grad
     assertEqualsDouble(gradJ.scalar, -2.5, 0.000001)
   }
 
@@ -462,7 +463,7 @@ class DAGVSuite extends FunSuite:
 
     // println(jetCalc.show)
 
-    val out = summed.backward(Set(tej))
+    val out = summed.backward[Matrix](Set(tej))
 
     val tejGrad = out.head.grad
 
@@ -481,52 +482,38 @@ class DAGVSuite extends FunSuite:
     )
 
   }
-  test("Row reductions - normalise".only) {
+  test("Row reductions - normalise") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
     val arr = vecxt.all.Matrix.fromRows(
-      Array(1.0, 2.0, 3.0),
-      Array(5.0, 6.0, 7.0),
-      Array(9.0, 10.0, 11.0)
+      Array(1.0, 2.0, 3.0)
+
     )
-    val tej = TejV(arr)
+
+    val tej = TejV(arr).div(TejV(Scalar(10.0)))
 
     val summed = tej.normaliseRows
     val mat = summed.value
     assertEqualsDouble(mat(0, 0), 1.0 / 6.0, 0.000001)
-    assertEqualsDouble(mat(1, 1),  6 / 18.0 , 0.000001)
-    assertEqualsDouble(mat(2, 2), 11.0 / 30.0, 0.000001)
-
-    given jd: JetDim = JetDim(9)
-    val jetArr = arr.raw.jetArr
-
-    val jetMat = Matrix[Jet[Double]](
-      arr.shape,
-      jetArr
-    )
-
-    val jetCalc = jetMat.mapRowsToScalar(
-      row => row.foldLeft(Jet(1.0))((acc, j) => acc * j)
-    )
-
-    // println(jetCalc.show)
-
-    val out = summed.backward(Set(tej))
-    os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/") / "graph.viz", tejV.dag.toGraphviz)
+    val out = summed.backward[Matrix](Set(tej))
+    // os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.viz", tejV.dag.toGraphviz)
 
     val tejGrad = out.head.grad
-
-    // println(tejGrad.show)
-
     assertEqualsDouble(
       tejGrad.raw(0),
-      6.0,
+      0.83333333,
       0.0000001
     )
 
     assertEqualsDouble(
-      tejGrad.raw.last,
-      90.0,
+      tejGrad.raw(1),
+      0.6666666,
+      0.0000001
+    )
+
+    assertEqualsDouble(
+      tejGrad.raw(2),
+      0.5,
       0.0000001
     )
 
@@ -589,7 +576,7 @@ class DAGVSuite extends FunSuite:
   // }
 
 
-  test("select elements".only) {
+  test("select elements") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
     val mat = Matrix.fromRows(
@@ -602,14 +589,16 @@ class DAGVSuite extends FunSuite:
     val indices = NArray((0, 0), (1, 1), (0, 1), (1, 3))
 
     val matGrad = Matrix.fromRows(
-      Array(1.0, 2.0, 0, 0),
-      Array(0, 6.0, 0, 8.0),
+      Array(1.0, 1.0, 0, 0),
+      Array(0, 1.0, 0, 1.0),
     )
 
     val graph = tej(indices)
 
-    val gradBack = graph.backward(Set(tej))
+    val gradBack = graph.backward[Matrix](Set(tej))
     val gradCalculated = gradBack.head.grad
+
+    println(gradCalculated.printMat)
 
     for i <- 0 until mat.shape(0) do
       for j <- 0 until mat.shape(1) do

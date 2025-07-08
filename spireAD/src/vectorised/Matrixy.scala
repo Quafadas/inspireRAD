@@ -122,7 +122,7 @@ trait Matrixy[F[_], A]:
     def matmul(b: F[A]): F[A]
     inline def @@(b: F[A]): F[A] = matmul(b)
 
-    def mapRows(f: NArray[A] => NArray[A]): F[A]
+    def mapRows(f: Array[A] => Array[A]): F[A]
 
     def mapRowsToScalar(f: NArray[A] => A): NArray[A]
 

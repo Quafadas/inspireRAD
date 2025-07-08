@@ -2,7 +2,7 @@ package io.github.quafadas.spireAD
 
 import scala.math.*
 import scala.reflect.*
-
+import scala.NamedTuple.*
 import spire.algebra.*
 import scala.util.chaining.*
 import scala.specialized as sp
@@ -88,7 +88,7 @@ case class TejVGraph[T: ClassTag]():
       vf: VectorisedField[F, T],
       tr: VectorisedTrig[F, T],
       f: Field[T],
-      rd: Reductions[F, T, 1],
+      rd: Reductions[F, T, InferDimension[F]],
       ct: ClassTag[T],
       n: Numeric[T],
       sh: Show[F[T]]
@@ -162,6 +162,7 @@ case class TejVGraph[T: ClassTag]():
       gfm: VectorisedField[Matrix, T],
       gfa: VectorisedField[Array, T],
       gta: VectorisedTrig[Matrix, T],
+      red: Reductions[Array, T, 1],
       sh: Show[Matrix[T]],
       ct: ClassTag[T],
       n: Numeric[T],
@@ -281,7 +282,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       fi: Field[T],
       ct: ClassTag[T],
       n: Numeric[T],
-      red: Reductions[F, T, 1]
+      red: Reductions[F, T, InferDimension[F]]
   ): TejV[F, T] =
     val newVal = f./(lhs.value)(rhs.value.scalar)
     new TejV(newVal).tap(td.scalar(lhs.id, rhs.id, _, BinaryOps.Div, rhs.value.scalar))
@@ -307,6 +308,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       vf: VectorisedField[Array, T],
       vf2: VectorisedField[Matrix, T],
       vt2: VectorisedTrig[Matrix, T],
+      red: Reductions[Array, T, 1],
       n: Numeric[T],
       f: Field[T],
       sh: Show[Matrix[T]],
@@ -350,7 +352,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     TejV.createDontAddToGraph(Scalar(value.mean)).tap(td.reduction(_, lhs, ReductionOps.Mean, lhs.id))
   end mean
 
-  def backward[G[_]](wrt: Set[TejV[G, T]])(using td: TejVGraph[T], ct: ClassTag[T]) =
+  def backward[G[_]](wrt: Set[TejV[?, T]])(using td: TejVGraph[T], ct: ClassTag[T]): Set[VNode[G, T]] =
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
@@ -372,6 +374,41 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     val ids = wrt.map(_.id)
     td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
   end backward
+
+  def backward2[N <: Tuple, V <: Tuple ](wrt: NamedTuple[N, V])(using td: TejVGraph[T], ct: ClassTag[T]) =
+    val graph = td.dag.toposort
+    val reversed = graph.reverse
+
+    reversed.head.setGradOne
+
+    // This _may_ prevent a bunch of uncessary work. need to check.
+    // val minIndex = reversed.zipWithIndex.collect {
+    //   case (node, index) if wrt.exists(_.id == node.id) => index
+    // }.min
+
+    // println(s"minIndex: $minIndex")
+
+    println("---> Backward pass for TejV")
+
+    reversed.foreach { node =>
+      println("node: " + node.graphShow)
+      node.backward
+    }
+    val ids = wrt.toList.asInstanceOf[List[TejV[?, T]]].map(_.id)
+
+    var nt: Tuple = EmptyTuple
+
+    val res = ids.map { i =>
+      val n = td.dag.getNode(i)
+      nt = nt :* n.grad
+    }
+
+    nt.withNames[N].asInstanceOf[NamedTuple[N, V]].tap { _ =>
+      println("Backward pass complete")
+    }
+
+
+  end backward2
 
   def @@(rhs: TejV[Matrix, T])(using
       f: VectorisedField[Matrix, T],

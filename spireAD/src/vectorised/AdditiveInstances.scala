@@ -385,6 +385,7 @@ trait VectorisedField[F[_], @sp(Double) A]:
     def productExceptSelf(): F[A]
     def numel: Int
 
+    // def +=(x: F[A]): F[A]
     def +(x: F[A]): F[A]
     @targetName("rhs+")
     def +(x: A): F[A]

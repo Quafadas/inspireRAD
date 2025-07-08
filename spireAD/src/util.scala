@@ -20,6 +20,12 @@ extension [T: Numeric: Field](a: NArray[T])
     a.zipWithIndex.map((v, i) => Jet(v.toDouble) + Jet.h[Double](i + idxStart))
   end jetArr
 
+  inline def jetArrNoGrad(using JetDim, ClassTag[T]): NArray[Jet[T]] =
+    import spire.implicits.DoubleAlgebra
+    import spire.implicits.ArrayNormedVectorSpace
+    a.map(Jet(_))
+  end jetArrNoGrad
+
   inline def tejArr(using
       inline jd: TejDim[Double],
       ct: ClassTag[Double],

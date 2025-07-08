@@ -18,7 +18,7 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
     vf: VectorisedField[F, T],
     // vf2: VectorisedField[Scalar, T],
     vt: VectorisedTrig[F, T],
-    rd: Reductions[F, T, 1],
+    rd: Reductions[F, T, InferDimension[F]],
     n: Numeric[T],
     f: Field[T],
     sh: Show[F[T]],
@@ -49,10 +49,10 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
       case BinaryOps.Div =>
 
         leftN.grad += vf./(grad)(scalar)
-        val argy = vf1.*(leftN.value)(grad).sum
-        val simpler = f.times(scalar, f.times(scalar, f.fromInt(-1)))
-        val nearly = f.div(argy, simpler)
-        rightN.grad = rvf.+(rightN.grad)(nearly)
+        val dot = f.times(f.fromInt(-1), vf1.*(leftN.value)(grad).sum)
+        val scale = f.times(scalar, scalar)
+        val toAdd = f.div(dot, scale)
+        rightN.grad = rvf.+(rightN.grad)(toAdd)
 
 
     end match

@@ -24,11 +24,12 @@ case class SelectIndiciesNode[T](
     s"SelectIndiciesNode (id: ${thisId.toString().takeRight(4)}, first 5 indices: ${indices.take(5).mkString(", ")})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
+    val n = td.dag.getNode(depId).asInstanceOf[VNode[Matrix, T]]
     import vecxt.BoundsCheck.DoBoundsCheck.no
     val zeros = vf.zero(value1)
     indices.foreach { case (i, j) =>
       zeros(i, j) = this.grad(i, j)
     }
-    this.grad = zeros
+    n.grad += zeros
 
 end SelectIndiciesNode

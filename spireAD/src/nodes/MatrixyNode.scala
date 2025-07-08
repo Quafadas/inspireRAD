@@ -10,6 +10,7 @@ import algebra.ring.Field
 import scala.reflect.ClassTag
 import vecxt.all.mapRowsInPlace
 import vecxt.all.mapRows
+import vecxt.all.row
 
 case class MatrixyNode[T](
     op: MatrixyBinaryOps,
@@ -41,33 +42,63 @@ case class MatrixyNode[T](
 
 end MatrixyNode
 
-// case class MapRowsNode[T](
-//     op: MatrixyBinaryOps,
+// case class ExplodeNode[T](
 //     value1: Matrix[T],
 //     thisId: UUID,
-//     in: UUID,
-//     out: UUID,
 //     rowTransforms: Seq[(UUID, UUID)]
 // )(using
 //     vf: VectorisedField[Matrix, T],
-//     vfa: VectorisedField[Array, T],
+
 //     vt: VectorisedTrig[Matrix, T],
-//     maty: Matrixy[Matrix, T],
+//     // maty: Matrixy[Matrix, T],
 //     sh: Show[Matrix[T]]
 // ) extends VNode[Matrix, T](value1, thisId):
-//   val vfa1 = vfa
+
 //   override def graphShow: String =
-//     s"MapRowsNodeStart (id: ${thisId.toString().takeRight(4)})" +
-//     s"MapRowsNodeEnd (id: ${thisId.toString().takeRight(4)})"
+//     s"ExplodeNode (id: ${thisId.toString().takeRight(4)})"
 
 
 //   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-//     op match
-//       case MatrixyBinaryOps.MatMul =>
-//         val leftN = td.dag.getNode(left).asInstanceOf[MatrixyNode[T]]
-//         val rightN = td.dag.getNode(right).asInstanceOf[MatrixyNode[T]]
-//         leftN.grad = vf.+(leftN.grad)(maty.matmul(this.grad)(rightN.value.transpose))
-//         rightN.grad = vf.+(rightN.grad)(maty.matmul(rightN.value.transpose)(this.grad))
+//     val rows = for n <- rowTransforms yield
+//       td.dag.getNode(n._1).value
+
+//     println(rows)
+
+// case class AggregateNode[T](
+//     value1: Matrix[T],
+//     thisId: UUID,
+//     rowTransforms: Seq[(UUID, UUID)]
+// )(using
+//     vf: VectorisedField[Matrix, T],
+
+//     vt: VectorisedTrig[Matrix, T],
+//     // maty: Matrixy[Matrix, T],
+//     sh: Show[Matrix[T]],
+//     ct: ClassTag[T]
+// ) extends VNode[Matrix, T](value1, thisId):
+
+//   override def graphShow: String =
+//     s"AggregateNode (id: ${thisId.toString().takeRight(4)})"
+
+
+//   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
+//     println("backward pass for AggregateNode")
+//     for (n, i) <- rowTransforms.zipWithIndex yield
+//       val newArr = grad.asInstanceOf[Matrix[T]].row(i)
+//       val newNode = td.dag.getNode(n._2)
+
+//       // println(newArr.mkString("[", ", ", "]"))
+//       // OMG ths is terrible....
+//       for (j <- 0 until newArr.length) do
+//         newNode.grad.asInstanceOf[Array[T]](j) = newArr(j)
+
+//       println(s"newNode: ${newNode.graphShow}")
+//       // println(newNode.grad.mkString("[", ", ", "]"))
+//       // println(s"AggregateNode backward: ${thisId.to
+
+
+//     // println(rows)
+
 
 
 

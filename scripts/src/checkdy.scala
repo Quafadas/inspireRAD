@@ -11,6 +11,7 @@ import spire.implicits.*
 import _root_.algebra.ring.Field
 import spire.compat.numeric
 import spire.math.Jet
+import vecxt.all.shape
 
 given Show[Matrix[Double]] with
   def show(matrix: Matrix[Double]): String =
@@ -35,6 +36,15 @@ given jd2: Show[Matrix[Jet[Double]]] = new Show[Matrix[Jet[Double]]]:
         .mkString(" | ")
     val footer = ("-" * (rows.head.length))
     (rows :+ footer).mkString("\n")
+  end show
+
+given jd3: Show[Array[Jet[Double]]] = new Show[Array[Jet[Double]]]:
+  def show(arr: Array[Jet[Double]]): String =
+    arr
+      .map(s => s.toString().reverse.padTo(10, ' ').reverse)
+      .mkString("[", "\n", "]")
+
+
   end show
 
 given Show[Array[Double]] with
@@ -69,6 +79,8 @@ end given
     // println(logits.show)
     val counts = logits.exp
     val probsNN = counts.mapRows(row => row / row.sum)
+    println("normaliseRows(probsNN).show")
+    println(probsNN.show)
     val range = (0 until targets.length).toArray.zip(targets)
     val ranged = mOps.apply(probsNN)(range)
     -Scalar(ranged.mapRowsToScalar(_.sum).log.mean)
@@ -82,6 +94,7 @@ end given
   )
 
   val mat2 = Matrix.fromRows(
+      Array(1.0, 2.0, 3.0, 4.0) / 10,
       Array(1.0, 2.0, 3.0, 4.0) / 10
     )
 
@@ -119,7 +132,8 @@ end given
         Array(1.0, 2.0, 3.0, 4.0).jetArr(12)
       ),
       Matrix.fromRows(
-        (Array(1.0, 2.0, 3.0, 4.0) / 10).jetArr
+        (Array(1.0, 2.0, 3.0, 4.0) / 10).jetArrNoGrad,
+        (Array(1.0, 2.0, 3.0, 4.0) / 10).jetArrNoGrad
       ),
       Array(1, 0)
     )
@@ -129,6 +143,26 @@ end given
     println("-----")
   }
 
+  given jd: JetDim = JetDim(16)
+
+  println("-----")
+  val part1 = Matrix.fromRows(
+    (Array(1.0, 2.0, 3.0) ).jetArr(0),
+    (Array(4.0, 5.0, 6.0) ).jetArr(3),
+    (Array(4.0, 5.0, 6.0) ).jetArr(6),
+  )
+
+  val newMat = part1.mapRows{row =>
+    val sum = row.foldLeft(Jet(0.0))(_ + _)
+    row.map(_ / sum)
+  }
+
+  println("check sum of first row:")
+  println(newMat.row(0).foldLeft(Jet(0.0))(_ + _))
+
+  println("newMat:")
+  println(newMat.show)
+
   given tvg : TejVGraph[Double] = TejVGraph[Double]()
 
   println("instantiate")
@@ -136,24 +170,25 @@ end given
   val tv1 = TejV(mat1)
   val tv2 = TejV(mat2)
 
-  val logits = tv2 @@ tv1
-  println("logits")
-  val counts = logits.exp
-  println("counts")
-  val probsNN = counts.mapRows{row =>
-    val s = row.sum
-    row.div(s.value)
-  }
-  println("probsNN")
-  val range = (0 until targets.length).toArray.zip(targets)
-  println("range")
-  val ranged = probsNN(range)
-  println("ranged")
-  val loss = ranged.mapRowsToScalar(ReductionOps.Sum)
-  println("mapped to scalars")
-  loss.log.mean
+  // val logits = tv2 @@ tv1
+  // println("logits")
+  // val counts = logits.exp
+  // println("counts")
+  // println("counts.shape: " + counts.value.shape)
+  // val probsNN = counts.mapRows{row =>
+  //   val s = row.sum
+  //   row.div(s)
+  // }
+  // println("probsNN")
+  // val range = (0 until targets.length).toArray.zip(targets)
+  // println("range")
+  // val ranged = probsNN(range)
+  // println("ranged")
+  // val loss = ranged.mapRowsToScalar(ReductionOps.Sum)
+  // println("mapped to scalars")
+  // loss.log.mean
 
-  println("loss")
+  // println("loss")
   // // now the Tej
   // given tejDim: TejDim[Double] = TejDim()
 
