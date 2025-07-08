@@ -63,7 +63,7 @@ jobs:
         run: ./mill spireAD.${{ matrix.project }}.fastLinkJS
 
       - name: Test
-        run: ./mill spireAD.${{ matrix.project }}.test
+        run: ./mill spireAD.test.${{ matrix.project }}
 
   publish:
     if: github.repository == 'Quafadas/spire_AD' && contains(github.ref, 'refs/tags/')
