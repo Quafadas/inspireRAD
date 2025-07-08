@@ -18,7 +18,7 @@ import spire.compat.numeric
 import cats.kernel.Order
 import _root_.algebra.ring.AdditiveCommutativeMonoid
 
-final case class Scalar[T: Numeric](scalar: T)
+final case class Scalar[T](scalar: T)
 object VectorisedField:
   given jetNumeric(using jd: JetDim): Numeric[Jet[Double]] = new Numeric[Jet[Double]]:
 
@@ -67,6 +67,13 @@ object VectorisedField:
     override def toDouble(x: Tej[Double]): Double = ???
 
   def scalarJetField(using jd: JetDim): VectorisedField[Scalar, Jet[Double]] = new VectorisedField[Scalar, Jet[Double]]:
+    extension (a: Scalar[Jet[Double]]) 
+      override def >(y: Jet[Double]): Scalar[Boolean] = Scalar(a.scalar.real > y.real)
+      override def clampMin(min: Jet[Double]): Scalar[Jet[Double]] = Scalar(Jet(Math.max(a.scalar.real, min.real)))
+
+      override def *:*(y: Scalar[Boolean]): Scalar[Jet[Double]] =
+        if (y.scalar) a else Scalar(Jet.zero[Double])
+
     extension (a: Double)
       override def const: Jet[Double] = Jet(a)
       override def /(b: Scalar[Jet[Double]]): Scalar[Jet[Double]] = Scalar(Jet(a) / b.scalar)
@@ -104,6 +111,12 @@ object VectorisedField:
       override def /(b: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(Tej(a) / b.scalar)
     end extension
 
+    extension (a: Scalar[Tej[Double]]) 
+      override def >(y: Tej[Double]): Scalar[Boolean] = Scalar(a.scalar.value > y.value)
+      override def clampMin(min: Tej[Double]): Scalar[Tej[Double]] = Scalar(Tej(Math.max(a.scalar.value, min.value)))
+      override def *:*(y: Scalar[Boolean]): Scalar[Tej[Double]] =
+        if (y.scalar) a else Scalar(Tej.zero[Double])
+
     override def fromDouble(x: Double): Tej[Double] = Tej(x)
 
     override def zero(x: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(Tej.zero[Double])
@@ -132,6 +145,14 @@ object VectorisedField:
 
   def elementwiseMatrixJetField(using jd: JetDim): VectorisedField[Matrix, Jet[Double]] =
     new VectorisedField[Matrix, Jet[Double]]:
+      extension (a: Matrix[Jet[Double]]) 
+        override def >(y: Jet[Double]): Matrix[Boolean] = Matrix(a.shape, a.raw.zipWithIndex.map { case (v, i) => v.real > y.real })
+        override def clampMin(min: Jet[Double]): Matrix[Jet[Double]] =
+          Matrix(a.shape, a.raw.map(tej => Jet(Math.max(tej.real, min.real))))
+
+        override def *:*(y: Matrix[Boolean]): Matrix[Jet[Double]] = ???
+          
+
       def fromDouble(x: Double): Jet[Double] = Jet(x)
       def zero(x: Matrix[Jet[Double]]): Matrix[Jet[Double]] =
         Matrix[Jet[Double]](x.shape, Array.fill(x.raw.length)(0.0).jetArr)
@@ -179,6 +200,13 @@ object VectorisedField:
 
   def elementwiseArrayJetField(using jd: JetDim): VectorisedField[NArray, Jet[Double]] =
     new VectorisedField[NArray, Jet[Double]]:
+
+      extension (a: NArray[Jet[Double]]) 
+        override def >(y: Jet[Double]): NArray[Boolean] = a.map(_.real > y.real)
+        override def clampMin(min: Jet[Double]): NArray[Jet[Double]] = a.map(tej => Jet(Math.max(tej.real, min.real)))
+        override def *:*(y: NArray[Boolean]): NArray[Jet[Double]] =
+          a.zip(y).map { case (tej, bool) => if (bool) tej else Jet.zero[Double] }
+
       def fromDouble(x: Double): Jet[Double] = Jet(x)
       def zero(x: NArray[Jet[Double]]): NArray[Jet[Double]] = NArray.fill[Jet[Double]](x.length)(Jet.zero[Double])
       def one(x: NArray[Jet[Double]])(using ClassTag[Jet[Double]]): NArray[Jet[Double]] =
@@ -213,6 +241,14 @@ object VectorisedField:
 
   def elementwiseArrayJetField(using jd: TejDim[Double]): VectorisedField[NArray, Tej[Double]] =
     new VectorisedField[NArray, Tej[Double]]:
+      
+
+      extension (a: Array[Tej[Double]]) 
+        override def >(y: Tej[Double]): Array[Boolean] = a.map(_.value > y.value)
+        override def clampMin(min: Tej[Double]): NArray[Tej[Double]] = a.map(tej => Tej(Math.max(tej.value, min.value)))
+        override def *:*(y: NArray[Boolean]): NArray[Tej[Double]] =
+          a.zip(y).map { case (tej, bool) => if (bool) tej else Tej.zero[Double] }
+
       def fromDouble(x: Double): Tej[Double] = Tej(x)
       def zero(x: NArray[Tej[Double]]): NArray[Tej[Double]] = NArray.fill[Tej[Double]](x.length)(Tej.zero[Double])
       def one(x: NArray[Tej[Double]])(using ClassTag[Tej[Double]]): NArray[Tej[Double]] =
@@ -246,6 +282,13 @@ object VectorisedField:
       end extension
 
   given scalarField: VectorisedField[Scalar, Double] = new VectorisedField[Scalar, Double]:
+
+    extension (a: Scalar[Double]) 
+      override def >(y: Double): Scalar[Boolean] = Scalar(a.scalar > y)
+      override def clampMin(y: Double): Scalar[Double] = Scalar(a.scalar.max(y))
+
+      override def *:*(y: Scalar[Boolean]): Scalar[Double] =
+        if (y.scalar) a else Scalar(0.0)
 
     extension (a: Double)
       override def const: Double = a
@@ -282,14 +325,18 @@ object VectorisedField:
 
   given elementwiseMatrixDoubleField: VectorisedField[Matrix, Double] = new VectorisedField[Matrix, Double]:
 
-    // extension (a: Matrix[Double]) override inline def +(x: Matrix[Double]): Matrix[Double] = ???
-    // end extension
 
-    // extension (a: Matrix[Double]) override inline def +(x: Double): Matrix[Double] = ???
-    // end extension
+    extension (a: Matrix[Double]) 
 
-    // extension (a: Matrix[Double]) override inline def -(x: Double): Matrix[Double] = ???
-    // end extension
+      override def clampMin(min: Double): Matrix[Double] = 
+        Matrix[Double](vecxt.arrays.clampMin(a.raw)(min), a.shape)
+
+      override def >(y: Double): Matrix[Boolean] = 
+        Matrix[Boolean](vecxt.arrays.>(a.raw)(y), a.shape)
+
+      override def *:*(y: Matrix[Boolean]): Matrix[Double] = 
+        vecxt.all.*:*(a)(y)
+
     def fromDouble(x: Double): Double = x
 
     def zero(x: Matrix[Double]): Matrix[Double] = Matrix.zeros[Double](x.shape)
@@ -329,6 +376,12 @@ object VectorisedField:
     end extension
 
   given elementwiseArrayDoubleField: VectorisedField[NArray, Double] = new VectorisedField[NArray, Double]:
+
+    extension (a: Array[Double]) 
+      override def >(y: Double): Array[Boolean] = vecxt.arrays.>(a)(y)
+      override def clampMin(min: Double): Array[Double] = vecxt.arrays.clampMin(a)(min)
+      override def *:*(y: Array[Boolean]): Array[Double] = vecxt.arrays.apply(a)(y)
+
     def fromDouble(x: Double): Double = x
     def zero(x: NArray[Double]): NArray[Double] = NArray.fill[Double](x.length)(0.0)
     def one(x: NArray[Double])(using ClassTag[Double]): NArray[Double] = NArray.fill[Double](x.length)(1.0)
@@ -398,6 +451,10 @@ trait VectorisedField[F[_], @sp(Double) A]:
     def /(y: F[A]): F[A]
     @targetName("rhs/")
     def /(y: A): F[A]
+
+    def >(y: A): F[Boolean]
+    def clampMin(min: A) : F[A]
+    def *:*(y: F[Boolean]): F[A]
   end extension
 end VectorisedField
 

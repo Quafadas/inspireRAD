@@ -8,7 +8,7 @@ import mill.scalajslib.api._
 
 object `package` extends RootModule with SiteModule {
 
-  override val jsSiteModule = jsSite
+  // override val jsSiteModule = jsSite
   // override def pathToImportMap = Some(PathRef(T.workspace / "importmap.json"))
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ build.Config.vecIncubatorFlag
   def scalaVersion = build.spireAD.jvm.scalaVersion
@@ -17,29 +17,29 @@ object `package` extends RootModule with SiteModule {
 
   override def scalacOptions: T[Seq[String]] = super.scalacOptions() ++ Seq("-experimental", "-language:experimental.namedTuples")
 
-  object jsSite extends SiteJSModule {
+  // object jsSite extends SiteJSModule {
 
-    override def moduleDeps = Seq(build.spireAD.js)
-    override def scalaVersion = build.Config.scalaVersion
-    override def scalaJSVersion = build.spireAD.js.scalaJSVersion
+  //   override def moduleDeps = Seq(build.spireAD.js)
+  //   override def scalaVersion = build.Config.scalaVersion
+  //   override def scalaJSVersion = build.spireAD.js.scalaJSVersion
 
-    override def scalaJsCompilerVersion: String = build.Config.scalaVersion
+  //   override def scalaJsCompilerVersion: String = build.Config.scalaVersion
 
 
-    // override def allScalacOptions: T[Seq[String]] = super.allScalacOptions`() ++ Seq("-experimental", "-language:experimental.namedTuples")
-    override def scalacOptions: T[Seq[String]] = super.scalacOptions() ++ Seq("-experimental", "-language:experimental.namedTuples")
-    override def moduleKind = ModuleKind.ESModule
-    // override def ivyDeps = super.ivyDeps() ++ Agg(
-    //   ivy"org.scala-js::scalajs-dom::2.8.0",
-    //   ivy"com.lihaoyi::scalatags::0.13.1",
-    //   ivy"com.raquo::laminar::17.0.0",
-    //   ivy"com.lihaoyi::upickle::4.0.2"
-    // )
+  //   // override def allScalacOptions: T[Seq[String]] = super.allScalacOptions`() ++ Seq("-experimental", "-language:experimental.namedTuples")
+  //   override def scalacOptions: T[Seq[String]] = super.scalacOptions() ++ Seq("-experimental", "-language:experimental.namedTuples")
+  //   override def moduleKind = ModuleKind.ESModule
+  //   // override def ivyDeps = super.ivyDeps() ++ Agg(
+  //   //   ivy"org.scala-js::scalajs-dom::2.8.0",
+  //   //   ivy"com.lihaoyi::scalatags::0.13.1",
+  //   //   ivy"com.raquo::laminar::17.0.0",
+  //   //   ivy"com.lihaoyi::upickle::4.0.2"
+  //   // )
 
-    // object test extends ScalaJSTests with CommonTests {
-    //   def moduleKind = ModuleKind.CommonJSModule
-    // }
-  }
+  //   // object test extends ScalaJSTests with CommonTests {
+  //   //   def moduleKind = ModuleKind.CommonJSModule
+  //   // }
+  // }
 
 
 }

@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
 import algebra.ring.Field
 
 case class BinaryScalarNode[F[_], @sp(Double) T](
-    op: BinaryOps,
+    op: BinaryScalarOps,
     value1: F[T],
     thisId: UUID,
     left: UUID,
@@ -37,16 +37,16 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
     val rightN = td.dag.getNode(right)
     val rvf = rightN.vf2
     op match
-      case BinaryOps.Add =>
+      case BinaryScalarOps.Add =>
         ???
 
-      case BinaryOps.Sub =>
+      case BinaryScalarOps.Sub =>
         ???
 
-      case BinaryOps.Mul =>
+      case BinaryScalarOps.Mul =>
         ???
 
-      case BinaryOps.Div =>
+      case BinaryScalarOps.Div =>
 
         leftN.grad += vf./(grad)(scalar)
         val dot = f.times(f.fromInt(-1), vf1.*(leftN.value)(grad).sum)
@@ -54,6 +54,12 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
         val toAdd = f.div(dot, scale)
         rightN.grad = rvf.+(rightN.grad)(toAdd)
 
+      case BinaryScalarOps.ClampMin =>
+        // we assume the scalar is not a learnable parameter, but a constant
+        val theCheck = vf.>(value1)(scalar)
+        val tmp = grad *:* theCheck
+        leftN.grad = tmp
+          
 
     end match
     // println("--> backward binary" + this.toString())

@@ -82,7 +82,7 @@ case class TejVGraph[T: ClassTag]():
       lhs: UUID,
       rhs: UUID,
       tv: TejV[F, T],
-      op: BinaryOps,
+      op: BinaryScalarOps,
       scalar: T
   )(using
       vf: VectorisedField[F, T],
@@ -285,8 +285,22 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       red: Reductions[F, T, InferDimension[F]]
   ): TejV[F, T] =
     val newVal = f./(lhs.value)(rhs.value.scalar)
-    new TejV(newVal).tap(td.scalar(lhs.id, rhs.id, _, BinaryOps.Div, rhs.value.scalar))
+    new TejV(newVal).tap(td.scalar(lhs.id, rhs.id, _, BinaryScalarOps.Div, rhs.value.scalar))
   end div
+
+  def clampMin(threshold: T)(using
+      f: VectorisedField[F, T],
+      t: VectorisedTrig[F, T],
+      td: TejVGraph[T],
+      sh: Show[F[T]],
+      fi: Field[T],
+      ct: ClassTag[T],
+      red: Reductions[F, T, InferDimension[F]],
+      n: Numeric[T]
+  ): TejV[F, T] =    
+    val newVal = f.clampMin(lhs.value)(threshold)
+    new TejV(newVal).tap(td.scalar(lhs.id, lhs.id, _, BinaryScalarOps.ClampMin, threshold))
+  end clampMin
 
   def sum(using
       td: TejVGraph[T],

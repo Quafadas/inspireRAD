@@ -30,14 +30,14 @@ object `package` extends RootModule {
 
   }
 
-  object js extends SharedModule with ScalaJSModule with build.PublishModule {
-    def scalaJSVersion = build.Config.scalaJs
-    override def ivyDeps = super.ivyDeps() ++
-      Agg(
-        ivy"org.scala-js::scalajs-dom::2.8.0",
-        ivy"org.scala-js::scalajs-java-securerandom::1.0.0".withDottyCompat(scalaVersion())
-      )
-  }
+  // object js extends SharedModule with ScalaJSModule with build.PublishModule {
+  //   def scalaJSVersion = build.Config.scalaJs
+  //   override def ivyDeps = super.ivyDeps() ++
+  //     Agg(
+  //       ivy"org.scala-js::scalajs-dom::2.8.0",
+  //       ivy"org.scala-js::scalajs-java-securerandom::1.0.0".withDottyCompat(scalaVersion())
+  //     )
+  // }
 
    object test extends Module {
     // object js extends SharedTest with build.CommonJS with TestScalaJSModule {

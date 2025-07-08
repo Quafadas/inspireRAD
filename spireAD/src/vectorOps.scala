@@ -8,6 +8,10 @@ enum BinaryOps:
   case Add, Sub, Mul, Div
 end BinaryOps
 
+enum BinaryScalarOps:
+  case Add, Sub, Mul, Div, ClampMin
+end BinaryScalarOps
+
 enum ReductionOps:
   case Sum, Product, Mean
 end ReductionOps
