@@ -434,6 +434,49 @@ class DAGVSuite extends FunSuite:
     assertEqualsDouble(gradJ.scalar, -2.5, 0.000001)
   }
 
+  test("Scalar clampMin".only) {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given td: TejVGraph[Double] = TejVGraph[Double]()
+        
+    val arr =
+      Matrix.fromRows(
+        Array(-1.0, 2.0, -9.0, 4.0),
+        Array(1.5, -2.0, 3.0, -4.0),
+      )
+    
+    val tej = TejV(arr)
+    val res = tej.clampMin(0.0)
+
+    val resM = Matrix(
+      arr.raw.clampMin(0.0),
+      arr.shape
+    )
+    val grad = Matrix.fromRows(      
+        Array(0.0, 1.0, 0.0, 1.0),
+        Array(1.0, 0.0, 1.0, 0.0)     
+    )
+
+    val out = res.backward[Matrix](Set(tej))
+
+    val tejGrad = out.head.grad    
+
+    for i <- 0 until arr.rows do
+      for j <- 0 until arr.cols do        
+          assertEqualsDouble(
+            res.value(i, j),
+            resM(i, j),
+            0.0000001
+          )
+          assertEqualsDouble(
+            tejGrad(i, j),
+            grad(i, j),
+            0.0000001
+          )
+        
+      end for      
+    end for
+  }
+
   test("Row reductions - product") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
