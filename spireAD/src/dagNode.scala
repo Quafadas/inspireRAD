@@ -121,8 +121,8 @@ case class TejOpBinary[@sp(Float, Double) T: Field](
 end TejOpBinary
 
 def graphShow(adNode: AdNode[?]): String = adNode match
-  case DebugNode(msg) => msg
-  case TejNode(tej)   => tej.toString
+  case DebugNode(msg)              => msg
+  case TejNode(tej)                => tej.toString
   case TejOpUrnary(op, value, dep) =>
     s"$op \n $value \n (_id: ${(value.nodeId.toString().takeRight(4))})"
   case TejOpBinary(op, value, left, right) =>

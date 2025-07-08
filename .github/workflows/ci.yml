@@ -30,7 +30,7 @@ jobs:
         os: [ubuntu-latest]
         scala: [3]
         java: [temurin@17]
-        project: [js, jvm]
+        project: [jvm]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:

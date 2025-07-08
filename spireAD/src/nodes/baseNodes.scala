@@ -29,9 +29,8 @@ abstract class VNode[F[_], T](forZeroVal: F[T], id: UUID)(using
     grad = vf.allOnes(forZeroVal)
   end setGradOne
   def graphShow: String
-  def setGradZero(using ct: ClassTag[T]): Unit = {
+  def setGradZero(using ct: ClassTag[T]): Unit =
     grad = vf.zero(forZeroVal)
-  }
 end VNode
 
 case class VConstNode[F[_], T](value1: F[T], idIn: UUID)(using

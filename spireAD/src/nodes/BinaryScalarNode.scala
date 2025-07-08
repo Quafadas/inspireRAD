@@ -31,7 +31,6 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
   override def graphShow: String =
     s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
 
-
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val leftN = td.dag.getNode(left).asInstanceOf[VNode[F, T]]
     val rightN = td.dag.getNode(right)
@@ -59,7 +58,6 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
         val theCheck = vf.>(value1)(scalar)
         val tmp = grad *:* theCheck
         leftN.grad = tmp
-          
 
     end match
     // println("--> backward binary" + this.toString())
@@ -67,4 +65,4 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
     // println("Update Right: " + rightN)
     // println("<--- end backward this node")
   end backward
-
+end BinaryScalarNode

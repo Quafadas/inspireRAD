@@ -57,7 +57,6 @@ end MatrixyNode
 //   override def graphShow: String =
 //     s"ExplodeNode (id: ${thisId.toString().takeRight(4)})"
 
-
 //   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
 //     val rows = for n <- rowTransforms yield
 //       td.dag.getNode(n._1).value
@@ -80,7 +79,6 @@ end MatrixyNode
 //   override def graphShow: String =
 //     s"AggregateNode (id: ${thisId.toString().takeRight(4)})"
 
-
 //   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
 //     println("backward pass for AggregateNode")
 //     for (n, i) <- rowTransforms.zipWithIndex yield
@@ -96,11 +94,7 @@ end MatrixyNode
 //       // println(newNode.grad.mkString("[", ", ", "]"))
 //       // println(s"AggregateNode backward: ${thisId.to
 
-
 //     // println(rows)
-
-
-
 
 case class RowReductionNode[T](
     op: ReductionOps,
@@ -112,7 +106,6 @@ case class RowReductionNode[T](
     gfa: VectorisedField[Array, T],
     gft: VectorisedTrig[Array, T],
     svf: Field[T],
-
     shF: Show[Array[T]],
     shG: Show[Matrix[T]],
     ct: ClassTag[T]
@@ -137,24 +130,29 @@ case class RowReductionNode[T](
     val incomingGrad = grad.asInstanceOf[Array[T]]
     op match
       case ReductionOps.Sum =>
-        n.grad.asInstanceOf[Matrix[T]].mapRowsInPlace(row =>
-          val newRow = gfa.+(row)(incomingGrad(i))
-          i += 1
-          newRow
-        )
+        n.grad
+          .asInstanceOf[Matrix[T]]
+          .mapRowsInPlace(row =>
+            val newRow = gfa.+(row)(incomingGrad(i))
+            i += 1
+            newRow
+          )
 
       case ReductionOps.Product =>
         n.grad = n.value.mapRows(row =>
-                  val newRow = row.productExceptSelf() * incomingGrad(i)
-                  i += 1
-                  newRow
-                )
-      case ReductionOps.Mean =>
-        n.grad.asInstanceOf[Matrix[T]].mapRowsInPlace(row =>
-          val broadCast = svf.div(incomingGrad(i), svf.fromInt( row.length))
-          val newRow = gfa.+(row)(broadCast)
+          val newRow = row.productExceptSelf() * incomingGrad(i)
           i += 1
           newRow
         )
+      case ReductionOps.Mean =>
+        n.grad
+          .asInstanceOf[Matrix[T]]
+          .mapRowsInPlace(row =>
+            val broadCast = svf.div(incomingGrad(i), svf.fromInt(row.length))
+            val newRow = gfa.+(row)(broadCast)
+            i += 1
+            newRow
+          )
     end match
+  end backward
 end RowReductionNode

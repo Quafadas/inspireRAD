@@ -18,7 +18,7 @@ inline def anyToDouble(n: Any): Double =
     case n: Float                   => n.toDouble
     case n: Double                  => n
     case c: ScalaNumericConversions => c.toDouble
-    case _ =>
+    case _                          =>
       throw new UnsupportedOperationException(s"$n is not a ScalaNumber")
 
 inline def anyToLong(n: Any): Long =
@@ -31,7 +31,7 @@ inline def anyToLong(n: Any): Long =
     case n: Float                   => n.toLong
     case n: Double                  => n.toLong
     case c: ScalaNumericConversions => c.toLong
-    case _ =>
+    case _                          =>
       throw new UnsupportedOperationException(s"$n is not a ScalaNumber")
 
 inline def anyIsWhole(n: Any): Boolean =
@@ -44,7 +44,7 @@ inline def anyIsWhole(n: Any): Boolean =
     case n: Float                   => n.isWhole
     case n: Double                  => n.isWhole
     case c: ScalaNumericConversions => c.isWhole
-    case _ =>
+    case _                          =>
       throw new UnsupportedOperationException(s"$n is not a ScalaNumber")
 
 inline def anyIsValidInt(n: Any): Boolean =
@@ -57,5 +57,5 @@ inline def anyIsValidInt(n: Any): Boolean =
     case n: Float                   => n.isValidInt
     case n: Double                  => n.isValidInt
     case c: ScalaNumericConversions => c.isValidInt
-    case _ =>
+    case _                          =>
       throw new UnsupportedOperationException(s"$n is not a ScalaNumber")

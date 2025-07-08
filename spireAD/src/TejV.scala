@@ -173,6 +173,7 @@ case class TejVGraph[T: ClassTag]():
     dag.addEdge(dep, value.id)
 
     // TejV(newMat)
+  end normaliseRows
 
   // This can't work.
   // inline def mapRowsNode(
@@ -199,7 +200,7 @@ case class TejVGraph[T: ClassTag]():
       sh: Show[Matrix[T]],
       ct: ClassTag[T]
   ): Unit =
-    val node = SelectIndiciesNode( tv.value, tv.id, incomingId, indicies)
+    val node = SelectIndiciesNode(tv.value, tv.id, incomingId, indicies)
     dag.addNode(node)
     dag.addEdge(incomingId, tv.id)
 
@@ -297,7 +298,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ct: ClassTag[T],
       red: Reductions[F, T, InferDimension[F]],
       n: Numeric[T]
-  ): TejV[F, T] =    
+  ): TejV[F, T] =
     val newVal = f.clampMin(lhs.value)(threshold)
     new TejV(newVal).tap(td.scalar(lhs.id, lhs.id, _, BinaryScalarOps.ClampMin, threshold))
   end clampMin
@@ -329,9 +330,8 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       mty: Matrixy[Matrix, T],
       ct: ClassTag[T],
       ev: F[T] <:< Matrix[T]
-
   ): TejV[Matrix, T] =
-    val newMat = mty.mapRows(value){(row: Array[T]) =>
+    val newMat = mty.mapRows(value) { (row: Array[T]) =>
       val su = row.sum
       vf./(row)(su)
     }
@@ -339,6 +339,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(newMat).tap(
       td.normaliseRows(this.id, _)
     )
+  end normaliseRows
 
   def product(using
       td: TejVGraph[T],
@@ -389,7 +390,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
   end backward
 
-  def backward2[N <: Tuple, V <: Tuple ](wrt: NamedTuple[N, V])(using td: TejVGraph[T], ct: ClassTag[T]) =
+  def backward2[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V])(using td: TejVGraph[T], ct: ClassTag[T]) =
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
@@ -420,7 +421,6 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     nt.withNames[N].asInstanceOf[NamedTuple[N, V]].tap { _ =>
       println("Backward pass complete")
     }
-
 
   end backward2
 
@@ -523,9 +523,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
   ): TejV[Matrix, T] =
     val newT = value.asInstanceOf[Matrix[T]]
     val newT2 = matTc.apply(newT)(i)
-    new TejV[Matrix, T](newT).tap( tv =>
-      td.selectIndicies(tv, i, lhs.id)
-    )
+    new TejV[Matrix, T](newT).tap(tv => td.selectIndicies(tv, i, lhs.id))
   end apply
 
 end TejV

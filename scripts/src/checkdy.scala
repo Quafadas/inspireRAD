@@ -44,7 +44,6 @@ given jd3: Show[Array[Jet[Double]]] = new Show[Array[Jet[Double]]]:
       .map(s => s.toString().reverse.padTo(10, ' ').reverse)
       .mkString("[", "\n", "]")
 
-
   end show
 
 given Show[Array[Double]] with
@@ -94,9 +93,9 @@ end given
   )
 
   val mat2 = Matrix.fromRows(
-      Array(1.0, 2.0, 3.0, 4.0) / 10,
-      Array(1.0, 2.0, 3.0, 4.0) / 10
-    )
+    Array(1.0, 2.0, 3.0, 4.0) / 10,
+    Array(1.0, 2.0, 3.0, 4.0) / 10
+  )
 
   val targets = Array(1, 0)
 
@@ -109,8 +108,6 @@ end given
   println("calc1:")
   println(calc1.show)
   println("-----")
-
-
 
   {
     given jd: JetDim = JetDim(16)
@@ -147,12 +144,12 @@ end given
 
   println("-----")
   val part1 = Matrix.fromRows(
-    (Array(1.0, 2.0, 3.0) ).jetArr(0),
-    (Array(4.0, 5.0, 6.0) ).jetArr(3),
-    (Array(4.0, 5.0, 6.0) ).jetArr(6),
+    (Array(1.0, 2.0, 3.0)).jetArr(0),
+    (Array(4.0, 5.0, 6.0)).jetArr(3),
+    (Array(4.0, 5.0, 6.0)).jetArr(6)
   )
 
-  val newMat = part1.mapRows{row =>
+  val newMat = part1.mapRows { row =>
     val sum = row.foldLeft(Jet(0.0))(_ + _)
     row.map(_ / sum)
   }
@@ -163,7 +160,7 @@ end given
   println("newMat:")
   println(newMat.show)
 
-  given tvg : TejVGraph[Double] = TejVGraph[Double]()
+  given tvg: TejVGraph[Double] = TejVGraph[Double]()
 
   println("instantiate")
 
@@ -197,7 +194,6 @@ end given
   // given tej_scalar: VectorisedField[Scalar, Tej[Double]] = VectorisedField.scalarTejField
   // given tej_array: VectorisedField[Array, Tej[Double]] = VectorisedField.elementwiseArrayTejField
 
-
   // val calcTej = calcLoss(
   //   Matrix.fromRows(
   //     Array(1.0, 2.0, 3.0, 4.0).tejArr,
@@ -209,6 +205,5 @@ end given
   //     (Array(1.0, 2.0, 3.0, 4.0) / 10).tejArr
   //   ),
   //   Array(1, 0)
-
 
 end checkefy

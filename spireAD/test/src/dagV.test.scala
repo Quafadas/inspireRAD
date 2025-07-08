@@ -41,7 +41,6 @@ class DAGVSuite extends FunSuite:
       (rows :+ footer).mkString("\n")
     end show
 
-
   given Show[Array[Double]] with
     def show(arr: Array[Double]): String = arr.mkString("[", ", ", "]")
   end given
@@ -416,7 +415,7 @@ class DAGVSuite extends FunSuite:
     assertEqualsDouble(res.value(2), 1.5, 0.000001)
     assertEqualsDouble(res.value(3), 2.0, 0.000001)
 
-    val out = res.backward[Array](Set(arr ))
+    val out = res.backward[Array](Set(arr))
 
     val tejGrad = out.head.grad
 
@@ -437,13 +436,13 @@ class DAGVSuite extends FunSuite:
   test("Scalar clampMin") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given td: TejVGraph[Double] = TejVGraph[Double]()
-        
+
     val arr =
       Matrix.fromRows(
         Array(-1.0, 2.0, -9.0, 4.0),
-        Array(1.5, -2.0, 3.0, -4.0),
+        Array(1.5, -2.0, 3.0, -4.0)
       )
-    
+
     val tej = TejV(arr)
     val res = tej.clampMin(0.0)
 
@@ -451,29 +450,29 @@ class DAGVSuite extends FunSuite:
       arr.raw.clampMin(0.0),
       arr.shape
     )
-    val grad = Matrix.fromRows(      
-        Array(0.0, 1.0, 0.0, 1.0),
-        Array(1.0, 0.0, 1.0, 0.0)     
+    val grad = Matrix.fromRows(
+      Array(0.0, 1.0, 0.0, 1.0),
+      Array(1.0, 0.0, 1.0, 0.0)
     )
 
     val out = res.backward[Matrix](Set(tej))
 
-    val tejGrad = out.head.grad    
+    val tejGrad = out.head.grad
 
     for i <- 0 until arr.rows do
-      for j <- 0 until arr.cols do        
-          assertEqualsDouble(
-            res.value(i, j),
-            resM(i, j),
-            0.0000001
-          )
-          assertEqualsDouble(
-            tejGrad(i, j),
-            grad(i, j),
-            0.0000001
-          )
-        
-      end for      
+      for j <- 0 until arr.cols do
+        assertEqualsDouble(
+          res.value(i, j),
+          resM(i, j),
+          0.0000001
+        )
+        assertEqualsDouble(
+          tejGrad(i, j),
+          grad(i, j),
+          0.0000001
+        )
+
+      end for
     end for
   }
 
@@ -500,9 +499,7 @@ class DAGVSuite extends FunSuite:
       jetArr
     )
 
-    val jetCalc = jetMat.mapRowsToScalar(
-      row => row.foldLeft(Jet(1.0))((acc, j) => acc * j)
-    )
+    val jetCalc = jetMat.mapRowsToScalar(row => row.foldLeft(Jet(1.0))((acc, j) => acc * j))
 
     // println(jetCalc.show)
 
@@ -530,7 +527,6 @@ class DAGVSuite extends FunSuite:
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
     val arr = vecxt.all.Matrix.fromRows(
       Array(1.0, 2.0, 3.0)
-
     )
 
     val tej = TejV(arr).div(TejV(Scalar(10.0)))
@@ -562,7 +558,6 @@ class DAGVSuite extends FunSuite:
 
   }
 
-
   // I don't think this can ever work.
   // Because if you do something like normalisation - e.g. row /  row.sum , the row.sum _is not an indepant constant_. Normalisation needs the jacobian gradient.
   // test("map rows".only) {
@@ -592,9 +587,6 @@ class DAGVSuite extends FunSuite:
   //     row.map(j => j / row.foldLeft(Jet(0.0))((acc, j) => acc + j))
   //   }
 
-
-
-
   //   val backward = out.backward(Set(tej))
 
   //   println(os.pwd)
@@ -615,16 +607,14 @@ class DAGVSuite extends FunSuite:
   //     )
   //   end for
 
-
   // }
-
 
   test("select elements") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
     val mat = Matrix.fromRows(
       Array(1.0, 2.0, 3.0, 4.0),
-      Array(1.0, 2.0, 3.0, 4.0) + 4.0,
+      Array(1.0, 2.0, 3.0, 4.0) + 4.0
     )
 
     val tej = TejV(mat)
@@ -633,7 +623,7 @@ class DAGVSuite extends FunSuite:
 
     val matGrad = Matrix.fromRows(
       Array(1.0, 1.0, 0, 0),
-      Array(0, 1.0, 0, 1.0),
+      Array(0, 1.0, 0, 1.0)
     )
 
     val graph = tej(indices)
@@ -645,16 +635,13 @@ class DAGVSuite extends FunSuite:
 
     for i <- 0 until mat.shape(0) do
       for j <- 0 until mat.shape(1) do
-          assertEqualsDouble(
-            gradCalculated(i, j),
-            matGrad(i, j),
-            0.0000001
-          )
+        assertEqualsDouble(
+          gradCalculated(i, j),
+          matGrad(i, j),
+          0.0000001
+        )
       end for
     end for
-
-
-
 
   }
 

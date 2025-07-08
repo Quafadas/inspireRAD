@@ -31,5 +31,6 @@ case class SelectIndiciesNode[T](
       zeros(i, j) = this.grad(i, j)
     }
     n.grad += zeros
+  end backward
 
 end SelectIndiciesNode

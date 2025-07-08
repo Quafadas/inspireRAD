@@ -107,7 +107,7 @@ trait VectorisedMonoid[F[_], @sp(Double) A: Semigroup] extends cats.kernel.Semig
     val head = as.iterator
     head.hasNext match
       case false => throw new IllegalArgumentException("Cannot combine empty iterator.")
-      case true =>
+      case true  =>
         var acc = head.next()
         while head.hasNext do acc = combine(acc, head.next())
         end while
