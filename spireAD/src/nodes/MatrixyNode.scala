@@ -44,15 +44,13 @@ case class MatrixyNode[T](
       case MatrixyBinaryOps.AddToRows =>
         val leftN = td.dag.getNode(left).asInstanceOf[MatrixyNode[T]]
         val rightN = td.dag.getNode(right).asInstanceOf[VNode[Array, T]]
-        val newGrad = vf.allOnes(value1)    
+        val newGrad = vf.allOnes(value1)
         leftN.grad += newGrad
 
         val rows = value1.rows
         val ones = vfa.allOnes(value1.row(0))
-        val newGradR = vfa.*(ones)( f.fromInt(rows))
+        val newGradR = vfa.*(ones)(f.fromInt(rows))
         rightN.grad += newGradR
-        
-
 
 end MatrixyNode
 

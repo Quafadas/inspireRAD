@@ -13,9 +13,8 @@ import narr.*
 
 // Type-level function to extract gradient types from TejV types
 type GradientTypes[V <: Tuple] <: Tuple = V match
-  case EmptyTuple => EmptyTuple
+  case EmptyTuple         => EmptyTuple
   case TejV[f, t] *: tail => f[t] *: GradientTypes[tail]
-
 
 object TejV extends TejInstances:
 
@@ -165,11 +164,11 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ev: F[T] <:< Matrix[T]
   ): TejV[Matrix, T] =
     val newMat = mty.mapRows(value) { (row: Array[T]) =>
-      
+
       val norm = vf.-(row)(row.max)
-      val expd = vta.exp(norm) 
+      val expd = vta.exp(norm)
       val summed = red.sum(expd)
-      vf./(expd)( summed)
+      vf./(expd)(summed)
     }
 
     new TejV(newMat).tap(
@@ -241,23 +240,20 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     }
 
     // Extract gradients while preserving tuple structure
-    def extractGradientTuple(t: Tuple): Tuple = t match {
+    def extractGradientTuple(t: Tuple): Tuple = t match
       case EmptyTuple => EmptyTuple
-      case h *: tail => 
+      case h *: tail  =>
         val tejv = h.asInstanceOf[TejV[?, T]]
         val grad = td.dag.getNode(tejv.id).grad
         grad *: extractGradientTuple(tail)
-    }
-    
+
     val gradientTuple = extractGradientTuple(wrt.toTuple)
-    
+
     println("Backward pass complete")
-    
+
     // Return with names preserved - the caller will have the correct types
     gradientTuple.asInstanceOf[NamedTuple[N, GradientTypes[V]]]
   end backward2
-
-
 
   def @@(rhs: TejV[Matrix, T])(using
       f: VectorisedField[Matrix, T],
@@ -358,7 +354,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ord: Numeric[T]
   ): TejV[Matrix, T] =
     val newT = value.asInstanceOf[Matrix[T]]
-    val newT2 = matTc.apply(newT)(i)    
+    val newT2 = matTc.apply(newT)(i)
     new TejV[Matrix, T](newT2).tap(tv => td.selectIndicies(tv, i, lhs.id))
   end apply
 

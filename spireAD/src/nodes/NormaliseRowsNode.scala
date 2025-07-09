@@ -18,7 +18,7 @@ import NormaliseRowOps.*
 case class NormaliseRowsNode[T](
     value1: Matrix[T],
     thisId: UUID,
-    depId: UUID, 
+    depId: UUID,
     op: NormaliseRowOps
 )(using
     vf: VectorisedField[Matrix, T],
@@ -43,25 +43,25 @@ case class NormaliseRowsNode[T](
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[Matrix, T]]
     val newGrad = vf.zero(grad)
-    op match 
-      case Softmax => 
+    op match
+      case Softmax =>
         for i <- 0 until value1.rows do
           val x = value1.row(i)
-          val gRow = grad.row(i)          
+          val gRow = grad.row(i)
           val dot = red.sum(vta.*(x)(gRow))
-          val newGradRow = vta.*(x)(vta.-(gRow)(dot)) 
-          
+          val newGradRow = vta.*(x)(vta.-(gRow)(dot))
+
           newGrad.updateInPlace(NArray(i), ::, NArray(newGradRow*))
         end for
-      case LogSoftmax => ??? 
-      case NormaliseRowOps.NormaliseRows =>      
+      case LogSoftmax                    => ???
+      case NormaliseRowOps.NormaliseRows =>
         // You can express this vectorized per row as:
         // \nabla x = \frac{g \cdot s - \left( \sum_j g_j x_j \right)}{s^2}
         // Or more compactly (in vector form):
         // val dotGX = g dot x
         // val gradX = (g * s - x * dotGX) / (s * s)
         // pre row, where g is a row from the upstream gradient
-        
+
         for i <- 0 until value1.rows do
           val x = value1.row(i)
           val gRow = grad.row(i)
@@ -77,7 +77,8 @@ case class NormaliseRowsNode[T](
           // println(s"Row $i: gradX: ${gradX.printArr}")
           // val newRow = vta./(grad.row(i))(gRow)
           newGrad.updateInPlace(NArray(i), ::, NArray(gradX*))
-        end for    
+        end for
+    end match
     n.grad += newGrad
 
   end backward

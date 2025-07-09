@@ -1,4 +1,4 @@
- import io.github.quafadas.spireAD.*
+import io.github.quafadas.spireAD.*
 import vecxt.all.*
 import scala.reflect.ClassTag
 import vecxt.BoundsCheck.DoBoundsCheck.yes
@@ -93,8 +93,8 @@ end given
   )
 
   val mat2 = Matrix.fromRows(
-    Array(1.0, 2.0, 3.0, 4.0)/10,
-    Array(1.0, 2.0, 3.0, 4.0)/10
+    Array(1.0, 2.0, 3.0, 4.0) / 10,
+    Array(1.0, 2.0, 3.0, 4.0) / 10
   )
 
   val targets = Array(1, 0)
@@ -166,16 +166,15 @@ end given
   val counts = logits.exp
   println("counts")
   println("counts.shape: " + counts.value.shape)
-  
 
   val probsNN = counts.normaliseRows
-  
+
   println("probsNN")
-  
+
   val range = (0 until targets.length).toArray.zip(targets)
 
   println("range")
-  println(range.mkString("[", ", ", "]")) 
+  println(range.mkString("[", ", ", "]"))
   val ranged = probsNN(range)
   println("ranged")
   println(ranged.value.show)
@@ -190,12 +189,11 @@ end given
   // println(grad.head.grad.printMat)
 
   val nt = (tv2 = tv2, tv1 = tv1)
-  
+
   val grad2 = scalarLoss.backward2(nt)
 
   println("grad")
   println(grad2.tv2.printMat)
   println(grad2.tv1.printMat)
-
 
 end checkdy
