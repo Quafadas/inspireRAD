@@ -128,15 +128,14 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@main
-      with:
-        name: page
-        path: .
-    - uses: actions/configure-pages@main
-    - uses: actions/upload-pages-artifact@main
-      with:
-        path: .
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@main
+    steps:      - uses: actions/download-artifact@main
+        with:
+          name: page
+          path: .
+      - uses: actions/configure-pages@main
+      - uses: actions/upload-pages-artifact@main
+        with:
+          path: .
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@main
