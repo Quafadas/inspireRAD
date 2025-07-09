@@ -569,15 +569,14 @@ class DAGVSuite extends FunSuite:
 
     val softmaxed = tej.softmaxRows
     val mat = softmaxed.value
-    
+
     val max = arr.raw.max
     val expRow = arr.raw.map(x => math.exp(x - max))
     val sumExp = expRow.sum
     val expected = expRow.map(_ / sumExp)
 
-    for (i <- 0 until arr.raw.length) {
-      assertEqualsDouble(mat(0, i), expected(i), 0.000001)
-    }
+    for i <- 0 until arr.raw.length do assertEqualsDouble(mat(0, i), expected(i), 0.000001)
+    end for
 
     val out = softmaxed.backward[Matrix](Set(tej))
     val tejGrad = out.head.grad
@@ -585,17 +584,16 @@ class DAGVSuite extends FunSuite:
     // Compute expected gradient for softmax
     // inomcing gradients are all 1.0
 
-    for (i <- 0 until arr.raw.length) {
+    for i <- 0 until arr.raw.length do
       val dot = expected.sum
       val grad = expected(i) * (1 - dot)
-      
+
       assertEqualsDouble(tejGrad.raw(i), grad, 0.000001)
-    }
+    end for
 
   }
 
   // test("backward 2") {
-
 
   // }
 
