@@ -558,6 +558,42 @@ class DAGVSuite extends FunSuite:
 
   }
 
+  test("Row reductions - softmax") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = vecxt.all.Matrix.fromRows(
+      Array(1.0, 2.0, 3.0)
+    )
+
+    val tej = TejV(arr)
+
+    val softmaxed = tej.softmaxRows
+    val mat = softmaxed.value
+    
+    val max = arr.raw.max
+    val expRow = arr.raw.map(x => math.exp(x - max))
+    val sumExp = expRow.sum
+    val expected = expRow.map(_ / sumExp)
+
+    for (i <- 0 until arr.raw.length) {
+      assertEqualsDouble(mat(0, i), expected(i), 0.000001)
+    }
+
+    val out = softmaxed.backward[Matrix](Set(tej))
+    val tejGrad = out.head.grad
+
+    // Compute expected gradient for softmax
+    // inomcing gradients are all 1.0
+
+    for (i <- 0 until arr.raw.length) {
+      val dot = expected.sum
+      val grad = expected(i) * (1 - dot)
+      
+      assertEqualsDouble(tejGrad.raw(i), grad, 0.000001)
+    }
+
+  }
+
   // I don't think this can ever work.
   // Because if you do something like normalisation - e.g. row /  row.sum , the row.sum _is not an indepant constant_. Normalisation needs the jacobian gradient.
   // test("map rows".only) {

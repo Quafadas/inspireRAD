@@ -28,3 +28,7 @@ end ParameterisedUpdateOps
 enum MatrixyBinaryOps:
   case MatMul
 end MatrixyBinaryOps
+
+enum NormaliseRowOps:
+  case NormaliseRows, Softmax, LogSoftmax
+end NormaliseRowOps

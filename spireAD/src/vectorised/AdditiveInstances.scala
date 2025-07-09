@@ -98,6 +98,8 @@ object VectorisedField:
       @targetName("rhs+")
       override def +(x: Jet[Double]): Scalar[Jet[Double]] = Scalar(a.scalar + x)
       override def -(y: Scalar[Jet[Double]]): Scalar[Jet[Double]] = Scalar(a.scalar - y.scalar)
+      @targetName("rhs-")
+      override def -(y: Jet[Double]): Scalar[Jet[Double]] = Scalar(a.scalar - y)
       override def *(y: Scalar[Jet[Double]]): Scalar[Jet[Double]] = Scalar(a.scalar * y.scalar)
       @targetName("rhs*")
       override def *(y: Jet[Double]): Scalar[Jet[Double]] = Scalar(a.scalar * y)
@@ -118,6 +120,8 @@ object VectorisedField:
         override def clampMin(min: Tej[Double]): Scalar[Tej[Double]] = Scalar(Tej(Math.max(a.scalar.value, min.value)))
         override def *:*(y: Scalar[Boolean]): Scalar[Tej[Double]] =
           if y.scalar then a else Scalar(Tej.zero[Double])
+        @targetName("rhs-")
+        override def -(y: Tej[Double]): Scalar[Tej[Double]] = Scalar(a.scalar - y)
       end extension
 
       override def fromDouble(x: Double): Tej[Double] = Tej(x)
@@ -323,6 +327,8 @@ object VectorisedField:
       @targetName("rhs+")
       override def +(x: Double): Scalar[Double] = Scalar(a.scalar + x)
       override def -(y: Scalar[Double]): Scalar[Double] = Scalar(a.scalar - y.scalar)
+      @targetName("rhs-")
+      override def -(y: Double): Scalar[Double] = Scalar(a.scalar - y)
       override def *(y: Scalar[Double]): Scalar[Double] = Scalar(a.scalar * y.scalar)
       @targetName("rhs*")
       override def *(y: Double): Scalar[Double] = Scalar(a.scalar * y)
@@ -454,6 +460,8 @@ trait VectorisedField[F[_], @sp(Double) A]:
     @targetName("rhs+")
     def +(x: A): F[A]
     def -(y: F[A]): F[A]
+    @targetName("rhs-")
+    def -(y: A): F[A]
 
     def *(y: F[A]): F[A]
     @targetName("rhs*")

@@ -13,11 +13,13 @@ import vecxt.BoundsCheck.DoBoundsCheck.yes
 import algebra.ring.Field
 import vecxt.all.printMat
 import vecxt.all.printArr
+import NormaliseRowOps.*
 
 case class NormaliseRowsNode[T](
     value1: Matrix[T],
     thisId: UUID,
-    depId: UUID
+    depId: UUID, 
+    op: NormaliseRowOps
 )(using
     vf: VectorisedField[Matrix, T],
     vt: VectorisedTrig[Matrix, T],
@@ -40,34 +42,42 @@ case class NormaliseRowsNode[T](
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[Matrix, T]]
-
-    println(s"depId: ${depId.toString()}")
-
-    // You can express this vectorized per row as:
-    // \nabla x = \frac{g \cdot s - \left( \sum_j g_j x_j \right)}{s^2}
-    // Or more compactly (in vector form):
-    // val dotGX = g dot x
-    // val gradX = (g * s - x * dotGX) / (s * s)
-    // pre row, where g is a row from the upstream gradient
     val newGrad = vf.zero(grad)
-    for i <- 0 until value1.rows do
-      val x = value1.row(i)
-      val gRow = grad.row(i)
-      val dotGX = vta.*(gRow.toArray)(x.toArray)
-      val x_dotGX = vta.*(x)(dotGX)
-      val S = red.sum(x)
-      val S_2 = numeric.times(S, S)
-      val gS = vta.*(gRow)(S)
-      val gradX = vta./(vta.-(gS)(dotGX))(
-        S_2
-      )
-      println(s"Row $i: x: ${x.printArr}, gRow: ${gRow.printArr}, dotGX: $dotGX, S: $S, S_2: $S_2, gS: ${gS.printArr}")
-      println(s"Row $i: gradX: ${gradX.printArr}")
-      // val newRow = vta./(grad.row(i))(gRow)
-      newGrad.updateInPlace(NArray(i), ::, NArray(gradX*))
-    end for
-
-    println(s"New Grad: ${newGrad.printMat}")
+    op match 
+      case Softmax => 
+        for i <- 0 until value1.rows do
+          val x = value1.row(i)
+          val gRow = grad.row(i)          
+          val dot = red.sum(vta.*(x)(gRow))
+          val newGradRow = vta.*(x)(vta.-(gRow)(dot)) 
+          
+          newGrad.updateInPlace(NArray(i), ::, NArray(newGradRow*))
+        end for
+      case LogSoftmax => ??? 
+      case NormaliseRowOps.NormaliseRows =>      
+        // You can express this vectorized per row as:
+        // \nabla x = \frac{g \cdot s - \left( \sum_j g_j x_j \right)}{s^2}
+        // Or more compactly (in vector form):
+        // val dotGX = g dot x
+        // val gradX = (g * s - x * dotGX) / (s * s)
+        // pre row, where g is a row from the upstream gradient
+        
+        for i <- 0 until value1.rows do
+          val x = value1.row(i)
+          val gRow = grad.row(i)
+          val dotGX = vta.*(gRow.toArray)(x.toArray)
+          val x_dotGX = vta.*(x)(dotGX)
+          val S = red.sum(x)
+          val S_2 = numeric.times(S, S)
+          val gS = vta.*(gRow)(S)
+          val gradX = vta./(vta.-(gS)(dotGX))(
+            S_2
+          )
+          // println(s"Row $i: x: ${x.printArr}, gRow: ${gRow.printArr}, dotGX: $dotGX, S: $S, S_2: $S_2, gS: ${gS.printArr}")
+          // println(s"Row $i: gradX: ${gradX.printArr}")
+          // val newRow = vta./(grad.row(i))(gRow)
+          newGrad.updateInPlace(NArray(i), ::, NArray(gradX*))
+        end for    
     n.grad += newGrad
 
   end backward
