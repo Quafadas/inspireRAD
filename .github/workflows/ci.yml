@@ -128,8 +128,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    steps:      
-    - uses: actions/download-artifact@main
+    steps:
+      - uses: actions/download-artifact@main
         with:
           name: page
           path: .
