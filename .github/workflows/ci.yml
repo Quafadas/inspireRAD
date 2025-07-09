@@ -53,7 +53,8 @@ jobs:
       - name: formatCheck
         run: ./mill mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
 
-      - if: matrix.project == 'js'
+      - name: Install npm dependencies
+        if: matrix.project == 'js'
         run: npm install
 
       # Removed native project configuration, no need to install dependencies
@@ -78,7 +79,7 @@ jobs:
       - uses: coursier/setup-action@main
         with:
           jvm: temurin@24
-          apps: []
+          apps:
 
       - name: Setup GPG secrets
         run: |
