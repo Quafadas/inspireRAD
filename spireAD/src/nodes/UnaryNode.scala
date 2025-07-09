@@ -28,7 +28,7 @@ case class UrnaryNode[F[_], @sp(Double) T](
       * incompatibility in the bound
       */
 
-    val n: VNode[F, T] = td.dag.getNode(depId).asInstanceOf[VNode[F, T]]
+    val n: VDimChangeNode[F, F, T] = td.dag.getNode(depId).asInstanceOf[VDimChangeNode[F, F, T]]
 
     val update = op match
       case UrnaryOps.Sin => this.grad * n.value.cos

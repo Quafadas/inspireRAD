@@ -594,6 +594,11 @@ class DAGVSuite extends FunSuite:
 
   }
 
+  // test("backward 2") {
+
+
+  // }
+
   // I don't think this can ever work.
   // Because if you do something like normalisation - e.g. row /  row.sum , the row.sum _is not an indepant constant_. Normalisation needs the jacobian gradient.
   // test("map rows".only) {

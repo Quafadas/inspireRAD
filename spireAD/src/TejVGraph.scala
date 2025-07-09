@@ -108,6 +108,7 @@ case class TejVGraph[T: ClassTag]():
       vfM: VectorisedField[Matrix, T],
       vfA: VectorisedField[Array, T],
       tr: VectorisedTrig[Matrix, T],
+      f: Field[T],
       mty: Matrixy[Matrix, T],
       sh: Show[Matrix[T]]
   ): Unit =

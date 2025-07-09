@@ -22,8 +22,10 @@ case class MatrixyNode[T](
     vf: VectorisedField[Matrix, T],
     vfa: VectorisedField[Array, T],
     vt: VectorisedTrig[Matrix, T],
+    f: Field[T],
     maty: Matrixy[Matrix, T],
-    sh: Show[Matrix[T]]
+    sh: Show[Matrix[T]],
+    ct: ClassTag[T]
 ) extends VNode[Matrix, T](value1, thisId):
   val vfa1 = vfa
   override def graphShow: String =
@@ -35,10 +37,22 @@ case class MatrixyNode[T](
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     op match
       case MatrixyBinaryOps.MatMul =>
-        val leftN = td.dag.getNode(left).asInstanceOf[MatrixyNode[T]]
-        val rightN = td.dag.getNode(right).asInstanceOf[MatrixyNode[T]]
+        val leftN = td.dag.getNode(left).asInstanceOf[VDimChangeNode[Matrix, Matrix, T]]
+        val rightN = td.dag.getNode(right).asInstanceOf[VDimChangeNode[Matrix, Matrix, T]]
         leftN.grad = vf.+(leftN.grad)(maty.matmul(this.grad)(rightN.value.transpose))
-        rightN.grad = vf.+(rightN.grad)(maty.matmul(rightN.value.transpose)(this.grad))
+        rightN.grad = vf.+(rightN.grad)(maty.matmul(leftN.value.transpose)(this.grad))
+      case MatrixyBinaryOps.AddToRows =>
+        val leftN = td.dag.getNode(left).asInstanceOf[MatrixyNode[T]]
+        val rightN = td.dag.getNode(right).asInstanceOf[VNode[Array, T]]
+        val newGrad = vf.allOnes(value1)    
+        leftN.grad += newGrad
+
+        val rows = value1.rows
+        val ones = vfa.allOnes(value1.row(0))
+        val newGradR = vfa.*(ones)( f.fromInt(rows))
+        rightN.grad += newGradR
+        
+
 
 end MatrixyNode
 

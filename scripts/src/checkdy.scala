@@ -1,4 +1,4 @@
-import io.github.quafadas.spireAD.*
+ import io.github.quafadas.spireAD.*
 import vecxt.all.*
 import scala.reflect.ClassTag
 import vecxt.BoundsCheck.DoBoundsCheck.yes
@@ -56,7 +56,7 @@ given Show[Scalar[Double]] with
     arr.scalar.toString
 end given
 
-@main def checkefy =
+@main def checkdy =
   inline def calcLoss[@specialized(Double) T](
       weights: Matrix[T],
       incomingData: Matrix[T],
@@ -93,8 +93,8 @@ end given
   )
 
   val mat2 = Matrix.fromRows(
-    Array(1.0, 2.0, 3.0, 4.0) / 10,
-    Array(1.0, 2.0, 3.0, 4.0) / 10
+    Array(1.0, 2.0, 3.0, 4.0)/10,
+    Array(1.0, 2.0, 3.0, 4.0)/10
   )
 
   val targets = Array(1, 0)
@@ -149,16 +149,10 @@ end given
     (Array(4.0, 5.0, 6.0)).jetArr(6)
   )
 
-  val newMat = part1.mapRows { row =>
-    val sum = row.foldLeft(Jet(0.0))(_ + _)
-    row.map(_ / sum)
-  }
-
-  println("check sum of first row:")
-  println(newMat.row(0).foldLeft(Jet(0.0))(_ + _))
-
-  println("newMat:")
-  println(newMat.show)
+  // val newMat = part1.mapRows { row =>
+  //   val sum = row.foldLeft(Jet(0.0))(_ + _)
+  //   row.map(_ / sum)
+  // }
 
   given tvg: TejVGraph[Double] = TejVGraph[Double]()
 
@@ -167,43 +161,41 @@ end given
   val tv1 = TejV(mat1)
   val tv2 = TejV(mat2)
 
-  // val logits = tv2 @@ tv1
-  // println("logits")
-  // val counts = logits.exp
-  // println("counts")
-  // println("counts.shape: " + counts.value.shape)
-  // val probsNN = counts.mapRows{row =>
-  //   val s = row.sum
-  //   row.div(s)
-  // }
-  // println("probsNN")
-  // val range = (0 until targets.length).toArray.zip(targets)
-  // println("range")
-  // val ranged = probsNN(range)
-  // println("ranged")
-  // val loss = ranged.mapRowsToScalar(ReductionOps.Sum)
-  // println("mapped to scalars")
-  // loss.log.mean
+  val logits = tv2 @@ tv1
 
-  // println("loss")
-  // // now the Tej
-  // given tejDim: TejDim[Double] = TejDim()
+  val counts = logits.exp
+  println("counts")
+  println("counts.shape: " + counts.value.shape)
+  
 
-  // given tej_N: Numeric[Tej[Double]] = VectorisedField.tejNumeric
-  // given tej_mOps: Matrixy[Matrix, Tej[Double]] = Matrixy.doubleTejIsMatrixy(using yes, tejDim)
-  // given tej_scalar: VectorisedField[Scalar, Tej[Double]] = VectorisedField.scalarTejField
-  // given tej_array: VectorisedField[Array, Tej[Double]] = VectorisedField.elementwiseArrayTejField
+  val probsNN = counts.normaliseRows
+  
+  println("probsNN")
+  
+  val range = (0 until targets.length).toArray.zip(targets)
 
-  // val calcTej = calcLoss(
-  //   Matrix.fromRows(
-  //     Array(1.0, 2.0, 3.0, 4.0).tejArr,
-  //     Array(1.0, 2.0, 3.0, 4.0).tejArr,
-  //     Array(1.0, 2.0, 3.0, 4.0).tejArr,
-  //     Array(1.0, 2.0, 3.0, 4.0).tejArr
-  //   ),
-  //   Matrix.fromRows(
-  //     (Array(1.0, 2.0, 3.0, 4.0) / 10).tejArr
-  //   ),
-  //   Array(1, 0)
+  println("range")
+  println(range.mkString("[", ", ", "]")) 
+  val ranged = probsNN(range)
+  println("ranged")
+  println(ranged.value.show)
+  val loss = ranged.mapRowsToScalar(ReductionOps.Sum)
+  println("mapped to scalars")
+  val scalarLoss = loss.log.mean
 
-end checkefy
+  // val grad =  scalarLoss.backward[Matrix](Set(tv1))
+  // println("scalarLoss")
+  // println(scalarLoss.value)
+  // println("grad")
+  // println(grad.head.grad.printMat)
+
+  val nt = (tv2 = tv2, tv1 = tv1)
+  
+  val grad2 = scalarLoss.backward2(nt)
+
+  println("grad")
+  println(grad2.tv2.printMat)
+  println(grad2.tv1.printMat)
+
+
+end checkdy

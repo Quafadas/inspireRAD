@@ -26,7 +26,7 @@ enum ParameterisedUpdateOps[N](val parameter: TupleDim[N]):
 end ParameterisedUpdateOps
 
 enum MatrixyBinaryOps:
-  case MatMul
+  case MatMul, AddToRows
 end MatrixyBinaryOps
 
 enum NormaliseRowOps:

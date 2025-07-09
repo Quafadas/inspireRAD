@@ -8,10 +8,13 @@ import scala.util.chaining.*
 import scala.specialized as sp
 import java.util.UUID
 import cats.Show
-import cats.syntax.show.toShow
 import vecxt.matrix.Matrix
 import narr.*
-import vecxt.all.`/`
+
+// Type-level function to extract gradient types from TejV types
+type GradientTypes[V <: Tuple] <: Tuple = V match
+  case EmptyTuple => EmptyTuple
+  case TejV[f, t] *: tail => f[t] *: GradientTypes[tail]
 
 
 object TejV extends TejInstances:
@@ -223,39 +226,38 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
   end backward
 
+  // Simpler approach: return a regular Tuple with type info preserved at call site
   def backward2[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V])(using td: TejVGraph[T], ct: ClassTag[T]) =
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
     reversed.head.setGradOne
 
-    // This _may_ prevent a bunch of uncessary work. need to check.
-    // val minIndex = reversed.zipWithIndex.collect {
-    //   case (node, index) if wrt.exists(_.id == node.id) => index
-    // }.min
-
-    // println(s"minIndex: $minIndex")
-
-    println("---> Backward pass for TejV")
+    println("---> Backward pass 2 for TejV")
 
     reversed.foreach { node =>
       println("node: " + node.graphShow)
       node.backward
     }
-    val ids = wrt.toList.asInstanceOf[List[TejV[?, T]]].map(_.id)
 
-    var nt: Tuple = EmptyTuple
-
-    val res = ids.map { i =>
-      val n = td.dag.getNode(i)
-      nt = nt :* n.grad
+    // Extract gradients while preserving tuple structure
+    def extractGradientTuple(t: Tuple): Tuple = t match {
+      case EmptyTuple => EmptyTuple
+      case h *: tail => 
+        val tejv = h.asInstanceOf[TejV[?, T]]
+        val grad = td.dag.getNode(tejv.id).grad
+        grad *: extractGradientTuple(tail)
     }
-
-    nt.withNames[N].asInstanceOf[NamedTuple[N, V]].tap { _ =>
-      println("Backward pass complete")
-    }
-
+    
+    val gradientTuple = extractGradientTuple(wrt.toTuple)
+    
+    println("Backward pass complete")
+    
+    // Return with names preserved - the caller will have the correct types
+    gradientTuple.asInstanceOf[NamedTuple[N, GradientTypes[V]]]
   end backward2
+
+
 
   def @@(rhs: TejV[Matrix, T])(using
       f: VectorisedField[Matrix, T],
@@ -264,6 +266,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       td: TejVGraph[T],
       sh: Show[Matrix[T]],
       ev: F[T] <:< Matrix[T],
+      fi: Field[T],
       matTc: Matrixy[Matrix, T]
   ): TejV[Matrix, T] =
     val newmat = matTc.@@(value)(rhs.value)
@@ -355,8 +358,8 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ord: Numeric[T]
   ): TejV[Matrix, T] =
     val newT = value.asInstanceOf[Matrix[T]]
-    val newT2 = matTc.apply(newT)(i)
-    new TejV[Matrix, T](newT).tap(tv => td.selectIndicies(tv, i, lhs.id))
+    val newT2 = matTc.apply(newT)(i)    
+    new TejV[Matrix, T](newT2).tap(tv => td.selectIndicies(tv, i, lhs.id))
   end apply
 
 end TejV
