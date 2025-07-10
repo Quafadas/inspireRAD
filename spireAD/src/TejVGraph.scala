@@ -70,6 +70,7 @@ case class TejVGraph[T: ClassTag]():
   )(using
       vf: VectorisedField[F, T],
       tr: VectorisedTrig[F, T],
+      f: Field[T],
       sh: Show[F[T]]
   ): Unit =
     val node = BinaryNode[F, T](op, tv.value, tv.id, lhs, rhs)

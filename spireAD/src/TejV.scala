@@ -65,21 +65,21 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
   def cos(using t: VectorisedTrig[F, T], td: TejVGraph[T]) =
     new TejV(lhs.value.cos).tap(td.unary(_, UrnaryOps.Cos, lhs.id))
 
-  def +(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]) =
+  def +(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
     new TejV(lhs.value + rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Add))
   end +
 
-  def -(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]) =
+  def -(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
     new TejV(lhs.value - rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Sub))
   end -
 
-  def *(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]) =
+  def *(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
     new TejV(lhs.value * rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Mul))
   end *
 
   def /(
       rhs: TejV[F, T]
-  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]]): TejV[F, T] =
+  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]], fi: Field[T]): TejV[F, T] =
     new TejV(lhs.value / rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
   end /
 
@@ -202,7 +202,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     TejV.createDontAddToGraph(Scalar(value.mean)).tap(td.reduction(_, lhs, ReductionOps.Mean, lhs.id))
   end mean
 
-  def backward[G[_]](wrt: Set[TejV[?, T]])(using td: TejVGraph[T], ct: ClassTag[T]): Set[VNode[G, T]] =
+  def backward[G[_]](wrt: Set[TejV[?, T]], debug: Boolean = false)(using td: TejVGraph[T], ct: ClassTag[T]): Set[VNode[G, T]] =
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
@@ -215,10 +215,14 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
 
     // println(s"minIndex: $minIndex")
 
-    println("---> Backward pass for TejV")
+    if (debug) {
+      println("---> Backward pass for TejV")
+    }
 
     reversed.foreach { node =>
-      println("node: " + node.graphShow)
+      if (debug) {
+        println("node: " + node.graphShow)
+      }
       node.backward
     }
     val ids = wrt.map(_.id)
@@ -226,16 +230,21 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
   end backward
 
   // Simpler approach: return a regular Tuple with type info preserved at call site
-  def backward2[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V])(using td: TejVGraph[T], ct: ClassTag[T]) =
+  def backward2[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V], debug: Boolean = false)(using td: TejVGraph[T], ct: ClassTag[T]) =
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
     reversed.head.setGradOne
 
-    println("---> Backward pass 2 for TejV")
+    if (debug) {
+      println("---> Backward pass for TejV")
+    }
 
     reversed.foreach { node =>
-      println("node: " + node.graphShow)
+      if (debug) {
+        println("node: " + node.graphShow)
+      }
+
       node.backward
     }
 

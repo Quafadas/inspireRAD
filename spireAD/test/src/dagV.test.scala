@@ -593,6 +593,21 @@ class DAGVSuite extends FunSuite:
 
   }
 
+  test("Multiply two scalars") {
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val a = TejV(Scalar(2.0))
+    val b = TejV(Scalar(3.0))
+
+    val res = a * b
+
+    assertEqualsDouble(res.value.scalar, 6.0, 0.000001)
+
+    val out = res.backward[Scalar](Set(a, b))
+
+    assertEqualsDouble(out.head.grad.scalar, 3.0, 0.000001)
+    assertEqualsDouble(out.last.grad.scalar, 2.0, 0.000001)
+  }
+
   // test("backward 2") {
 
   // }
@@ -670,7 +685,7 @@ class DAGVSuite extends FunSuite:
     val gradBack = graph.backward[Matrix](Set(tej))
     val gradCalculated = gradBack.head.grad
 
-    println(gradCalculated.printMat)
+    // println(gradCalculated.printMat)
 
     for i <- 0 until mat.shape(0) do
       for j <- 0 until mat.shape(1) do

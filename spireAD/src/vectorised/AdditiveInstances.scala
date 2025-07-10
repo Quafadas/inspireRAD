@@ -67,6 +67,7 @@ object VectorisedField:
     override def toDouble(x: Tej[Double]): Double = ???
 
   def scalarJetField(using jd: JetDim): VectorisedField[Scalar, Jet[Double]] = new VectorisedField[Scalar, Jet[Double]]:
+    override val numDimensions = 0
     extension (a: Scalar[Jet[Double]])
       override def >(y: Jet[Double]): Scalar[Boolean] = Scalar(a.scalar.real > y.real)
       override def clampMin(min: Jet[Double]): Scalar[Jet[Double]] = Scalar(Jet(Math.max(a.scalar.real, min.real)))
@@ -110,6 +111,7 @@ object VectorisedField:
 
   def scalarTejField(using jd: TejDim[Double]): VectorisedField[Scalar, Tej[Double]] =
     new VectorisedField[Scalar, Tej[Double]]:
+      override val numDimensions = 0
       extension (a: Double)
         override def const: Tej[Double] = Tej(a)
         override def /(b: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(Tej(a) / b.scalar)
@@ -154,6 +156,7 @@ object VectorisedField:
 
   def elementwiseMatrixJetField(using jd: JetDim): VectorisedField[Matrix, Jet[Double]] =
     new VectorisedField[Matrix, Jet[Double]]:
+      override val numDimensions = 2
       extension (a: Matrix[Jet[Double]])
         override def >(y: Jet[Double]): Matrix[Boolean] =
           Matrix(a.shape, a.raw.zipWithIndex.map { case (v, i) => v.real > y.real })
@@ -210,6 +213,7 @@ object VectorisedField:
 
   def elementwiseArrayJetField(using jd: JetDim): VectorisedField[NArray, Jet[Double]] =
     new VectorisedField[NArray, Jet[Double]]:
+      override val numDimensions = 1
 
       extension (a: NArray[Jet[Double]])
         override def >(y: Jet[Double]): NArray[Boolean] = a.map(_.real > y.real)
@@ -253,6 +257,7 @@ object VectorisedField:
 
   def elementwiseArrayJetField(using jd: TejDim[Double]): VectorisedField[NArray, Tej[Double]] =
     new VectorisedField[NArray, Tej[Double]]:
+      override val numDimensions = 1
 
       extension (a: Array[Tej[Double]])
         override def >(y: Tej[Double]): Array[Boolean] = a.map(_.value > y.value)
@@ -295,6 +300,7 @@ object VectorisedField:
       end extension
 
   given scalarField: VectorisedField[Scalar, Double] = new VectorisedField[Scalar, Double]:
+    override val numDimensions = 0
 
     extension (a: Scalar[Double])
       override def >(y: Double): Scalar[Boolean] = Scalar(a.scalar > y)
@@ -340,6 +346,7 @@ object VectorisedField:
     end extension
 
   given elementwiseMatrixDoubleField: VectorisedField[Matrix, Double] = new VectorisedField[Matrix, Double]:
+    override val numDimensions = 2
 
     extension (a: Matrix[Double])
 
@@ -392,8 +399,9 @@ object VectorisedField:
     end extension
 
   given elementwiseArrayDoubleField: VectorisedField[NArray, Double] = new VectorisedField[NArray, Double]:
-
+    override val numDimensions = 1
     extension (a: Array[Double])
+
       override def >(y: Double): Array[Boolean] = vecxt.arrays.>(a)(y)
       override def clampMin(min: Double): Array[Double] = vecxt.arrays.clampMin(a)(min)
       override def *:*(y: Array[Boolean]): Array[Double] = vecxt.arrays.apply(a)(y)
@@ -440,6 +448,7 @@ object VectorisedField:
 end VectorisedField
 
 trait VectorisedField[F[_], @sp(Double) A]:
+  val numDimensions: InferDimension[F]
   def fromDouble(x: Double): A
   def zero(x: F[A]): F[A]
   def one(x: F[A])(using ClassTag[A]): F[A]
