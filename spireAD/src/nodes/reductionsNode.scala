@@ -36,14 +36,16 @@ case class ReductionNode[F[_], T](
     val n = td.dag.getNode(depId).asInstanceOf[VNode[F, T]]
     op match
       case ReductionOps.Sum =>
-        n.grad = n.vf1.+(n.grad)(n.vf1.allOnes(n.grad))
+        val ones = n.vf1.allOnes(n.value)
+        n.grad = n.vf1.+(n.grad)(n.vf1.*(ones)(n.grad))  // broadcast grad
 
       case ReductionOps.Product =>
         val pes = n.vf2.productExceptSelf(n.value)()
-        n.grad = n.vf2.+(n.grad)(pes)
+        n.grad = n.vf2.+(n.grad)(n.vf2.*(pes)(n.grad))  // chain rule
 
       case ReductionOps.Mean =>
-        n.grad = n.vf2.+(n.grad)(n.vf2./(n.vf2.allOnes(n.grad))(n.vf2.fromDouble(n.vf2.numel(n.value))))
+        val meanGrad = n.vf2./(n.vf2.allOnes(n.value))(n.vf2.fromDouble(n.vf2.numel(n.value)))
+        n.grad = n.vf2.+(n.grad)(n.vf2.*(meanGrad)(n.grad))  // broadcast mean grad
 
     end match
   end backward

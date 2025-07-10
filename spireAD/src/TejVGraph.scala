@@ -167,6 +167,7 @@ case class TejVGraph[T: ClassTag]():
       red: Reductions[Array, T, 1],
       sh: Show[Matrix[T]],
       ct: ClassTag[T],
+      nr: NRoot[T],
       n: Numeric[T],
       mty: Matrixy[Matrix, T]
   ): Unit =

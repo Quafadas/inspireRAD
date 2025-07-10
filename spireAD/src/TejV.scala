@@ -166,6 +166,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       f: Field[T],
       sh: Show[Matrix[T]],
       mty: Matrixy[Matrix, T],
+      nr: NRoot[T],
       ct: ClassTag[T],
       ev: F[T] <:< Matrix[T]
   ): TejV[Matrix, T] =
@@ -189,6 +190,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       n: Numeric[T],
       f: Field[T],
       sh: Show[Matrix[T]],
+      nr: NRoot[T],
       mty: Matrixy[Matrix, T],
       ct: ClassTag[T],
       ev: F[T] <:< Matrix[T]

@@ -14,6 +14,7 @@ import algebra.ring.Field
 import vecxt.all.printMat
 import vecxt.all.printArr
 import NormaliseRowOps.*
+import spire.algebra.NRoot
 
 case class NormaliseRowsNode[T](
     value1: Matrix[T],
@@ -26,6 +27,7 @@ case class NormaliseRowsNode[T](
     vta: VectorisedField[Array, T],
     red: Reductions[Array, T, 1],
     f: Field[T],
+    nr: NRoot[T],
     sh: Show[Matrix[T]],
     numeric: Numeric[T],
     ct: ClassTag[T]
@@ -65,14 +67,11 @@ case class NormaliseRowsNode[T](
         for i <- 0 until value1.rows do
           val x = value1.row(i)
           val gRow = grad.row(i)
-          val dotGX = vta.*(gRow.toArray)(x.toArray)
-          val x_dotGX = vta.*(x)(dotGX)
-          val S = red.sum(x)
-          val S_2 = numeric.times(S, S)
-          val gS = vta.*(gRow)(S)
-          val gradX = vta./(vta.-(gS)(dotGX))(
-            S_2
-          )
+          val norm = nr.sqrt(red.sum(vta.*(x)(x)))
+          val dotGX = red.sum(vta.*(gRow)(x))          // g ⋅ x
+          val gS = vta.*(gRow)(norm)                   // g * s
+          val xDotGX = vta.*(x)(dotGX)                 // x * (g ⋅ x)
+          val gradX = vta./(vta.-(gS)(xDotGX))(f.times(norm, norm)) // (g*s - x*(g⋅x)) / s^2
           // println(s"Row $i: x: ${x.printArr}, gRow: ${gRow.printArr}, dotGX: $dotGX, S: $S, S_2: $S_2, gS: ${gS.printArr}")
           // println(s"Row $i: gradX: ${gradX.printArr}")
           // val newRow = vta./(grad.row(i))(gRow)
