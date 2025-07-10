@@ -28,8 +28,8 @@ case class BinaryNode[F[_], @sp(Double) T](
     grad = vf.allOnes(value1)
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-    val leftN = td.dag.getNode(left).asInstanceOf[VNode[F, T]]
-    val rightN = td.dag.getNode(right).asInstanceOf[VNode[F, T]]
+    val leftN = td.dag.getNode(left).asInstanceOf[VDimChangeNode[F, F, T]]
+    val rightN = td.dag.getNode(right).asInstanceOf[VDimChangeNode[F, F, T]]
     op match
       case BinaryOps.Add =>
         leftN.grad += leftN.grad + this.grad
