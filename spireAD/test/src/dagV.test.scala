@@ -602,10 +602,10 @@ class DAGVSuite extends FunSuite:
 
     assertEqualsDouble(res.value.scalar, 6.0, 0.000001)
 
-    val out = res.backward[Scalar](Set(a, b))
+    val out = res.backward2((a = a, b = b))
 
-    assertEqualsDouble(out.head.grad.scalar, 3.0, 0.000001)
-    assertEqualsDouble(out.last.grad.scalar, 2.0, 0.000001)
+    assertEqualsDouble(out.a.scalar, 3.0, 0.000001)
+    assertEqualsDouble(out.b.scalar, 2.0, 0.000001)
   }
 
   // test("backward 2") {
@@ -697,6 +697,41 @@ class DAGVSuite extends FunSuite:
       end for
     end for
 
+  }
+
+  test("arrage") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val mat = Matrix.fromRows(
+      Array(1.0, 2.0, 3.0, 4.0),
+      Array(1.0, 2.0, 3.0, 4.0) + 4.0
+    )
+
+    val tej = TejV(mat)
+
+    val indices = NArray((0, 0), (1, 1), (0, 1), (1, 3))
+
+    val matGrad = Matrix.fromRows(
+      Array(1.0, 1.0, 0, 0),
+      Array(0, 1.0, 0, 1.0)
+    )
+
+    val graph = tej.arrange(indices)
+
+    val gradBack = graph.backward[Matrix](Set(tej))
+    val gradCalculated = gradBack.head.grad
+
+    // println(gradCalculated.printMat)
+
+    for i <- 0 until mat.shape(0) do
+      for j <- 0 until mat.shape(1) do
+        assertEqualsDouble(
+          gradCalculated(i, j),
+          matGrad(i, j),
+          0.0000001
+        )
+      end for
+    end for
   }
 
 end DAGVSuite

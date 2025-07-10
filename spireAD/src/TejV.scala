@@ -10,6 +10,7 @@ import java.util.UUID
 import cats.Show
 import vecxt.matrix.Matrix
 import narr.*
+import vecxt.BoundsCheck
 
 // Type-level function to extract gradient types from TejV types
 type GradientTypes[V <: Tuple] <: Tuple = V match
@@ -366,6 +367,26 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     val newT2 = matTc.apply(newT)(i)
     new TejV[Matrix, T](newT2).tap(tv => td.selectIndicies(tv, i, lhs.id))
   end apply
+
+  def arrange(i: NArray[(Int, Int)])(using
+      td: TejVGraph[T],
+      fi: Field[T],
+      vf: VectorisedField[Matrix, T],
+      vt: VectorisedTrig[Array, T],
+      vfa: VectorisedField[NArray, T],
+      ev: F[T] <:< Matrix[T],
+      matTc: Matrixy[Matrix, T],
+      ct: ClassTag[T],
+      ord: Numeric[T],
+      sh: Show[Array[T]]
+
+  ): TejV[Array, T] =
+    import vecxt.BoundsCheck.DoBoundsCheck.no
+    val newT = value.asInstanceOf[Matrix[T]]
+
+    val newT2 = matTc.arrange(newT)(i)
+    new TejV[Array, T](newT2).tap(tv => td.arrange(tv, i, lhs.id))
+  end arrange
 
 end TejV
 

@@ -208,4 +208,22 @@ case class TejVGraph[T: ClassTag]():
 
   end selectIndicies
 
+  // follow torch nomenclature
+  def arrange(
+      tv: TejV[Array, T],
+      indicies: NArray[(Int, Int)],
+      incomingId: UUID
+  )(using
+      fa: VectorisedField[Array, T],
+      t: VectorisedTrig[Array, T],
+      fi: Field[T],
+      m: Matrixy[Matrix, T],
+      ct: ClassTag[T]
+  ): Unit =
+    val node = ArrangeNode(tv.value, tv.id, incomingId, indicies)
+    dag.addNode(node)
+    dag.addEdge(incomingId, tv.id)
+
+  end arrange
+
 end TejVGraph

@@ -119,6 +119,8 @@ trait Matrixy[F[_], A]:
     // def apply(i: NArray[Int], j: NArray[Int]): F[A]
     def apply(i: NArray[(Int, Int)]): F[A]
 
+    inline def apply(i: Int, j: Int)(using inline bc: BoundsCheck): A = vecxt.MatrixInstance.apply(a.asInstanceOf[Matrix[A]])(i, j)
+
     def matmul(b: F[A]): F[A]
     inline def @@(b: F[A]): F[A] = matmul(b)
 
@@ -128,6 +130,12 @@ trait Matrixy[F[_], A]:
 
     def transpose: F[A]
 
+    inline def arrange(i: NArray[(Int, Int)])(using ct: ClassTag[A], inline bc: BoundsCheck): NArray[A] =
+
+        val out = NArray.ofSize[A](i.length)
+        for ((row, col), idx) <- i.zipWithIndex do
+          out(idx) = vecxt.MatrixInstance.apply(a.asInstanceOf[Matrix[A]])(row, col)
+        out
   end extension
 
 end Matrixy
