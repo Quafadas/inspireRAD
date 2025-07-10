@@ -21,7 +21,7 @@ case class SelectIndicesNode[T](
 ) extends VNode[Matrix, T](value1, thisId):
 
   override def graphShow: String =
-    s"SelectIndicesNode(id: ${thisId.toString().takeRight(4)}, first 5 indices: ${indices.take(5).mkString(", ")})"
+    s"SelectIndicesNode(id: ${thisId.toString().takeRight(4)}, first 5 indices: ${indices.take(5).mkString(", ")}), \n value: ${value1.show}, \n grad: ${grad.show})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[Matrix, T]]
