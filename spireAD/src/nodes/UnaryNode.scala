@@ -20,7 +20,7 @@ case class UrnaryNode[F[_], @sp(Double) T](
     s"$op \n v:$value g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"UrnaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value}, grad: ${grad})"
+    s"UrnaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     /** Although the ".asInstanceOf[VNode[F, T]]" appears sketchy, it was in fact validated by the compiler, on the

@@ -8,7 +8,7 @@ import narr.*
 import vecxt.all.update
 import vecxt.all.apply
 
-case class SelectIndiciesNode[T](
+case class SelectIndicesNode[T](
     value1: Matrix[T],
     thisId: UUID,
     depId: UUID,
@@ -21,7 +21,7 @@ case class SelectIndiciesNode[T](
 ) extends VNode[Matrix, T](value1, thisId):
 
   override def graphShow: String =
-    s"SelectIndiciesNode (id: ${thisId.toString().takeRight(4)}, first 5 indices: ${indices.take(5).mkString(", ")})"
+    s"SelectIndicesNode(id: ${thisId.toString().takeRight(4)}, first 5 indices: ${indices.take(5).mkString(", ")})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[Matrix, T]]
@@ -33,4 +33,4 @@ case class SelectIndiciesNode[T](
     n.grad += zeros
   end backward
 
-end SelectIndiciesNode
+end SelectIndicesNode

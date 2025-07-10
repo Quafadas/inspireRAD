@@ -72,6 +72,23 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(lhs.value + rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Add))
   end +
 
+  def +(d: Double)(using
+      f: VectorisedField[F, T],
+      fs: VectorisedField[Scalar, T],
+      t: VectorisedTrig[F, T],
+      td: TejVGraph[T],
+      fi: Field[T],
+      sh: Show[F[T]],
+      shs: Show[Scalar[T]],
+      rd: Reductions[F, T, InferDimension[F]],
+      n: Numeric[T],
+      ct: ClassTag[T]
+  ): TejV[F, T] =
+    val fid = f.fromDouble(d)
+    val scalar = new TejV(Scalar(fid))
+    f.+(lhs.value)(fid).tap(td.scalar(lhs.id, lhs.id, _, BinaryScalarOps.Add, fid))
+  end +
+
   def -(
       rhs: TejV[F, T]
   )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =

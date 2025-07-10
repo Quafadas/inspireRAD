@@ -12,7 +12,7 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
     value1: F[T],
     thisId: UUID,
     left: UUID,
-    right: UUID,
+    right: UUID, // a scalar node
     scalar: T
 )(using
     vf: VectorisedField[F, T],
@@ -29,7 +29,13 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
     s"$op \n v:$value1 g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value}, grad: ${grad})"
+    vf.numDimensions match
+      case 0 => s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value1.show}, grad: ${grad.show})"
+      case 1 => s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value1.show}, grad: ${grad.show})"
+      case 2 => s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value1.show}, grad: ${grad.show})"
+      case _ => ???
+
+
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     // println("left " + td.dag.getNode(left))
@@ -44,7 +50,12 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
 
     op match
       case BinaryScalarOps.Add =>
-        ???
+        // For vector + scalar: gradient flows through to vector unchanged
+        // Scalar accumulates sum of all gradients (since it's broadcast to all elements)
+        // leftN.grad = leftGradOps.+(leftN.grad)(scalar)
+        // Sum all gradients for the scalar since it affects all elements
+        val scalarGrad = this.grad.sum
+        rightN.grad = rvf.+(rightN.grad)(scalarGrad)
 
       case BinaryScalarOps.Sub =>
         ???

@@ -49,6 +49,6 @@ case class ReductionNode[F[_], T](
   end backward
 
   override def graphShow: String =
-    s"ReductionNode (id: ${thisId.toString().takeRight(4)}, value: ${value}, grad: ${grad})"
+    s"ReductionNode (id: ${thisId.toString().takeRight(4)}, value: ${value.show}, grad: ${grad.show})"
 
 end ReductionNode

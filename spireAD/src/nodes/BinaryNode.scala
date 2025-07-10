@@ -24,7 +24,7 @@ case class BinaryNode[F[_], @sp(Double) T](
     s"$op \n v:$value1 g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"BinaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value}, grad: ${grad})"
+    s"BinaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
 
   override def setGradOne(using ct: ClassTag[T]): Unit =
     grad = vf.allOnes(value1)

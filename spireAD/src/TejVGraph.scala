@@ -202,7 +202,7 @@ case class TejVGraph[T: ClassTag]():
       sh: Show[Matrix[T]],
       ct: ClassTag[T]
   ): Unit =
-    val node = SelectIndiciesNode(tv.value, tv.id, incomingId, indicies)
+    val node = SelectIndicesNode(tv.value, tv.id, incomingId, indicies)
     dag.addNode(node)
     dag.addEdge(incomingId, tv.id)
 
