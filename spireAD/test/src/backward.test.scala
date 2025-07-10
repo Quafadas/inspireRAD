@@ -131,6 +131,40 @@ class BackwardSuite extends FunSuite:
 
   }
 
+  test("Backpropagation for arrange selects correct gradients") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given graph: TejVGraph[Double] = TejVGraph[Double]()
+    val n = 5
+    val arangeArray = NArray.tabulate(n)(i => i.toDouble)
+    val x = Matrix(arangeArray, rows = n, cols = 1)
+    val xVar = TejV(x)
+
+    // Select elements at rows 0, 3, 4 (col is always 0)
+    val selected = xVar.arrange(Array((0, 0), (3, 0), (4, 0)))
+
+    // f = sum of squares of selected elements
+    val f = (selected * selected).sum
+
+    // Backprop gradients to xVar
+    val grads = f.backward2((x = xVar))
+    val gradMatrix = grads.x
+
+    val gradRaw = gradMatrix.raw.toArray
+
+    // Expected: grad = 2 * x[i] at selected positions, zero elsewhere
+    val expectedGrad = Array.fill(n)(0.0)
+    val selectedIndices = Array(0, 3, 4)
+    selectedIndices.foreach(i => expectedGrad(i) = 2.0 * arangeArray(i))
+
+    // Assert gradient correctness
+    for (i <- 0 until n) {
+      assert(
+        math.abs(gradRaw(i) - expectedGrad(i)) < 1e-8,
+        s"Grad at index $i incorrect: found ${gradRaw(i)}, expected ${expectedGrad(i)}"
+      )
+    }
+  }
+
   test("Tiny regression") {
     import vecxt.BoundsCheck.DoBoundsCheck.no
     val X = Matrix.fromRows(
