@@ -132,7 +132,7 @@ case class RowReductionNode[T](
     grad = gfa.zero(grad)
 
   override def graphShow: String =
-    s"RowReductionNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show})"
+    s"RowReductionNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value}, grad: ${grad} )"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[Matrix, T]]

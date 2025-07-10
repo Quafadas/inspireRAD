@@ -29,7 +29,7 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
     s"$op \n v:$value1 g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
+    s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value}, grad: ${grad})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     // println("left " + td.dag.getNode(left))

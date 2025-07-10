@@ -34,7 +34,7 @@ case class ReductionWithParams[F[_], G[_], @sp(Double) T](
     grad = gf.zero(grad)
 
   override def graphShow: String =
-    s"ReductionWithParams (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
+    s"ReductionWithParams (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value}, grad: ${grad})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[G, T]]
