@@ -37,7 +37,7 @@ case class NormaliseRowsNode[T](
     s"v:$value g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"NormaliseRowsNode (id: ${thisId.toString().takeRight(4)}, value: ${value1.show}, grad: ${grad.show})"
+    s"NormaliseRowsNode (id: ${thisId.toString().takeRight(4)}, op: ${op.toString()},\n value: ${value1.show}, \n grad: ${grad.show})"
 
   override def setGradOne(using ct: ClassTag[T]): Unit =
     grad = vf.allOnes(value1)
