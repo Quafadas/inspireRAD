@@ -157,12 +157,12 @@ class BackwardSuite extends FunSuite:
     selectedIndices.foreach(i => expectedGrad(i) = 2.0 * arangeArray(i))
 
     // Assert gradient correctness
-    for (i <- 0 until n) {
+    for i <- 0 until n do
       assert(
         math.abs(gradRaw(i) - expectedGrad(i)) < 1e-8,
         s"Grad at index $i incorrect: found ${gradRaw(i)}, expected ${expectedGrad(i)}"
       )
-    }
+    end for
   }
 
   test("Tiny regression") {
