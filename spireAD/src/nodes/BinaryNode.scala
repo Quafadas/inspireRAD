@@ -24,7 +24,7 @@ case class BinaryNode[F[_], @sp(Double) T](
     s"$op \n v:$value1 g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"BinaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
+    s"BinaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value}, grad: ${grad})"
 
   override def setGradOne(using ct: ClassTag[T]): Unit =
     grad = vf.allOnes(value1)
@@ -61,7 +61,8 @@ case class BinaryNode[F[_], @sp(Double) T](
           case BinaryOps.Div =>
             leftN2.grad += this.grad / rightN2.value
             rightN2.grad -= this.grad * leftN2.value / (rightN2.value * rightN2.value)
-      case (thisDim, gradDimL, gradDimR) if(thisDim == 0) =>
+        end match
+      case (thisDim, gradDimL, gradDimR) if (thisDim == 0) =>
         // If this dimension is a scalar, then we can use the scalar operations stored in the left / right nodes.
         // Further, we know that the left and right _values_ are scalar.
         // Left and right _gradients_ however... are not scalar - otherwise we would have the simple case above.
@@ -81,19 +82,18 @@ case class BinaryNode[F[_], @sp(Double) T](
             rightN.grad = rightN2.-(rightN.grad)(gradVal)
 
           case BinaryOps.Mul =>
-            leftN.grad = leftN2.+(leftN.grad)( fi.times(gradVal, rightVal))
+            leftN.grad = leftN2.+(leftN.grad)(fi.times(gradVal, rightVal))
             rightN.grad = rightN2.+(rightN.grad)(fi.times(gradVal, rightVal))
 
           case BinaryOps.Div =>
             leftN.grad = leftN2.+(leftN.grad)(fi.div(gradVal, rightVal))
 
             rightN.grad = rightN2.-(rightN.grad)(fi.div(fi.times(gradVal, leftVal), fi.times(rightVal, rightVal)))
+        end match
       case (thisDim, gradDimL, gradDimR) =>
         // Let's not think about this right now as it makes my head hurt and I don't need it atm.
         ???
-
-
-
+    end match
 
     // op match
     //   case BinaryOps.Add =>

@@ -97,7 +97,10 @@ object Matrixy:
         vecxt.MatrixInstance.apply(a)(i)(using bc, ct)
       end apply
 
-      def matmul(b: Matrix[Double]): Matrix[Double] = vecxt.all.@@(a)(b)
+      def matmul(b: Matrix[Double]): Matrix[Double] =
+        // println("Matrixy.doubleMatrix.matmul")
+        // println("vecxt.all.@@(a)(b), a shape: " + a.shape + ", b shape: " + b.shape)
+        vecxt.all.@@(a)(b)
 
       def mapRows(f: NArray[Double] => NArray[Double]): Matrix[Double] =
         vecxt.all.mapRows(a)(f)
@@ -119,7 +122,8 @@ trait Matrixy[F[_], A]:
     // def apply(i: NArray[Int], j: NArray[Int]): F[A]
     def apply(i: NArray[(Int, Int)]): F[A]
 
-    inline def apply(i: Int, j: Int)(using inline bc: BoundsCheck): A = vecxt.MatrixInstance.apply(a.asInstanceOf[Matrix[A]])(i, j)
+    inline def apply(i: Int, j: Int)(using inline bc: BoundsCheck): A =
+      vecxt.MatrixInstance.apply(a.asInstanceOf[Matrix[A]])(i, j)
 
     def matmul(b: F[A]): F[A]
     inline def @@(b: F[A]): F[A] = matmul(b)
@@ -132,10 +136,12 @@ trait Matrixy[F[_], A]:
 
     inline def arrange(i: NArray[(Int, Int)])(using ct: ClassTag[A], inline bc: BoundsCheck): NArray[A] =
 
-        val out = NArray.ofSize[A](i.length)
-        for ((row, col), idx) <- i.zipWithIndex do
-          out(idx) = vecxt.MatrixInstance.apply(a.asInstanceOf[Matrix[A]])(row, col)
-        out
+      val out = NArray.ofSize[A](i.length)
+      for ((row, col), idx) <- i.zipWithIndex do
+        out(idx) = vecxt.MatrixInstance.apply(a.asInstanceOf[Matrix[A]])(row, col)
+      end for
+      out
+    end arrange
   end extension
 
 end Matrixy

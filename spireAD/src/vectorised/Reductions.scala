@@ -49,6 +49,18 @@ object Reductions:
       override def product: Double = vecxt.all.product(a)
       inline def mean: Double = vecxt.all.mean(a)
       inline def sum: Double = vecxt.all.sum(a)
+    end extension
+
+  given vts: Reductions[Scalar, Double, 0] = new Reductions[Scalar, Double, 0]:
+
+    extension (a: Scalar[Double])
+
+      override def apply(i: EmptyTuple): Double = a.scalar
+      override def update(i: EmptyTuple, scalar: Double): Unit = ()
+
+      override def product: Double = a.scalar
+      inline def mean: Double = a.scalar
+      inline def sum: Double = a.scalar
 
     end extension
 

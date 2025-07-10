@@ -39,6 +39,7 @@ case class HeatmapBigram(override val mods: Seq[JsonMod] = List())(using
     PlotTarget
 ) extends FromResource:
   override lazy val path = "HeatmapBigram.vg.json"
+end HeatmapBigram
 
 def heatmap(data: collection.Seq[(String, Int)])(using PlotTarget) =
   HeatmapBigram(
@@ -58,6 +59,7 @@ def heatmap(data: collection.Seq[(String, Int)])(using PlotTarget) =
 def onehot(char: Char, allChars: collection.Map[Char, Int]): Array[Double] =
   val idx2 = allChars(char)
   Array.fill(allChars.size)(0.0).tap(_(idx2) = 1.0)
+end onehot
 
 // @main def checkOneHot =
 //   val chars = ('a' to 'z').toVector
@@ -99,24 +101,21 @@ import cats.Show
 
   def data: CsvIterator[Tuple1["name"]] = CSV.resource("names.txt")
 
-  /** Bookended : adds "."to either end of the string Pairs : extracts the
-    * series of pairs of the bookended characters characters Ints : indexes the
-    * bookended characters xenc : one hot encodes the characters excluding the
-    * last character
+  /** Bookended : adds "."to either end of the string Pairs : extracts the series of pairs of the bookended characters
+    * characters Ints : indexes the bookended characters xenc : one hot encodes the characters excluding the last
+    * character
     */
   def bookended = data
     .addColumn["Bookend", String](s => s".${s.name}.")
     .addColumn["Pairs", Seq[String]](s => s.Bookend.sliding(2).toSeq)
     .addColumn["Ints", Seq[Int]](s => s.Bookend.map(charsIdx.seq))
-    .addColumn["xenc", Seq[Array[Double]]](s =>
-      s.Ints.init.map(i => onehot(chars(i), charsIdx.seq))
-    )
+    .addColumn["xenc", Seq[Array[Double]]](s => s.Ints.init.map(i => onehot(chars(i), charsIdx.seq)))
     .addColumn["yenc", Array[Int]](s => s.Ints.tail.toArray)
 
-  val combinations = for {
+  val combinations = for
     a <- chars
     b <- chars
-  } yield s"$a$b"
+  yield s"$a$b"
 
   println("Change lange to neural network")
 
@@ -160,6 +159,7 @@ import cats.Show
     val probsNN = counts.mapRows(row => row / row.sum)
     val range = (0 until targets.length).toArray.zip(targets)
     -Scalar(probsNN(range).mapRowsToScalar(_.sum).log.mean)
+  end calcLoss
 
   inline def calcLossF[T](
       weights: TejV[Matrix, T],
@@ -188,9 +188,10 @@ import cats.Show
     val counts = logits.exp
 
     val probsNN = counts.normaliseRows
-    val range: Array[(Int, Int)] = (0.until( targets.length)).toArray.zip(targets)
+    val range: Array[(Int, Int)] = (0.until(targets.length)).toArray.zip(targets)
     val nearly = probsNN(range).mapRowsToScalar(ReductionOps.Sum).log.mean
     nearly * TejV(Scalar(fi.fromDouble(-1.0)))
+  end calcLossF
 
   // import io.github.quafadas.spireAD.VectorisedField.elementwiseMatrixDoubleField
   // import io.github.quafadas.spireAD.VectorisedField.elementwiseArrayDoubleField
@@ -210,7 +211,6 @@ import cats.Show
   println("lossT shape: " + lossT.value.shape)
   val menc = TejV(xencMall)
   val lossF = calcLossF[Double](lossT, menc, yChars)
-
 
   val grad = lossF.backward2((weights = lossT))
 
@@ -246,3 +246,4 @@ import cats.Show
   // println(probsNN.printMat)
 
   // println(loss)
+end makemore

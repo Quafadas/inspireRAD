@@ -29,7 +29,7 @@ case class MatrixyNode[T](
 ) extends VNode[Matrix, T](value1, thisId):
   val vfa1 = vfa
   override def graphShow: String =
-    s"MatNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show})"
+    s"MatNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value})"
 
   // def setGradOne(using ct: ClassTag[T]): Unit =
   //   grad = vf.allOnes(grad)

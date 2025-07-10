@@ -32,9 +32,16 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
     s"BinaryScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-    val leftN = td.dag.getNode(left).asInstanceOf[VNode[F, T]]
+    // println("left " + td.dag.getNode(left))
+    // println(td.dag.getNode(right))
+
+    // println("grad this node" + this.grad)
+    val leftN = td.dag.getNode(left)
     val rightN = td.dag.getNode(right)
     val rvf = rightN.vf2
+    val leftGradOps = leftN.vf2
+    val leftValOps = leftN.vf1
+
     op match
       case BinaryScalarOps.Add =>
         ???
@@ -46,18 +53,20 @@ case class BinaryScalarNode[F[_], @sp(Double) T](
         ???
 
       case BinaryScalarOps.Div =>
-
-        leftN.grad += vf./(grad)(scalar)
-        val dot = f.times(f.fromInt(-1), vf1.*(leftN.value)(grad).sum)
+        // println("left grad start")
+        // println(leftN.grad)
+        leftN.grad = leftGradOps./(leftN.grad)(scalar)
+        // println("left grad doen")
+        val dot = f.times(f.fromInt(-1), vf.*(grad)(leftN.value.asInstanceOf[Scalar[T]].scalar).sum)
         val scale = f.times(scalar, scalar)
         val toAdd = f.div(dot, scale)
         rightN.grad = rvf.+(rightN.grad)(toAdd)
 
       case BinaryScalarOps.ClampMin =>
-        // we assume the scalar is not a learnable parameter, but a constant
+        val leftCheat = leftN.asInstanceOf[VDimChangeNode[F, F, T]]
         val theCheck = vf.>(value1)(scalar)
         val tmp = grad *:* theCheck
-        leftN.grad = tmp
+        leftCheat.grad = tmp
 
     end match
     // println("--> backward binary" + this.toString())

@@ -18,9 +18,9 @@ class MatrixTCjSuite extends FunSuite:
     val fi1 = summon[VectorisedField[NArray, Double]]
     val fi2 = summon[VectorisedField[Scalar, Double]]
 
-    assertEquals(fi.numDimensions, 2 )
-    assertEquals(fi1.numDimensions, 1 )
-    assertEquals(fi2.numDimensions, 0 )
+    assertEquals(fi.numDimensions, 2)
+    assertEquals(fi1.numDimensions, 1)
+    assertEquals(fi2.numDimensions, 0)
   }
 
   test("Matrix Typelcasses") {

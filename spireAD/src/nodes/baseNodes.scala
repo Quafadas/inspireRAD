@@ -40,7 +40,7 @@ case class VConstNode[F[_], T](value1: F[T], idIn: UUID)(using
 ) extends VNode[F, T](value1, idIn):
 
   override def graphShow: String =
-    s"VConstNode (id: ${idIn.toString().takeRight(4)}, const: value: ${value1.show}, grad: ${grad.show})"
+    s"VConstNode (id: ${idIn.toString().takeRight(4)}, const: value: ${value1}, grad: ${grad})"
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit = ()
 

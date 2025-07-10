@@ -16,7 +16,6 @@ case class ArrangeNode[T](
     depId: UUID,
     indices: NArray[(Int, Int)]
 )(using
-
     vfa: VectorisedField[Array, T],
     vt: VectorisedTrig[Array, T],
     fi: Field[T],
@@ -32,8 +31,9 @@ case class ArrangeNode[T](
     // val zeros = n.vf1.zero( n.grad )
     for z <- 0 until indices.length do
       val (i, j) = indices(z)
-      n.grad(i, j) = fi.plus(n.grad(i,j), this.grad(z))
+      n.grad(i, j) = fi.plus(n.grad(i, j), this.grad(z))
     end for
     // n.grad += zeros
 
   end backward
+end ArrangeNode

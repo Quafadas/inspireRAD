@@ -66,21 +66,33 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
   def cos(using t: VectorisedTrig[F, T], td: TejVGraph[T]) =
     new TejV(lhs.value.cos).tap(td.unary(_, UrnaryOps.Cos, lhs.id))
 
-  def +(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
+  def +(
+      rhs: TejV[F, T]
+  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
     new TejV(lhs.value + rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Add))
   end +
 
-  def -(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
+  def -(
+      rhs: TejV[F, T]
+  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
     new TejV(lhs.value - rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Sub))
   end -
 
-  def *(rhs: TejV[F, T])(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
+  def *(
+      rhs: TejV[F, T]
+  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
     new TejV(lhs.value * rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Mul))
   end *
 
   def /(
       rhs: TejV[F, T]
-  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], sh: Show[F[T]], fi: Field[T]): TejV[F, T] =
+  )(using
+      f: VectorisedField[F, T],
+      t: VectorisedTrig[F, T],
+      td: TejVGraph[T],
+      sh: Show[F[T]],
+      fi: Field[T]
+  ): TejV[F, T] =
     new TejV(lhs.value / rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
   end /
 
@@ -203,7 +215,10 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     TejV.createDontAddToGraph(Scalar(value.mean)).tap(td.reduction(_, lhs, ReductionOps.Mean, lhs.id))
   end mean
 
-  def backward[G[_]](wrt: Set[TejV[?, T]], debug: Boolean = false)(using td: TejVGraph[T], ct: ClassTag[T]): Set[VNode[G, T]] =
+  def backward[G[_]](wrt: Set[TejV[?, T]], debug: Boolean = false)(using
+      td: TejVGraph[T],
+      ct: ClassTag[T]
+  ): Set[VNode[G, T]] =
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
@@ -216,14 +231,12 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
 
     // println(s"minIndex: $minIndex")
 
-    if (debug) {
-      println("---> Backward pass for TejV")
-    }
+    if debug then println("---> Backward pass for TejV")
+    end if
 
     reversed.foreach { node =>
-      if (debug) {
-        println("node: " + node.graphShow)
-      }
+      if debug then println("node: " + node.graphShow)
+      end if
       node.backward
     }
     val ids = wrt.map(_.id)
@@ -231,20 +244,21 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
   end backward
 
   // Simpler approach: return a regular Tuple with type info preserved at call site
-  def backward2[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V], debug: Boolean = false)(using td: TejVGraph[T], ct: ClassTag[T]) =
+  def backward2[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V], debug: Boolean = false)(using
+      td: TejVGraph[T],
+      ct: ClassTag[T]
+  ) =
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
     reversed.head.setGradOne
 
-    if (debug) {
-      println("---> Backward pass for TejV")
-    }
+    if debug then println("---> Backward pass for TejV")
+    end if
 
     reversed.foreach { node =>
-      if (debug) {
-        println("node: " + node.graphShow)
-      }
+      if debug then println("node: " + node.graphShow)
+      end if
 
       node.backward
     }
@@ -259,7 +273,8 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
 
     val gradientTuple = extractGradientTuple(wrt.toTuple)
 
-    println("Backward pass complete")
+    if debug then println("Backward pass complete")
+    end if
 
     // Return with names preserved - the caller will have the correct types
     gradientTuple.asInstanceOf[NamedTuple[N, GradientTypes[V]]]
@@ -379,7 +394,6 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ct: ClassTag[T],
       ord: Numeric[T],
       sh: Show[Array[T]]
-
   ): TejV[Array, T] =
     import vecxt.BoundsCheck.DoBoundsCheck.no
     val newT = value.asInstanceOf[Matrix[T]]
