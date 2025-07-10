@@ -291,8 +291,11 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
         grad *: extractGradientTuple(tail)
 
     val gradientTuple = extractGradientTuple(wrt.toTuple)
-
-    if debug then println("Backward pass complete")
+    if debug then
+      println(" Graph after backward pass:--------")
+      println(td.dag.toGraphviz)
+    end if
+    if debug then println("-----------Backward pass complete")
     end if
 
     // Return with names preserved - the caller will have the correct types
