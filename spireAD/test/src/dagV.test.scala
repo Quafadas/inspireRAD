@@ -234,7 +234,7 @@ class DAGVSuite extends FunSuite:
     val arr = Array(1.0, 2.0, 3.0, 4.0)
     val tej = TejV(arr)
 
-    val t2 = tej + Array(1.0, 2.0, 3.0, 4.0)
+    val t2 = tej + Array(1.0, 2.0, 3.0, 4.0).tej
     // TODO ???
     // val t3 = arr + tej
     assert(tejV.dag.toposort.size == 3)
@@ -790,6 +790,24 @@ class DAGVSuite extends FunSuite:
         )
       end for
     end for
+  }
+
+  test("scalar plus".only) {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val a = TejV(Matrix.fromRows(Array(2.0, 4.0, 6.0)))
+    val b = 3.0
+
+    val res = (a + b.tej).sum
+    graphDebug(tejV.dag.toGraphviz)
+    assertEquals(tejV.dag.getAllNodes.size, 4)
+    assertEquals(tejV.dag.getAllEdges.size, 3)
+    assertEqualsDouble(res.value.scalar, 21.0, 0.000001)
+
+    val grad = res.backward2((a = a))
+
+    // assertEqualsDouble(out.a.scalar, 1.0, 0.000001)
+    // assertEqualsDouble(out.b.scalar, 1.0, 0.000001)
   }
 
 end DAGVSuite

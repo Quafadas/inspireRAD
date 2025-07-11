@@ -33,7 +33,7 @@ case class ReductionNode[F[_], T](
     grad = vfF.zero(gradsize)
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-    val n = td.dag.getNode(depId).asInstanceOf[VNode[F, T]]
+    val n = td.dag.getNode(depId).asInstanceOf[VDimChangeNode[F, F, T]]
 
     // op match
     //   case ReductionOps.Sum =>

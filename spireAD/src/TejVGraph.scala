@@ -105,11 +105,6 @@ case class TejVGraph[T: ClassTag]():
       // shg: Show[G[T]]
   ): Unit =
     val leftN = dag.getNode(lhs)
-    // val leftNtype = (leftN.vf2.numDimensions, leftN.vf1.numDimensions) match
-    //   case (0, 0) => leftN.asInstanceOf[VDimChangeNode[F, F, T]]
-    //   case (1, 0) => leftN.vf1
-    //   case (2, 0) => leftN.vf2
-    //   case _      => throw new IllegalArgumentException(s"Unsupported dimensions: ${leftN.vf2.numDimensions}, ${leftN.vf1.numDimensions}")
 
     given gradL: VectorisedField[leftN.thisGrad, T] = leftN.vf2.asInstanceOf[VectorisedField[leftN.thisGrad, T]]
     given shg: Show[leftN.thisGrad[T]] = leftN.shg.asInstanceOf[Show[leftN.thisGrad[T]]]
@@ -117,6 +112,7 @@ case class TejVGraph[T: ClassTag]():
     dag.addNode(node)
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
+
     // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding scalar node")
 
   end scalar

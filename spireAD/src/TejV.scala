@@ -17,6 +17,23 @@ type GradientTypes[V <: Tuple] <: Tuple = V match
   case EmptyTuple         => EmptyTuple
   case TejV[f, t] *: tail => f[t] *: GradientTypes[tail]
 
+extension (d: Double)
+  def tej(using td: TejVGraph[Double], sh: Show[Scalar[Double]]) = TejV(Scalar(d))
+
+extension (m: Array[Double])
+  def tej(using td: TejVGraph[Double], sh: Show[Array[Double]], f: VectorisedField[Array, Double]) =
+    TejV(m)
+
+extension (m: Matrix[Double])
+  def tej(using
+      td: TejVGraph[Double],
+      sh: Show[Matrix[Double]],
+      f: VectorisedField[Matrix, Double],
+      tr: VectorisedTrig[Matrix, Double],
+      ev: Matrixy[Matrix, Double]
+  ) =
+    TejV(m)
+
 object TejV extends TejInstances:
 
   def apply[F[_], T](
@@ -34,14 +51,14 @@ object TejV extends TejInstances:
   ): TejV[F, T] =
     new TejV(t)
 
-  implicit def autoTejV[F[_], T](anF: F[T])(using
-      c: ClassTag[T],
-      td: TejVGraph[T],
-      f: VectorisedField[F, T],
-      sh: Show[F[T]],
-      t: VectorisedTrig[F, T]
-  ): TejV[F, T] =
-    new TejV(value = anF).tap(td.addToGraph)
+  // implicit def autoTejV[F[_], T](anF: F[T])(using
+  //     c: ClassTag[T],
+  //     td: TejVGraph[T],
+  //     f: VectorisedField[F, T],
+  //     sh: Show[F[T]],
+  //     t: VectorisedTrig[F, T]
+  // ): TejV[F, T] =
+  //   new TejV(value = anF).tap(td.addToGraph)
 
 end TejV
 
@@ -72,7 +89,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     new TejV(lhs.value + rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Add))
   end +
 
-  def +(d: Double)(using
+  def +(rhs: TejV[Scalar, T])(using
       f: VectorisedField[F, T],
       fs: VectorisedField[Scalar, T],
       t: VectorisedTrig[F, T],
@@ -85,9 +102,9 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       n: Numeric[T],
       ct: ClassTag[T]
   ): TejV[F, T] =
-    val fid = f.fromDouble(d)
-    val scalar = new TejV(Scalar(fid)).tap(td.addToGraph)
-    f.+(lhs.value)(fid).tap(td.scalar[F](lhs.id, lhs.id, _, BinaryScalarOps.Add, fid))
+    // val fid = f.fromDouble(d)
+    val newVal = f.+(lhs.value)(rhs.value.scalar)
+    new TejV(newVal).tap(td.scalar[F](lhs.id, rhs.id, _, BinaryScalarOps.Add, rhs.value.scalar))
   end +
 
   def -(

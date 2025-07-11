@@ -209,7 +209,7 @@ class BackwardSuite extends FunSuite:
     def loss(
         data: TejV[Matrix, Double],
         weights: TejV[Matrix, Double],
-        targets: Matrix[Double]
+        targets: TejV[Matrix, Double]
     )(using
         mOps: Matrixy[Matrix, Double],
         fm: VectorisedField[Matrix, Double],
@@ -248,11 +248,11 @@ class BackwardSuite extends FunSuite:
 
       if steps == 0 then weights_
       else
-        val lossCalculated = loss(data_, weights_, targets)
+        val lossCalculated = loss(data_, weights_, targets.tej)
         // graphDebug(graph.dag.toGraphviz)
         val grad = lossCalculated.backward2((weights = weights_), false)
 
-        val updated = weights_ - (grad.weights * learningRate)
+        val updated = weights_ - (grad.weights * learningRate).tej
         // println(s"Updated weights: ${updated.value.show}")
         // if` steps % 3 == 0 then
         //   `println(s"Step $steps, loss: ${lossCalculated.value.scalar}")
