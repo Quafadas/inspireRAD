@@ -13,7 +13,7 @@ tags
 metals.sbt
 sbt-launch.jar
 .scala-build
-.vscode/mcp.json
+
 spireAD/graph.viz
 
 # npm
@@ -22,3 +22,4 @@ node_modules/
 #mill
 out/
 .envrc
+graph.dot

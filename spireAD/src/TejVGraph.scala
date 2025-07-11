@@ -87,14 +87,25 @@ case class TejVGraph[T: ClassTag]():
       scalar: T
   )(using
       vf: VectorisedField[F, T],
+      // vg: VectorisedField[G, T],
       tr: VectorisedTrig[F, T],
       f: Field[T],
-      rd: Reductions[F, T, InferDimension[F]],
+      // rd: Reductions[G, T, InferDimension[G]],
       ct: ClassTag[T],
       n: Numeric[T],
-      sh: Show[F[T]]
+      shf: Show[F[T]]
+      // shg: Show[G[T]]
   ): Unit =
-    val node = BinaryScalarNode[F, T](op, tv.value, tv.id, lhs, rhs, scalar)
+    val leftN = dag.getNode(lhs)
+    // val leftNtype = (leftN.vf2.numDimensions, leftN.vf1.numDimensions) match
+    //   case (0, 0) => leftN.asInstanceOf[VDimChangeNode[F, F, T]]
+    //   case (1, 0) => leftN.vf1
+    //   case (2, 0) => leftN.vf2
+    //   case _      => throw new IllegalArgumentException(s"Unsupported dimensions: ${leftN.vf2.numDimensions}, ${leftN.vf1.numDimensions}")
+
+    given gradL: VectorisedField[leftN.thisGrad, T] = leftN.vf2.asInstanceOf[VectorisedField[leftN.thisGrad, T]]
+    given shg: Show[leftN.thisGrad[T]] = leftN.shg.asInstanceOf[Show[leftN.thisGrad[T]]]
+    val node = ScalarNode[F, leftN.thisGrad, T](op, tv.value, tv.id, lhs, rhs, scalar, leftN.grad)
     dag.addNode(node)
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
@@ -141,6 +152,7 @@ case class TejVGraph[T: ClassTag]():
     dag.addEdge(depId, tv.id)
   end reductionWithParams
 
+  // For reduction to scalars.
   inline def rowReduction(
       tv: TejV[Array, T],
       depId: UUID,
@@ -171,6 +183,7 @@ case class TejVGraph[T: ClassTag]():
       n: Numeric[T],
       mty: Matrixy[Matrix, T]
   ): Unit =
+    println("adding normaliseRows node")
     val node = NormaliseRowsNode[T](value.value, value.id, dep, op)
     dag.addNode(node)
     dag.addEdge(dep, value.id)
@@ -218,6 +231,7 @@ case class TejVGraph[T: ClassTag]():
       fa: VectorisedField[Array, T],
       t: VectorisedTrig[Array, T],
       fi: Field[T],
+      sh: Show[Array[T]],
       m: Matrixy[Matrix, T],
       ct: ClassTag[T]
   ): Unit =

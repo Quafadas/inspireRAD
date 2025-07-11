@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "spire_AD-metals": {
+      "url": "http://localhost:49624/sse",
+      "type": "sse"
+    }
+  }
+}

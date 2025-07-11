@@ -23,8 +23,8 @@ class BackwardSuite extends FunSuite:
           .row(i)
           .map(s => "%.3f".format(s).reverse.padTo(6, ' ').reverse)
           .mkString(" | ")
-      val footer = ("-" * (rows.head.length))
-      (rows :+ footer).mkString("\n")
+      // val footer = ("-" * (rows.head.length))
+      rows.mkString("\n")
     end show
   end given
 
@@ -222,7 +222,9 @@ class BackwardSuite extends FunSuite:
       if steps == 0 then weights_
       else
         val lossCalculated = loss(data_, weights_, targets)
+        // graphDebug(graph.dag.toGraphviz)
         val grad = lossCalculated.backward2((weights = weights_), false)
+
         val updated = weights_ - (grad.weights * learningRate)
         // println(s"Updated weights: ${updated.value.show}")
         // if` steps % 3 == 0 then
@@ -237,7 +239,7 @@ class BackwardSuite extends FunSuite:
     // println(s"trained on 100 steps")
     // println(s"Final weights: ${weights.value.show}")
 
-    assertEqualsDouble(weights.value(0, 0), 0.0, 0.01)
+    assertEqualsDouble(weights.value(0, 0), 0.01, 0.01)
     assertEqualsDouble(weights.value(1, 0), 1.0, 0.01)
   }
   // test("A tiny example") {

@@ -30,5 +30,5 @@ enum MatrixyBinaryOps:
 end MatrixyBinaryOps
 
 enum NormaliseRowOps:
-  case NormaliseRows, Softmax, LogSoftmax
+  case NormaliseRowsL1, NormaliseRowsL2, Softmax, LogSoftmax
 end NormaliseRowOps

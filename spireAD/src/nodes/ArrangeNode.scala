@@ -18,6 +18,7 @@ case class ArrangeNode[T](
 )(using
     vfa: VectorisedField[Array, T],
     vt: VectorisedTrig[Array, T],
+    sh: Show[Array[T]],
     fi: Field[T],
     ct: ClassTag[T]
 ) extends VNode[Array, T](value1, thisId):

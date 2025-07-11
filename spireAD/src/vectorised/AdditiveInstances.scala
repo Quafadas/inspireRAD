@@ -67,6 +67,12 @@ object VectorisedField:
     override def toDouble(x: Tej[Double]): Double = ???
 
   def scalarJetField(using jd: JetDim): VectorisedField[Scalar, Jet[Double]] = new VectorisedField[Scalar, Jet[Double]]:
+
+    override def sum(x: Scalar[Jet[Double]])(using ClassTag[Jet[Double]]): Jet[Double] = x.scalar
+    override def abs(x: Scalar[Jet[Double]]): Scalar[Jet[Double]] = Scalar(x.scalar.abs)
+    override def sign(x: Scalar[Jet[Double]])(using ClassTag[Jet[Double]]): Scalar[Jet[Double]] =
+      Scalar(Jet(if x.scalar.real > 0.0 then 1.0 else if x.scalar.real < 0.0 then -1.0 else 0.0))
+
     override val numDimensions = 0
     extension (a: Scalar[Jet[Double]])
       override def >(y: Jet[Double]): Scalar[Boolean] = Scalar(a.scalar.real > y.real)
@@ -111,6 +117,12 @@ object VectorisedField:
 
   def scalarTejField(using jd: TejDim[Double]): VectorisedField[Scalar, Tej[Double]] =
     new VectorisedField[Scalar, Tej[Double]]:
+
+      override def sum(x: Scalar[Tej[Double]])(using ClassTag[Tej[Double]]): Tej[Double] = x.scalar
+      override def abs(x: Scalar[Tej[Double]]): Scalar[Tej[Double]] = Scalar(x.scalar.abs)
+      override def sign(x: Scalar[Tej[Double]])(using ClassTag[Tej[Double]]): Scalar[Tej[Double]] =
+        Scalar(Tej(if x.scalar.value > 0.0 then 1.0 else if x.scalar.value < 0.0 then -1.0 else 0.0))
+
       override val numDimensions = 0
       extension (a: Double)
         override def const: Tej[Double] = Tej(a)
@@ -156,6 +168,13 @@ object VectorisedField:
 
   def elementwiseMatrixJetField(using jd: JetDim): VectorisedField[Matrix, Jet[Double]] =
     new VectorisedField[Matrix, Jet[Double]]:
+
+      override def sum(x: Matrix[Jet[Double]])(using ClassTag[Jet[Double]]): Jet[Double] =
+        x.raw.foldLeft(Jet.zero[Double])(_ + _)
+      override def abs(x: Matrix[Jet[Double]]): Matrix[Jet[Double]] = Matrix(x.shape, x.raw.map(_.abs))
+      override def sign(x: Matrix[Jet[Double]])(using ClassTag[Jet[Double]]): Matrix[Jet[Double]] =
+        Matrix(x.shape, x.raw.map(jet => Jet(if jet.real > 0.0 then 1.0 else if jet.real < 0.0 then -1.0 else 0.0)))
+
       override val numDimensions = 2
       extension (a: Matrix[Jet[Double]])
         override def >(y: Jet[Double]): Matrix[Boolean] =
@@ -213,6 +232,13 @@ object VectorisedField:
 
   def elementwiseArrayJetField(using jd: JetDim): VectorisedField[NArray, Jet[Double]] =
     new VectorisedField[NArray, Jet[Double]]:
+
+      override def sum(x: Array[Jet[Double]])(using ClassTag[Jet[Double]]): Jet[Double] =
+        x.foldLeft(Jet.zero[Double])(_ + _)
+      override def abs(x: Array[Jet[Double]]): Array[Jet[Double]] = x.map(_.abs)
+      override def sign(x: Array[Jet[Double]])(using ClassTag[Jet[Double]]): Array[Jet[Double]] =
+        x.map(jet => Jet(if jet.real > 0.0 then 1.0 else if jet.real < 0.0 then -1.0 else 0.0))
+
       override val numDimensions = 1
 
       extension (a: NArray[Jet[Double]])
@@ -257,6 +283,13 @@ object VectorisedField:
 
   def elementwiseArrayJetField(using jd: TejDim[Double]): VectorisedField[NArray, Tej[Double]] =
     new VectorisedField[NArray, Tej[Double]]:
+
+      override def sum(x: Array[Tej[Double]])(using ClassTag[Tej[Double]]): Tej[Double] =
+        x.foldLeft(Tej.zero[Double])(_ + _)
+      override def abs(x: Array[Tej[Double]]): Array[Tej[Double]] = x.map(_.abs)
+      override def sign(x: Array[Tej[Double]])(using ClassTag[Tej[Double]]): Array[Tej[Double]] =
+        x.map(tej => Tej(if tej.value > 0.0 then 1.0 else if tej.value < 0.0 then -1.0 else 0.0))
+
       override val numDimensions = 1
 
       extension (a: Array[Tej[Double]])
@@ -300,6 +333,12 @@ object VectorisedField:
       end extension
 
   given scalarField: VectorisedField[Scalar, Double] = new VectorisedField[Scalar, Double]:
+
+    override def sum(x: Scalar[Double])(using ClassTag[Double]): Double = x.scalar
+    override def abs(x: Scalar[Double]): Scalar[Double] = Scalar(x.scalar.abs)
+    override def sign(x: Scalar[Double])(using ClassTag[Double]): Scalar[Double] =
+      Scalar(if x.scalar > 0.0 then 1.0 else if x.scalar < 0.0 then -1.0 else 0.0)
+
     override val numDimensions = 0
 
     extension (a: Scalar[Double])
@@ -346,6 +385,11 @@ object VectorisedField:
     end extension
 
   given elementwiseMatrixDoubleField: VectorisedField[Matrix, Double] = new VectorisedField[Matrix, Double]:
+    override def sum(x: Matrix[Double])(using ClassTag[Double]): Double = vecxt.arrays.sum(x.raw)
+    override def abs(x: Matrix[Double]): Matrix[Double] = Matrix(x.shape, x.raw.map(_.abs))
+    override def sign(x: Matrix[Double])(using ClassTag[Double]): Matrix[Double] =
+      Matrix(x.shape, x.raw.map(d => if d > 0.0 then 1.0 else if d < 0.0 then -1.0 else 0.0))
+
     override val numDimensions = 2
 
     extension (a: Matrix[Double])
@@ -399,6 +443,12 @@ object VectorisedField:
     end extension
 
   given elementwiseArrayDoubleField: VectorisedField[NArray, Double] = new VectorisedField[NArray, Double]:
+
+    override def sum(x: Array[Double])(using ClassTag[Double]): Double = vecxt.arrays.sum(x)
+    override def abs(x: Array[Double]): Array[Double] = x.map(_.abs)
+    override def sign(x: Array[Double])(using ClassTag[Double]): Array[Double] =
+      x.map(d => if d > 0.0 then 1.0 else if d < 0.0 then -1.0 else 0.0)
+
     override val numDimensions = 1
     extension (a: Array[Double])
 
@@ -449,10 +499,13 @@ end VectorisedField
 
 trait VectorisedField[F[_], @sp(Double) A]:
   val numDimensions: InferDimension[F]
+  def sum(x: F[A])(using ClassTag[A]): A
   def fromDouble(x: Double): A
   def zero(x: F[A]): F[A]
   def one(x: F[A])(using ClassTag[A]): F[A]
   def allOnes(x: F[A])(using ClassTag[A]): F[A]
+  def abs(x: F[A]): F[A]
+  def sign(x: F[A])(using ClassTag[A]): F[A]
 
   extension (a: Double)
     def const: A

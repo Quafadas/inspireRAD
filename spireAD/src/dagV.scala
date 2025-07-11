@@ -35,6 +35,11 @@ class DAGV[T: ClassTag, N <: VDimChangeNode[?, ?, T]]:
   def getAllNodes: Set[N] =
     nodeMap.values.toSet
 
+  def getAllEdges: Set[(UUID, UUID)] =
+    adjacencyList.flatMap { case (from, neighbors) =>
+      neighbors.map(to => (from, to))
+    }.toSet
+
   def removeNode(id: UUID): Unit =
     nodeMap.get(id).foreach(reverseNodeMap -= _)
     adjacencyList -= id

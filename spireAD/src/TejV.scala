@@ -87,7 +87,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
   ): TejV[F, T] =
     val fid = f.fromDouble(d)
     val scalar = new TejV(Scalar(fid)).tap(td.addToGraph)
-    f.+(lhs.value)(fid).tap(td.scalar(lhs.id, lhs.id, _, BinaryScalarOps.Add, fid))
+    f.+(lhs.value)(fid).tap(td.scalar[F](lhs.id, lhs.id, _, BinaryScalarOps.Add, fid))
   end +
 
   def -(
@@ -125,7 +125,9 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       red: Reductions[F, T, InferDimension[F]]
   ): TejV[F, T] =
     val newVal = f./(lhs.value)(rhs.value.scalar)
-    new TejV(newVal).tap(td.scalar(lhs.id, rhs.id, _, BinaryScalarOps.Div, rhs.value.scalar))
+    new TejV(newVal).tap(
+      td.scalar(lhs.id, rhs.id, _, BinaryScalarOps.Div, rhs.value.scalar)
+    )
   end div
 
   def clampMin(threshold: T)(using
@@ -157,7 +159,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     newT.tap(td.reduction(_, lhs, ReductionOps.Sum, lhs.id))
   end sum
 
-  def normaliseRows(using
+  def normaliseRowsL1(using
       td: TejVGraph[T],
       vf: VectorisedField[Array, T],
       vf2: VectorisedField[Matrix, T],
@@ -177,9 +179,33 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     }
 
     new TejV(newMat).tap(
-      td.normaliseRows(this.id, _, NormaliseRowOps.NormaliseRows)
+      td.normaliseRows(this.id, _, NormaliseRowOps.NormaliseRowsL1)
     )
-  end normaliseRows
+  end normaliseRowsL1
+
+  def normaliseRowsL2(using
+      td: TejVGraph[T],
+      vf: VectorisedField[Array, T],
+      vf2: VectorisedField[Matrix, T],
+      vt2: VectorisedTrig[Matrix, T],
+      red: Reductions[Array, T, 1],
+      n: Numeric[T],
+      f: Field[T],
+      sh: Show[Matrix[T]],
+      mty: Matrixy[Matrix, T],
+      nr: NRoot[T],
+      ct: ClassTag[T],
+      ev: F[T] <:< Matrix[T]
+  ): TejV[Matrix, T] =
+    val newMat = mty.mapRows(value) { (row: Array[T]) =>
+      val l2 = nr.sqrt(row.map(x => n.times(x, x)).sum)
+      vf./(row)(l2)
+    }
+
+    new TejV(newMat).tap(
+      td.normaliseRows(this.id, _, NormaliseRowOps.NormaliseRowsL2)
+    )
+  end normaliseRowsL2
 
   def softmaxRows(using
       td: TejVGraph[T],

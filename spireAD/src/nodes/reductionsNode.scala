@@ -34,23 +34,36 @@ case class ReductionNode[F[_], T](
 
   override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
     val n = td.dag.getNode(depId).asInstanceOf[VNode[F, T]]
+
+    // op match
+    //   case ReductionOps.Sum =>
+    //     n.grad = n.vf1.+(n.grad)(n.vf1.allOnes(n.grad))
+
+    //   case ReductionOps.Product =>
+    //     val pes = n.vf2.productExceptSelf(n.value)()
+    //     n.grad = n.vf2.+(n.grad)(pes)
+
+    //   case ReductionOps.Mean =>
+    //     n.grad = n.vf2.+(n.grad)(n.vf2./(n.vf2.allOnes(n.grad))(n.vf2.fromDouble(n.vf2.numel(n.value))))
+
     op match
       case ReductionOps.Sum =>
         val ones = n.vf1.allOnes(n.value)
-        n.grad = n.vf1.+(n.grad)(n.vf1.*(ones)(n.grad))  // broadcast grad
+        // println(n.vf1.+(n.grad)(n.vf1.*(ones)(n.grad)).show)
+        n.grad = n.vf1.+(n.grad)(n.vf1.*(ones)(grad)) // broadcast grad
 
       case ReductionOps.Product =>
         val pes = n.vf2.productExceptSelf(n.value)()
-        n.grad = n.vf2.+(n.grad)(n.vf2.*(pes)(n.grad))  // chain rule
+        n.grad = n.vf2.+(n.grad)(n.vf2.*(pes)(grad)) // chain rule
 
       case ReductionOps.Mean =>
         val meanGrad = n.vf2./(n.vf2.allOnes(n.value))(n.vf2.fromDouble(n.vf2.numel(n.value)))
-        n.grad = n.vf2.+(n.grad)(n.vf2.*(meanGrad)(n.grad))  // broadcast mean grad
+        n.grad = n.vf2.+(n.grad)(n.vf2.*(meanGrad)(grad)) // broadcast mean grad
 
     end match
   end backward
 
   override def graphShow: String =
-    s"ReductionNode (id: ${thisId.toString().takeRight(4)}, value: ${value.show}, grad: ${grad.show})"
+    s"ReductionNode (id: ${thisId.toString().takeRight(4)}, , op: ${op} \n value: \n ${value.show} \n grad \n ${grad.show})"
 
 end ReductionNode

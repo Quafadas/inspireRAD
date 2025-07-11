@@ -19,6 +19,9 @@ import vecxt.MatrixInstance.apply
 import vecxt.matrix.Matrix.apply
 import vecxt.all.mapRows
 
+def graphDebug(s: String) =
+  os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", s)
+
 class DAGVSuite extends FunSuite:
 
   import VectorisedTrig.vta
@@ -405,32 +408,73 @@ class DAGVSuite extends FunSuite:
 
     given td: TejVGraph[Double] = TejVGraph[Double]()
 
-    val j = TejV(Scalar(2.0))
-    val arr = TejV(Array(1.0, 2.0, 3.0, 4.0))
+    val c = TejV(Scalar(2.0))
+    val x = TejV(Array(2.0, 4.0, 6.0))
 
-    val res = arr.div(j)
+    val res = x.div(c)
 
-    assertEqualsDouble(res.value(0), 0.5, 0.000001)
-    assertEqualsDouble(res.value(1), 1.0, 0.000001)
-    assertEqualsDouble(res.value(2), 1.5, 0.000001)
-    assertEqualsDouble(res.value(3), 2.0, 0.000001)
+    assertEquals(td.dag.getAllNodes.size, 3)
+    assertEquals(td.dag.getAllEdges.size, 2)
 
-    val out = res.backward[Array](Set(arr))
+    assertEqualsDouble(res.value(0), 1.0, 0.000001)
+    assertEqualsDouble(res.value(1), 2.0, 0.000001)
+    assertEqualsDouble(res.value(2), 3, 0, 0.000001)
 
-    val tejGrad = out.head.grad
+    val grads = res.backward2((x = x, c = c))
+    graphDebug(td.dag.toGraphviz)
 
-    for i <- 0 until tejGrad.length do
+    for i <- 0 until grads.x.length do
       assertEqualsDouble(
-        tejGrad(i),
+        grads.x(i),
         0.5,
         0.0000001
       )
     end for
 
-    td.dag.resetGrads
+    assertEqualsDouble(
+      grads.c.scalar,
+      -3.0,
+      0.001
+    )
 
-    val gradJ = res.backward[Scalar](Set(j)).head.grad
-    assertEqualsDouble(gradJ.scalar, -2.5, 0.000001)
+  }
+
+  test("Scalar division mat") {
+
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+
+    given td: TejVGraph[Double] = TejVGraph[Double]()
+
+    val c = TejV(Scalar(2.0))
+    val x = TejV(
+      Matrix.fromRows(
+        Array(2.0, 4.0),
+        Array(6.0, 8.0)
+      )
+    )
+
+    val res = x.div(c)
+
+    assertEquals(td.dag.getAllNodes.size, 3)
+    assertEquals(td.dag.getAllEdges.size, 2)
+
+    val grads = res.backward2((x = x, c = c))
+    graphDebug(td.dag.toGraphviz)
+
+    for i <- 0 until grads.x.raw.length do
+      assertEqualsDouble(
+        grads.x.raw(i),
+        0.5,
+        0.0000001
+      )
+    end for
+
+    assertEqualsDouble(
+      grads.c.scalar,
+      -5.0,
+      0.001
+    )
+
   }
 
   test("Scalar clampMin") {
@@ -522,39 +566,52 @@ class DAGVSuite extends FunSuite:
     )
 
   }
-  test("Row reductions - normalise") {
+  test("Row reductions - normalise L1") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given graph: TejVGraph[Double] = TejVGraph[Double]()
+    val arr = vecxt.all.Matrix.fromRows(
+      Array(1.0, 2.0, 3.0)
+    )
+
+    val tej = TejV(arr)
+    val divvd = tej.div(TejV(Scalar(10.0)))
+
+    val summed = divvd.normaliseRowsL1.sum
+    val mat = summed.value
+    assertEqualsDouble(summed.value.scalar, 1.0, 0.000001)
+    val grad = summed.backward2((tej = tej))
+
+    assertEquals(graph.dag.getAllNodes.size, 5)
+
+    // graphDebug(graph.dag.toGraphviz)
+
+    assertEqualsDouble(grad.tej.raw(0), 0.0833333, 0.0000001)
+    assertEqualsDouble(grad.tej.raw(1), 0, 0.0000001)
+    assertEqualsDouble(grad.tej.raw(2), -0.0833333333, 0.0000001)
+
+  }
+
+  test("Matrix sum Binary div".only) {
+
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
     val arr = vecxt.all.Matrix.fromRows(
       Array(1.0, 2.0, 3.0)
     )
+    val tej = TejV(arr)
+    val scalar = TejV(Scalar(10.0))
 
-    val tej = TejV(arr).div(TejV(Scalar(10.0)))
+    val calc = tej.sum.div(scalar)
 
-    val summed = tej.normaliseRows
-    val mat = summed.value
-    assertEqualsDouble(mat(0, 0), 1.0 / 6.0, 0.000001)
-    val out = summed.backward[Matrix](Set(tej))
-    // os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.viz", tejV.dag.toGraphviz)
+    assertEqualsDouble(calc.value.scalar, 0.6, 0.000001)
 
-    val tejGrad = out.head.grad
-    assertEqualsDouble(
-      tejGrad.raw(0),
-      0.83333333,
-      0.0000001
-    )
+    // graphDebug(tejV.dag.toGraphviz)
+    val grad = calc.backward2((tej = tej, scalar = scalar))
+    // graphDebug(tejV.dag.toGraphviz)
 
-    assertEqualsDouble(
-      tejGrad.raw(1),
-      0.6666666,
-      0.0000001
-    )
-
-    assertEqualsDouble(
-      tejGrad.raw(2),
-      0.5,
-      0.0000001
-    )
+    grad.tej.raw.foreach { x =>
+      assertEqualsDouble(x, 0.1, 0.000001)
+    }
 
   }
 
