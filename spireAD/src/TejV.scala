@@ -265,6 +265,10 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       td: TejVGraph[T],
       ct: ClassTag[T]
   ): Set[VNode[G, T]] =
+    if debug || !td.dag.isCompletelyConnected then
+      os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", td.dag.toGraphviz)
+    end if
+    assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
     val graph = td.dag.toposort
     val reversed = graph.reverse
 

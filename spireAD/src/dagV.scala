@@ -20,6 +20,11 @@ class DAGV[T: ClassTag, N <: VDimChangeNode[?, ?, T]]:
       node.setGradZero
     }
 
+  def isCompletelyConnected: Boolean =
+    adjacencyList.nonEmpty && adjacencyList.forall { case (id, neighbors) =>
+      neighbors.nonEmpty || adjacencyList.values.exists(_.contains(id))
+    }
+
   def addNode(node: N): Unit =
     if !adjacencyList.contains(node.id) then
       adjacencyList(node.id) = mutable.Set.empty

@@ -77,6 +77,27 @@ class BackwardSuite extends FunSuite:
   //   os.write.over(os.Path("/Users/simon/Code/spire_AD/spireAD/experiments/tmp.dot"), graph)
   // end writeGraph
 
+  test("completely connectedness") {
+    import vecxt.BoundsCheck.DoBoundsCheck.no
+    given graph: TejVGraph[Double] = TejVGraph[Double]()
+    val x = TejV(Matrix.fromRows(NArray(1.0, 2.0, 3.0)))
+    val y = TejV(Matrix.fromRows(NArray(4.0, 5.0, 6.0)))
+    graphDebug(graph.dag.toGraphviz)
+    val z = x + y
+    assert(graph.dag.isCompletelyConnected)
+    // println(graph.dag.toGraphviz)
+  }
+
+  test(" throws if not completely connected") {
+    import vecxt.BoundsCheck.DoBoundsCheck.no
+    given graph: TejVGraph[Double] = TejVGraph[Double]()
+    val x = TejV(Matrix.fromRows(NArray(1.0, 2.0, 3.0)))
+    val y = TejV(Matrix.fromRows(NArray(4.0, 5.0, 6.0)))
+    val oops = TejV(Matrix.fromRows(NArray(4.0, 5.0, 6.0)))
+
+    assert(!graph.dag.isCompletelyConnected)
+  }
+
   test("log softmax gradients sum to zero. Result are consistent between Tej, Jet, double") {
     val dim = 4
     given jetd: JetDim = JetDim(dim)

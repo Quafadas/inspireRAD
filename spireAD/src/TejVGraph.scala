@@ -50,6 +50,7 @@ case class TejVGraph[T: ClassTag]():
     val node = ReductionNode[F, T](tv.value, tv.id, depId, op, f.zero(incoming.value))
     dag.addNode(node)
     dag.addEdge(depId, tv.id)
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding reduction node")
   end reduction
 
   inline def unary[F[_]](tv: TejV[F, T], op: UrnaryOps, depId: UUID)(using
@@ -60,7 +61,12 @@ case class TejVGraph[T: ClassTag]():
     val node = UrnaryNode[F, T](op, tv.value, tv.id, depId)
     dag.addNode(node)
     dag.addEdge(depId, tv.id)
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding unary node")
   end unary
+
+  def graphDebug(s: String) =
+    os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", s)
+
 
   inline def binary[F[_]](
       lhs: UUID,
@@ -77,6 +83,8 @@ case class TejVGraph[T: ClassTag]():
     dag.addNode(node)
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
+    // graphDebug(dag.toGraphviz)
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding binary node")
   end binary
 
   inline def scalar[F[_]](
@@ -109,6 +117,8 @@ case class TejVGraph[T: ClassTag]():
     dag.addNode(node)
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding scalar node")
+
   end scalar
 
   inline def matrixy(
@@ -128,6 +138,9 @@ case class TejVGraph[T: ClassTag]():
     dag.addNode(node)
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
+    // println("Adding matrix node to graph")
+    graphDebug(dag.toGraphviz)
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding matrix node")
   end matrixy
 
   inline def reductionWithParams[F[_], G[_]](
@@ -150,6 +163,7 @@ case class TejVGraph[T: ClassTag]():
     val node = ReductionWithParams[F, G, T](op, tv.value, tv.id, depId, param, someG)
     dag.addNode(node)
     dag.addEdge(depId, tv.id)
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding reduction with params node")
   end reductionWithParams
 
   // For reduction to scalars.
@@ -169,6 +183,7 @@ case class TejVGraph[T: ClassTag]():
     val node = RowReductionNode(op, tv.value, tv.id, depId, rowGrads)
     dag.addNode(node)
     dag.addEdge(depId, tv.id)
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding row reduction node")
   end rowReduction
 
   def normaliseRows(dep: UUID, value: TejV[Matrix, T], op: NormaliseRowOps)(using
@@ -183,11 +198,11 @@ case class TejVGraph[T: ClassTag]():
       n: Numeric[T],
       mty: Matrixy[Matrix, T]
   ): Unit =
-    println("adding normaliseRows node")
+    // println("adding normaliseRows node")
     val node = NormaliseRowsNode[T](value.value, value.id, dep, op)
     dag.addNode(node)
     dag.addEdge(dep, value.id)
-
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding normaliseRows node")
     // TejV(newMat)
   end normaliseRows
 
@@ -238,6 +253,8 @@ case class TejVGraph[T: ClassTag]():
     val node = ArrangeNode(tv.value, tv.id, incomingId, indicies)
     dag.addNode(node)
     dag.addEdge(incomingId, tv.id)
+
+    // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding arrange node")
 
   end arrange
 
