@@ -67,7 +67,6 @@ case class TejVGraph[T: ClassTag]():
   def graphDebug(s: String) =
     os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", s)
 
-
   inline def binary[F[_]](
       lhs: UUID,
       rhs: UUID,

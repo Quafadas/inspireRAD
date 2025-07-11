@@ -17,12 +17,13 @@ type GradientTypes[V <: Tuple] <: Tuple = V match
   case EmptyTuple         => EmptyTuple
   case TejV[f, t] *: tail => f[t] *: GradientTypes[tail]
 
-extension (d: Double)
-  def tej(using td: TejVGraph[Double], sh: Show[Scalar[Double]]) = TejV(Scalar(d))
+extension (d: Double) def tej(using td: TejVGraph[Double], sh: Show[Scalar[Double]]) = TejV(Scalar(d))
+end extension
 
 extension (m: Array[Double])
   def tej(using td: TejVGraph[Double], sh: Show[Array[Double]], f: VectorisedField[Array, Double]) =
     TejV(m)
+end extension
 
 extension (m: Matrix[Double])
   def tej(using
@@ -33,6 +34,7 @@ extension (m: Matrix[Double])
       ev: Matrixy[Matrix, Double]
   ) =
     TejV(m)
+end extension
 
 object TejV extends TejInstances:
 
@@ -282,8 +284,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       td: TejVGraph[T],
       ct: ClassTag[T]
   ): Set[VNode[G, T]] =
-    if debug || !td.dag.isCompletelyConnected then
-      os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
+    if debug || !td.dag.isCompletelyConnected then os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
     end if
     assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
     val graph = td.dag.toposort
@@ -315,8 +316,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       td: TejVGraph[T],
       ct: ClassTag[T]
   ) =
-    if debug || !td.dag.isCompletelyConnected then
-      os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
+    if debug || !td.dag.isCompletelyConnected then os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
     end if
     assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
     val graph = td.dag.toposort

@@ -78,7 +78,7 @@ case class ScalarNode[F[_], G[_], @sp(Double) T](
       case BinaryScalarOps.Add =>
         // Y = X + c
         // LHS gradient is the same as the input gradient
-        this.grad = leftN.grad.asInstanceOf[G[T]]
+        leftN.grad = grad.asInstanceOf[leftN.thisGrad[T]]
         // Sum all gradients for the scalar since it affects all elements
         rightN.grad = Scalar(leftN.vf2.sum(leftN.grad))
 

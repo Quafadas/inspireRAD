@@ -421,7 +421,7 @@ class DAGVSuite extends FunSuite:
     assertEqualsDouble(res.value(2), 3, 0, 0.000001)
 
     val grads = res.backward2((x = x, c = c))
-    graphDebug(td.dag.toGraphviz)
+    // graphDebug(td.dag.toGraphviz)
 
     for i <- 0 until grads.x.length do
       assertEqualsDouble(
@@ -460,7 +460,7 @@ class DAGVSuite extends FunSuite:
     assertEquals(td.dag.getAllEdges.size, 2)
 
     val grads = res.backward2((x = x, c = c))
-    graphDebug(td.dag.toGraphviz)
+    // graphDebug(td.dag.toGraphviz)
 
     for i <- 0 until grads.x.raw.length do
       assertEqualsDouble(
@@ -792,14 +792,14 @@ class DAGVSuite extends FunSuite:
     end for
   }
 
-  test("scalar plus".only) {
+  test("scalar plus") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
     val a = TejV(Matrix.fromRows(Array(2.0, 4.0, 6.0)))
     val b = 3.0
 
     val res = (a + b.tej).sum
-    graphDebug(tejV.dag.toGraphviz)
+    // graphDebug(tejV.dag.toGraphviz)
     assertEquals(tejV.dag.getAllNodes.size, 4)
     assertEquals(tejV.dag.getAllEdges.size, 3)
     assertEqualsDouble(res.value.scalar, 21.0, 0.000001)
@@ -808,6 +808,25 @@ class DAGVSuite extends FunSuite:
 
     // assertEqualsDouble(out.a.scalar, 1.0, 0.000001)
     // assertEqualsDouble(out.b.scalar, 1.0, 0.000001)
+  }
+
+  test("unary log grad") {
+    import vecxt.BoundsCheck.DoBoundsCheck.yes
+    given tejV: TejVGraph[Double] = TejVGraph[Double]()
+    val a = TejV(Matrix.fromRows(Array(2.0, 4.0, 6.0)))
+
+    val res = (a + 1.tej).log.sum
+
+    // assertEquals(tejV.dag.getAllNodes.size, 4)
+    // assertEquals(tejV.dag.getAllEdges.size, )
+
+    val grad = res.backward2((a = a))
+
+    assertEqualsDouble(grad.a.raw(0), 0.33333333, 0.000001)
+    assertEqualsDouble(grad.a.raw(1), 0.2, 0.000001)
+    assertEqualsDouble(grad.a.raw(2), 0.14285714, 0.000001)
+
+    assertEqualsDouble(res.value.scalar, 4.653960, 0.000001)
   }
 
 end DAGVSuite

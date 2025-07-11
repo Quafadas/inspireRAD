@@ -82,7 +82,7 @@ class BackwardSuite extends FunSuite:
     given graph: TejVGraph[Double] = TejVGraph[Double]()
     val x = TejV(Matrix.fromRows(NArray(1.0, 2.0, 3.0)))
     val y = TejV(Matrix.fromRows(NArray(4.0, 5.0, 6.0)))
-    graphDebug(graph.dag.toGraphviz)
+    // graphDebug(graph.dag.toGraphviz)
     val z = x + y
     assert(graph.dag.isCompletelyConnected)
     // println(graph.dag.toGraphviz)
