@@ -93,9 +93,16 @@ class BackwardSuite extends FunSuite:
     given graph: TejVGraph[Double] = TejVGraph[Double]()
     val x = TejV(Matrix.fromRows(NArray(1.0, 2.0, 3.0)))
     val y = TejV(Matrix.fromRows(NArray(4.0, 5.0, 6.0)))
+    val z = x + y
+    // This gets added to the graph, but does nothing! It might nerf the toposort...
     val oops = TejV(Matrix.fromRows(NArray(4.0, 5.0, 6.0)))
 
     assert(!graph.dag.isCompletelyConnected)
+    // println(graph.dag.toGraphviz)
+
+    intercept[java.lang.AssertionError] {
+      z.backward2((x = x, y = y, oops = oops))
+    }
   }
 
   test("log softmax gradients sum to zero. Result are consistent between Tej, Jet, double") {
@@ -202,7 +209,7 @@ class BackwardSuite extends FunSuite:
     def loss(
         data: TejV[Matrix, Double],
         weights: TejV[Matrix, Double],
-        targets: TejV[Matrix, Double]
+        targets: Matrix[Double]
     )(using
         mOps: Matrixy[Matrix, Double],
         fm: VectorisedField[Matrix, Double],
@@ -238,7 +245,6 @@ class BackwardSuite extends FunSuite:
       given graph: TejVGraph[Double] = TejVGraph[Double]()
       val weights_ = TejV(weights)
       val data_ = TejV(data)
-      val targets_ = TejV(targets)
 
       if steps == 0 then weights_
       else

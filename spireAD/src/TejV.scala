@@ -25,7 +25,7 @@ object TejV extends TejInstances:
     new TejV(value = t).tap(td.addToGraph)
   end apply
 
-  private def createDontAddToGraph[F[_], T](
+  def createDontAddToGraph[F[_], T](
       t: F[T]
   )(using
       f: VectorisedField[F, T],
@@ -266,7 +266,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       ct: ClassTag[T]
   ): Set[VNode[G, T]] =
     if debug || !td.dag.isCompletelyConnected then
-      os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", td.dag.toGraphviz)
+      os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
     end if
     assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
     val graph = td.dag.toposort
@@ -301,6 +301,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     if debug || !td.dag.isCompletelyConnected then
       os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
     end if
+    assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
     val graph = td.dag.toposort
     val reversed = graph.reverse
 

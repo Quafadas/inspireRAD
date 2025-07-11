@@ -672,7 +672,7 @@ class DAGVSuite extends FunSuite:
 
   // I don't think this can ever work.
   // Because if you do something like normalisation - e.g. row /  row.sum , the row.sum _is not an indepant constant_. Normalisation needs the jacobian gradient.
-  // test("map rows".only) {
+  // test("map rows") {
   //   import vecxt.BoundsCheck.DoBoundsCheck.yes
   //   given tejV: TejVGraph[Double] = TejVGraph[Double]()
   //   val arr = vecxt.all.Matrix.fromRows(
