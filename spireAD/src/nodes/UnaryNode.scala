@@ -46,11 +46,11 @@ case class UrnaryNode[F[_], @sp(Double) T](
 
     n.grad = n.grad + update
     // n.grad = td.dag.getNode(depId).grad + this.grad
-    println("--->backward unary" + this.toString())
-    println("New grad backward: " + n.id.toString().takeRight(4))
-    println("Updated: by " + update.show)
-    println("Grad: " + n.grad.show)
-    println("<--- end backward this node")
+    // println("--->backward unary" + this.toString())
+    // println("New grad backward: " + n.id.toString().takeRight(4))
+    // println("Updated: by " + update.show)
+    // println("Grad: " + n.grad.show)
+    // println("<--- end backward this node")
 
   end backward
 end UrnaryNode
