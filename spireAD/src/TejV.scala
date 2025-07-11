@@ -298,6 +298,9 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       td: TejVGraph[T],
       ct: ClassTag[T]
   ) =
+    if debug || !td.dag.isCompletelyConnected then
+      os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
+    end if
     val graph = td.dag.toposort
     val reversed = graph.reverse
 
