@@ -280,39 +280,39 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     TejV.createDontAddToGraph(Scalar(value.mean)).tap(td.reduction(_, lhs, ReductionOps.Mean, lhs.id))
   end mean
 
-  def backward[G[_]](wrt: Set[TejV[?, T]], debug: Boolean = false)(using
-      td: TejVGraph[T],
-      ct: ClassTag[T]
-  ): Set[VNode[G, T]] =
-    if debug || !td.dag.isCompletelyConnected then os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
-    end if
-    assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
-    val graph = td.dag.toposort
-    val reversed = graph.reverse
+  // def backward[G[_]](wrt: Set[TejV[?, T]], debug: Boolean = false)(using
+  //     td: TejVGraph[T],
+  //     ct: ClassTag[T]
+  // ): Set[VNode[G, T]] =
+  //   if debug || !td.dag.isCompletelyConnected then os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
+  //   end if
+  //   assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
+  //   val graph = td.dag.toposort
+  //   val reversed = graph.reverse
 
-    reversed.head.setGradOne
+  //   reversed.head.setGradOne
 
-    // This _may_ prevent a bunch of uncessary work. need to check.
-    // val minIndex = reversed.zipWithIndex.collect {
-    //   case (node, index) if wrt.exists(_.id == node.id) => index
-    // }.min
+  //   // This _may_ prevent a bunch of uncessary work. need to check.
+  //   // val minIndex = reversed.zipWithIndex.collect {
+  //   //   case (node, index) if wrt.exists(_.id == node.id) => index
+  //   // }.min
 
-    // println(s"minIndex: $minIndex")
+  //   // println(s"minIndex: $minIndex")
 
-    if debug then println("---> Backward pass for TejV")
-    end if
+  //   if debug then println("---> Backward pass for TejV")
+  //   end if
 
-    reversed.foreach { node =>
-      if debug then println("node: " + node.graphShow)
-      end if
-      node.backward
-    }
-    val ids = wrt.map(_.id)
-    td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
-  end backward
+  //   reversed.foreach { node =>
+  //     if debug then println("node: " + node.graphShow)
+  //     end if
+  //     node.backward
+  //   }
+  //   val ids = wrt.map(_.id)
+  //   td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
+  // end backward
 
   // Simpler approach: return a regular Tuple with type info preserved at call site
-  def backward2[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V], debug: Boolean = false)(using
+  def backward[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V], debug: Boolean = false)(using
       td: TejVGraph[T],
       ct: ClassTag[T]
   ) =
@@ -352,7 +352,7 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
 
     // Return with names preserved - the caller will have the correct types
     gradientTuple.asInstanceOf[NamedTuple[N, GradientTypes[V]]]
-  end backward2
+  end backward
 
   def @@(rhs: TejV[Matrix, T])(using
       f: VectorisedField[Matrix, T],

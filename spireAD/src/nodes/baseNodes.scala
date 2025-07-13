@@ -15,6 +15,8 @@ trait VDimChangeNode[F[_], G[_], T](val value: F[T], val id: UUID)(using
   type thisGrad[T] = G[T]
   type thisValue[T] = F[T]
 
+  var requiredGrad: Boolean = false
+
   val vf1: VectorisedField[F, T] = vf
   val vf2: VectorisedField[G, T] = vfG
   val shf: Show[F[T]] = shf_

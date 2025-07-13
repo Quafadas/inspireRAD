@@ -101,7 +101,7 @@ class BackwardSuite extends FunSuite:
     // println(graph.dag.toGraphviz)
 
     intercept[java.lang.AssertionError] {
-      z.backward2((x = x, y = y, oops = oops))
+      z.backward((x = x, y = y, oops = oops))
     }
   }
 
@@ -174,7 +174,7 @@ class BackwardSuite extends FunSuite:
     val f = (selected * selected).sum
 
     // Backprop gradients to xVar
-    val grads = f.backward2((x = xVar))
+    val grads = f.backward((x = xVar))
     val gradMatrix = grads.x
 
     val gradRaw = gradMatrix.raw.toArray
@@ -250,7 +250,7 @@ class BackwardSuite extends FunSuite:
       else
         val lossCalculated = loss(data_, weights_, targets.tej)
         // graphDebug(graph.dag.toGraphviz)
-        val grad = lossCalculated.backward2((weights = weights_), false)
+        val grad = lossCalculated.backward((weights = weights_), false)
 
         val updated = weights_ - (grad.weights * learningRate).tej
         // println(s"Updated weights: ${updated.value.show}")
