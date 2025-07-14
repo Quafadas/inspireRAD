@@ -729,7 +729,6 @@ class DAGVSuite extends FunSuite:
 
     val gradBack = graph.backward((tej = tej))
 
-
     // println(gradCalculated.printMat)
 
     for i <- 0 until mat.shape(0) do
@@ -744,7 +743,7 @@ class DAGVSuite extends FunSuite:
 
   }
 
-  test("arrage") {
+  test("arrange") {
     import vecxt.BoundsCheck.DoBoundsCheck.yes
     given tejV: TejVGraph[Double] = TejVGraph[Double]()
     val mat = Matrix.fromRows(

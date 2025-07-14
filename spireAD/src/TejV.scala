@@ -316,7 +316,9 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
       td: TejVGraph[T],
       ct: ClassTag[T]
   ) =
-    if debug || !td.dag.isCompletelyConnected then os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
+    if debug || !td.dag.isCompletelyConnected then
+      println("Writing graph to graph.dot file as graph not completely connected")
+      os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
     end if
     assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
     val graph = td.dag.toposort
