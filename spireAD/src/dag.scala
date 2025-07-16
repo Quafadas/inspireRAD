@@ -28,6 +28,61 @@ class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
       throw new NoSuchElementException(s"Node with id $id not found")
     )
 
+  def reachableNodesFromSink(
+    sink: AdNode[T],
+    sources: Set[AdNode[T]],
+    incomingEdges: Map[AdNode[T], List[AdNode[T]]] // map from node -> list of predecessors
+  ): Set[AdNode[T]] = {
+    assert(getAllNodes.contains(sink), s"Sink node $sink not found in the graph")
+    assert(sources.nonEmpty, "Sources set cannot be empty")
+    // Removed overly restrictive assertion about empty incoming edges
+    assert(sources.forall(getAllNodes.contains), "All source nodes must be in the graph")
+    val visited = mutable.Set[AdNode[T]]()
+    val stack = mutable.Stack[AdNode[T]](sink)
+
+    while (stack.nonEmpty) {
+      val current = stack.pop()
+      if (!visited.contains(current)) {
+        visited += current
+
+        // Stop descending if we've hit a source node
+        if (!sources.contains(current)) {
+          val predecessors = incomingEdges.getOrElse(current, Nil)
+          predecessors.foreach(stack.push)
+        }
+      }
+    }
+
+    visited.toSet
+  }
+
+  /** Computes the incoming edges map from the DAG's adjacency list.
+    * Returns a map from each node to the list of its predecessors.
+    */
+  inline def computeIncomingEdges: Map[AdNode[T], List[AdNode[T]]] = {
+    val incoming = mutable.Map[AdNode[T], mutable.ListBuffer[AdNode[T]]]()
+    
+    // Build incoming edges from adjacency list - only include nodes that have incoming edges
+    adjacencyList.foreach { case (fromId, toIds) =>
+      val fromNode = nodeMap(fromId)
+      toIds.foreach { toId =>
+        val toNode = nodeMap(toId)
+        incoming.getOrElseUpdate(toNode, mutable.ListBuffer()) += fromNode
+      }
+    }
+    
+    incoming.view.mapValues(_.toList).toMap
+  }
+
+  /** Convenient overload that computes incoming edges automatically */
+  def reachableNodesFromSink(
+    sink: AdNode[T],
+    sources: Set[AdNode[T]]
+  ): Set[AdNode[T]] = {
+    reachableNodesFromSink(sink, sources, computeIncomingEdges)
+  }
+
+
   inline def addAdNode(adNode: AdNode[T]): Unit =
     if !adjacencyList.contains(adNode.id) then
       adjacencyList(adNode.id) = mutable.Set.empty
@@ -169,5 +224,7 @@ class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
 
     sb.append("}")
     sb.toString()
-  end toGraphviz
+  end toGraphviz  
 end DAG
+
+

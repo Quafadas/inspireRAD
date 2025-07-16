@@ -15,7 +15,7 @@ object `package` extends RootModule with SiteModule {
   override def moduleDeps = Seq(build.spireAD.jvm)
   override def scalaDocOptions = super.scalaDocOptions
 
-  override def scalacOptions: T[Seq[String]] = super.scalacOptions() ++ Seq("-experimental", "-language:experimental.namedTuples")
+  override def scalacOptions: T[Seq[String]] = super.scalacOptions()
 
   // object jsSite extends SiteJSModule {
 

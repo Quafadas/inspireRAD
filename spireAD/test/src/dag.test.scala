@@ -255,4 +255,161 @@ class DAGSuite extends FunSuite:
     given td: TejDim[Double] = TejDim()
     binaryTest((x: Tej[Double], y: Tej[Double]) => x / y, (x: Jet[Double], y: Jet[Double]) => x / y, "Div")
   }
+
+  test("reachableNodesFromSink - single path") {
+    val dag = new DAG[Double]()
+    val nodeA: AdNode[Double] = DebugNode("A") // source
+    val nodeB: AdNode[Double] = DebugNode("B") // intermediate
+    val nodeC: AdNode[Double] = DebugNode("C") // sink
+    
+    dag.addNode(nodeA)
+    dag.addNode(nodeB)
+    dag.addNode(nodeC)
+    dag.addEdge(nodeA, nodeB)
+    dag.addEdge(nodeB, nodeC)
+    
+    val incomingEdges: Map[AdNode[Double], List[AdNode[Double]]] = Map(
+      nodeB -> List(nodeA),
+      nodeC -> List(nodeB)
+    )
+    
+    val reachable = dag.reachableNodesFromSink(nodeC, Set(nodeA), incomingEdges)
+    assertEquals(reachable, Set(nodeA, nodeB, nodeC))
+  }
+
+  test("reachableNodesFromSink - multiple paths") {
+    val dag = new DAG[Double]()
+    val nodeA: AdNode[Double] = DebugNode("A") // source 1
+    val nodeB: AdNode[Double] = DebugNode("B") // source 2
+    val nodeC: AdNode[Double] = DebugNode("C") // intermediate
+    val nodeD: AdNode[Double] = DebugNode("D") // intermediate
+    val nodeE: AdNode[Double] = DebugNode("E") // sink
+    
+    dag.addNode(nodeA)
+    dag.addNode(nodeB)
+    dag.addNode(nodeC)
+    dag.addNode(nodeD)
+    dag.addNode(nodeE)
+    
+    // Create diamond pattern: A->C->E, B->D->E, C->D
+    dag.addEdge(nodeA, nodeC)
+    dag.addEdge(nodeB, nodeD)
+    dag.addEdge(nodeC, nodeE)
+    dag.addEdge(nodeD, nodeE)
+    dag.addEdge(nodeC, nodeD) // Additional edge creating diamond
+    
+    val incomingEdges: Map[AdNode[Double], List[AdNode[Double]]] = Map(
+      nodeC -> List(nodeA),
+      nodeD -> List(nodeB, nodeC),
+      nodeE -> List(nodeC, nodeD)
+    )
+    
+    val reachable = dag.reachableNodesFromSink(nodeE, Set(nodeA, nodeB), incomingEdges)
+    assertEquals(reachable, Set(nodeA, nodeB, nodeC, nodeD, nodeE))
+  }
+
+  test("reachableNodesFromSink - partial reachability") {
+    val dag = new DAG[Double]()
+    val nodeA: AdNode[Double] = DebugNode("A") // source 1 (reachable)
+    val nodeB: AdNode[Double] = DebugNode("B") // source 2 (not reachable from sink)
+    val nodeC: AdNode[Double] = DebugNode("C") // intermediate from A
+    val nodeD: AdNode[Double] = DebugNode("D") // intermediate from B
+    val nodeE: AdNode[Double] = DebugNode("E") // sink (only reachable from A path)
+    
+    dag.addNode(nodeA)
+    dag.addNode(nodeB)
+    dag.addNode(nodeC)
+    dag.addNode(nodeD)
+    dag.addNode(nodeE)
+    
+    // A->C->E and B->D (D not connected to E)
+    dag.addEdge(nodeA, nodeC)
+    dag.addEdge(nodeB, nodeD)
+    dag.addEdge(nodeC, nodeE)
+    
+    val incomingEdges: Map[AdNode[Double], List[AdNode[Double]]] = Map(
+      nodeC -> List(nodeA),
+      nodeD -> List(nodeB),
+      nodeE -> List(nodeC)
+    )
+    
+    val reachable = dag.reachableNodesFromSink(nodeE, Set(nodeA, nodeB), incomingEdges)
+    // Should only include nodes reachable from sink E
+    assertEquals(reachable, Set(nodeA, nodeC, nodeE))
+  }
+
+  test("reachableNodesFromSink - sink is source") {
+    val dag = new DAG[Double]()
+    val nodeA: AdNode[Double] = DebugNode("A") // both source and sink
+    
+    dag.addNode(nodeA)
+    
+    val incomingEdges = Map.empty[AdNode[Double], List[AdNode[Double]]]
+    
+    val reachable = dag.reachableNodesFromSink(nodeA, Set(nodeA), incomingEdges)
+    assertEquals(reachable, Set(nodeA))
+  }
+
+  test("reachableNodesFromSink - assertions fail for invalid inputs") {
+    val dag = new DAG[Double]()
+    val nodeA: AdNode[Double] = DebugNode("A")
+    val nodeB: AdNode[Double] = DebugNode("B")
+    dag.addNode(nodeA)
+    // nodeB not added to DAG
+    
+    val incomingEdges: Map[AdNode[Double], List[AdNode[Double]]] = Map(nodeA -> List.empty)
+    
+    // Sink not in graph
+    intercept[AssertionError] {
+      dag.reachableNodesFromSink(nodeB, Set(nodeA), incomingEdges)
+    }
+    
+    // Empty sources
+    intercept[AssertionError] {
+      dag.reachableNodesFromSink(nodeA, Set.empty, incomingEdges)
+    }
+    
+    // Source not in graph
+    intercept[AssertionError] {
+      dag.reachableNodesFromSink(nodeA, Set(nodeB), incomingEdges)
+    }
+  }
+
+  // Helper method test
+  test("computeIncomingEdges helper") {
+    val dag = new DAG[Double]()
+    val nodeA: AdNode[Double] = DebugNode("A")
+    val nodeB: AdNode[Double] = DebugNode("B")
+    val nodeC: AdNode[Double] = DebugNode("C")
+    
+    dag.addNode(nodeA)
+    dag.addNode(nodeB)
+    dag.addNode(nodeC)
+    dag.addEdge(nodeA, nodeB)
+    dag.addEdge(nodeB, nodeC)
+    dag.addEdge(nodeA, nodeC) // Direct edge A->C
+    
+    val incomingEdges = dag.computeIncomingEdges
+    
+    assertEquals(incomingEdges.get(nodeA), None) // No incoming edges to A
+    assertEquals(incomingEdges.get(nodeB), Some(List(nodeA)))
+    assertEquals(incomingEdges.get(nodeC).map(_.toSet), Some(Set(nodeA, nodeB)))
+  }
+
+  test("reachableNodesFromSink - convenient overload") {
+    val dag = new DAG[Double]()
+    val nodeA: AdNode[Double] = DebugNode("A") // source
+    val nodeB: AdNode[Double] = DebugNode("B") // intermediate
+    val nodeC: AdNode[Double] = DebugNode("C") // sink
+    
+    dag.addNode(nodeA)
+    dag.addNode(nodeB)
+    dag.addNode(nodeC)
+    dag.addEdge(nodeA, nodeB)
+    dag.addEdge(nodeB, nodeC)
+    
+    val reachable = dag.reachableNodesFromSink(nodeC, Set(nodeA))
+    assertEquals(reachable, Set(nodeA, nodeB, nodeC))
+  }
+
 end DAGSuite
