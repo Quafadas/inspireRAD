@@ -33,6 +33,7 @@ import vecxt.all.apply
 import scala.reflect.ClassTag
 import vecxt.all.row
 import cats.syntax.all.toShow
+import spire.algebra.NRoot
 
 type JsonMod = ujson.Value => Unit
 case class HeatmapBigram(override val mods: Seq[JsonMod] = List())(using
@@ -161,36 +162,39 @@ import cats.Show
     -Scalar(probsNN(range).mapRowsToScalar(_.sum).log.mean)
   end calcLoss
 
-  inline def calcLossF[T](
-      weights: TejV[Matrix, T],
-      incomingData: TejV[Matrix, T],
+  inline def calcLossF(
+      weights: TejV[Matrix, Double],
+      incomingData: TejV[Matrix, Double],
       targets: Array[Int]
   )(using
-      mOps: Matrixy[Matrix, T],
-      fm: VectorisedField[Matrix, T],
-      fa: VectorisedField[Array, T],
-      fas: VectorisedField[Scalar, T],
-      fi: Field[T],
-      redMat: Reductions[Matrix, T, 2],
-      redArr: Reductions[Array, T, 1],
-      vtm: VectorisedTrig[Matrix, T],
-      vta: VectorisedTrig[Array, T],
-      vts: VectorisedTrig[Scalar, T],
-      dag: TejVGraph[T],
-      nt: Numeric[T],
-      ct: ClassTag[T],
-      sh: Show[Matrix[T]],
-      sha: Show[Array[T]],
-      shs: Show[Scalar[T]]
-  ): TejV[Scalar, T] =
+      // mOps: Matrixy[Matrix, T],
+      // fm: VectorisedField[Matrix, T],
+      // fa: VectorisedField[Array, T],
+      // fas: VectorisedField[Scalar, T],      
+      // ftm: VectorisedTrig[Matrix, T],
+      // fta: VectorisedTrig[Array, T],
+      // fts: VectorisedTrig[Scalar, T],
+      // redArr: Reductions[Array, T, 1],
+      // redMat: Reductions[Matrix, T, 2],
+      // nr: NRoot[Double],
+      // fi: Field[Double],
+      dag: TejVGraph[Double],
+      // nt: Numeric[Double],
+      // ct: ClassTag[Double],
+      sh: Show[Matrix[Double]],
+      sha: Show[Array[Double]],
+      shs: Show[Scalar[Double]]
+  ): TejV[Scalar, Double] =
+    import TejVDoubleAlgebra.given
+  
 
     val logits = incomingData @@ weights
     val counts = logits.exp
 
-    val probsNN = counts.normaliseRows
+    val probsNN = counts.normaliseRowsL1
     val range: Array[(Int, Int)] = (0.until(targets.length)).toArray.zip(targets)
-    val nearly = probsNN(range).mapRowsToScalar(ReductionOps.Sum).log.mean
-    nearly * TejV(Scalar(fi.fromDouble(-1.0)))
+    val loss = probsNN(range).mapRowsToScalar(ReductionOps.Sum).log.mean
+    loss * -1.0.tej
   end calcLossF
 
   // import io.github.quafadas.spireAD.VectorisedField.elementwiseMatrixDoubleField
@@ -210,11 +214,11 @@ import cats.Show
   val lossT = TejV(W)
   println("lossT shape: " + lossT.value.shape)
   val menc = TejV(xencMall)
-  val lossF = calcLossF[Double](lossT, menc, yChars)
+  val lossF = calcLossF(lossT, menc, yChars)
 
-  val grad = lossF.backward2((weights = lossT))
+  val grad = lossF.backward((lossT = lossT))
 
-  println(grad.weights.shape)
+  println(grad.lossT.shape)
 
   // println(grad)
   // println(expLossT.value.show)

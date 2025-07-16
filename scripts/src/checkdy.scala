@@ -167,7 +167,7 @@ end given
   println("counts")
   println("counts.shape: " + counts.value.shape)
 
-  val probsNN = counts.normaliseRows
+  val probsNN = counts.normaliseRowsL1
 
   println("probsNN")
 
@@ -187,13 +187,12 @@ end given
   // println(scalarLoss.value)
   // println("grad")
   // println(grad.head.grad.printMat)
+  
 
-  val nt = (tv2 = tv2, tv1 = tv1)
-
-  val grad2 = scalarLoss.backward2(nt)
+  val grad2 = scalarLoss.backward((tv1 = tv1))
 
   println("grad")
-  println(grad2.tv2.printMat)
   println(grad2.tv1.printMat)
+  
 
 end checkdy

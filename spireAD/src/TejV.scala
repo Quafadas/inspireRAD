@@ -17,8 +17,7 @@ type GradientTypes[V <: Tuple] <: Tuple = V match
   case EmptyTuple         => EmptyTuple
   case TejV[f, t] *: tail => f[t] *: GradientTypes[tail]
 
-extension (d: Double) def tej(using td: TejVGraph[Double], sh: Show[Scalar[Double]]) = TejV(Scalar(d))
-end extension
+extension (d: Double) def tej[T](using td: TejVGraph[T], sh: Show[Scalar[T]], fi: Field[T], f: VectorisedField[Scalar, T], vt: VectorisedTrig[Scalar, T]): TejV[Scalar, T] = TejV(Scalar(fi.fromDouble(d)))
 
 extension (m: Array[Double])
   def tej(using td: TejVGraph[Double], sh: Show[Array[Double]], f: VectorisedField[Array, Double]) =

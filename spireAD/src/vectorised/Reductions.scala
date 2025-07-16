@@ -39,7 +39,7 @@ object Reductions:
 
     end extension
 
-  given vta: Reductions[NArray, Double, 1] = new Reductions[NArray, Double, 1]:
+  given redArray: Reductions[NArray, Double, 1] = new Reductions[NArray, Double, 1]:
 
     extension (a: NArray[Double])
 
@@ -51,7 +51,7 @@ object Reductions:
       inline def sum: Double = vecxt.all.sum(a)
     end extension
 
-  given vts: Reductions[Scalar, Double, 0] = new Reductions[Scalar, Double, 0]:
+  given redScalar: Reductions[Scalar, Double, 0] = new Reductions[Scalar, Double, 0]:
 
     extension (a: Scalar[Double])
 
@@ -64,7 +64,7 @@ object Reductions:
 
     end extension
 
-  given vtm: Reductions[Matrix, Double, 2] = new Reductions[Matrix, Double, 2]:
+  given redMat: Reductions[Matrix, Double, 2] = new Reductions[Matrix, Double, 2]:
 
     extension (a: Matrix[Double])
 

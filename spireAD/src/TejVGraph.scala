@@ -134,7 +134,7 @@ case class TejVGraph[T: ClassTag]():
     dag.addEdge(lhs, tv.id)
     dag.addEdge(rhs, tv.id)
     // println("Adding matrix node to graph")
-    graphDebug(dag.toGraphviz)
+    // graphDebug(dag.toGraphviz)
     // assert(dag.isCompletelyConnected, "Graph is not completely connected after adding matrix node")
   end matrixy
 
