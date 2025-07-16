@@ -34,6 +34,7 @@ import scala.reflect.ClassTag
 import vecxt.all.row
 import cats.syntax.all.toShow
 import spire.algebra.NRoot
+import TejVDoubleAlgebra.given
 
 type JsonMod = ujson.Value => Unit
 case class HeatmapBigram(override val mods: Seq[JsonMod] = List())(using
@@ -167,27 +168,11 @@ import cats.Show
       incomingData: TejV[Matrix, Double],
       targets: Array[Int]
   )(using
-      // mOps: Matrixy[Matrix, T],
-      // fm: VectorisedField[Matrix, T],
-      // fa: VectorisedField[Array, T],
-      // fas: VectorisedField[Scalar, T],      
-      // ftm: VectorisedTrig[Matrix, T],
-      // fta: VectorisedTrig[Array, T],
-      // fts: VectorisedTrig[Scalar, T],
-      // redArr: Reductions[Array, T, 1],
-      // redMat: Reductions[Matrix, T, 2],
-      // nr: NRoot[Double],
-      // fi: Field[Double],
       dag: TejVGraph[Double],
-      // nt: Numeric[Double],
-      // ct: ClassTag[Double],
       sh: Show[Matrix[Double]],
       sha: Show[Array[Double]],
       shs: Show[Scalar[Double]]
   ): TejV[Scalar, Double] =
-    import TejVDoubleAlgebra.given
-  
-
     val logits = incomingData @@ weights
     val counts = logits.exp
 
@@ -197,17 +182,7 @@ import cats.Show
     loss * -1.0.tej
   end calcLossF
 
-  // import io.github.quafadas.spireAD.VectorisedField.elementwiseMatrixDoubleField
-  // import io.github.quafadas.spireAD.VectorisedField.elementwiseArrayDoubleField
-  // import io.github.quafadas.spireAD.Matrixy.matOps
-  // import io.github.quafadas.spireAD.Reductions.vta
-  // import io.github.quafadas.spireAD.Reductions.vtm
-  // import io.github.quafadas.spireAD.VectorisedTrig.vtm
-
   val loss = calcLoss(W, xencMall, yChars)
-  // println(loss.shape)
-
-  import io.github.quafadas.spireAD.Matrixy.matOps
   given graph: TejVGraph[Double] = TejVGraph[Double]()
 
   // val lossF = calcLossF(W, xencMall, yChars)

@@ -187,12 +187,10 @@ end given
   // println(scalarLoss.value)
   // println("grad")
   // println(grad.head.grad.printMat)
-  
 
   val grad2 = scalarLoss.backward((tv1 = tv1))
 
   println("grad")
   println(grad2.tv1.printMat)
-  
 
 end checkdy
