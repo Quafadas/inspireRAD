@@ -26,7 +26,7 @@ class DAGVSuite extends FunSuite:
 
   import VectorisedTrig.vta
   import VectorisedField.elementwiseArrayDoubleField
-  import Reductions.vtm
+  import Reductions.redMat
 
   given Show[Matrix[Double]] with
     def show(arr: Matrix[Double]): String = vecxt.all.printMat(arr)
