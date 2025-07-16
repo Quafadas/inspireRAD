@@ -20,6 +20,7 @@ import _root_.algebra.ring.AdditiveCommutativeMonoid
 
 final case class Scalar[T](scalar: T)
 object VectorisedField:
+
   given jetNumeric(using jd: JetDim): Numeric[Jet[Double]] = new Numeric[Jet[Double]]:
 
     override def parseString(str: String): Option[Jet[Double]] = ???
@@ -498,7 +499,7 @@ object VectorisedField:
 end VectorisedField
 
 trait VectorisedField[F[_], @sp(Double) A]:
-  val numDimensions: InferDimension[F]
+  val numDimensions: Int
   def sum(x: F[A])(using ClassTag[A]): A
   def fromDouble(x: Double): A
   def zero(x: F[A]): F[A]

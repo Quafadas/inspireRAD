@@ -12,7 +12,6 @@ import scala.reflect.ClassTag
 class MatrixTCjSuite extends FunSuite:
 
   test("num dims available") {
-    import VectorisedField.elementwiseMatrixDoubleField
 
     val fi = summon[VectorisedField[Matrix, Double]]
     val fi1 = summon[VectorisedField[NArray, Double]]
@@ -24,8 +23,6 @@ class MatrixTCjSuite extends FunSuite:
   }
 
   test("Matrix Typelcasses") {
-    import VectorisedTrig.vtm
-    import VectorisedField.elementwiseMatrixDoubleField
 
     val m = Matrix.fromRows[Double](
       NArray(1.5, 2.0),
@@ -43,8 +40,6 @@ class MatrixTCjSuite extends FunSuite:
   }
 
   test("Matrix Typelcasses 2") {
-    import VectorisedField.elementwiseMatrixDoubleField
-
     val m = Matrix.fromRows[Double](
       NArray(1.5, 2.0),
       NArray(1.5, 3.0)
