@@ -19,8 +19,9 @@ import vecxt.MatrixInstance.apply
 import vecxt.matrix.Matrix.apply
 import vecxt.all.mapRows
 
-def graphDebug(s: String) =
-  os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", s)
+object TestUtils:
+  def graphDebug(s: String) =
+    os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", s)
 
 class DAGVSuite extends FunSuite:
 

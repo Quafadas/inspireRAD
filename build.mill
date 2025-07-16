@@ -28,10 +28,10 @@ object Config {
 
 //  mill --import ivy:com.lihaoyi::mill-contrib-bloop: mill.contrib.bloop.Bloop/install
 // mill mill.scalalib.scalafmt.ScalafmtModule/
-trait Common extends ScalaModule  with PublishModule with ScalafixModule {
+trait Common extends ScalaModule with ScalafixModule {
   def scalaVersion = Config.scalaVersion
 
-  def publishVersion = VcsVersion.vcsState().format()
+  def publishVersion = T{VcsVersion.vcsState().format()}
 
   def ivyDeps = super.ivyDeps() ++ Agg(
     Config.vecxt,
