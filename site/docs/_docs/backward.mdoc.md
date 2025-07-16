@@ -17,34 +17,37 @@ import spire.math._
 import spire.implicits.*
 import _root_.algebra.ring.Field
 import spire.algebra.Trig
-
+import vecxt.all.*
+import vecxt.BoundsCheck.DoBoundsCheck.yes
 import spire.math.Jet.*
 import io.github.quafadas.spireAD.*
+import io.github.quafadas.spireAD.TejVDoubleAlgebra.*
+import io.github.quafadas.spireAD.TejVDoubleAlgebra.ShowLite.given
 
-def softmax[T: Trig: ClassTag](x: Array[T])(using f: Field[T]): Array[T] =
-  val expValues = x.map(exp)
-  val sumExpValues = expValues.foldLeft(f.zero)(_ + _)
-  expValues.map(_ / sumExpValues)
-end softmax
+given graph: TejVGraph[Double] = TejVGraph[Double]()
 
-given jd: TejDim[Double] = TejDim()
-val dim = 5
-val range = (1 to dim).toArray.map(_.toDouble).tejArr
+val data = Matrix.fromRows(
+  Array(1.0, 2.0),
+  Array(-1.0, -2),
+  Array(4.0, 5.0)
+).tej
 
-val traced : Tej[Double] = softmax(range).foldLeft(Tej(0.0))(_+_)
+val weights = Matrix.fromColumns(Array(0.1, 0.2), Array(0.05, 0.1)).tej
 
-/// And now we have... exaclty the same number! So yey?
+val probits = (data @@ weights).exp.normaliseRowsL1
+val selected = probits(Array((0,0), (1,1))).mapRowsToScalar(ReductionOps.Sum).log.mean
+val loss = selected * -1.0.tej
 
-traced.backward(range)
+loss.backward((weights = weights))
 
 ```
-`traced.backward(range)` does the backward pass, and returns a tuple of the gradient of the `traced` variable, with respect to each of the input dimensions (that you asked for in `range`).
+`traced.backward(weights)` does the backward pass, and returns a named tuple of the gradient of the `loss` variable with respect to the input nodes, in this case "weights".
 
 It is possible to inspect the calculation graph which is carried around in side the `TejDim` given.
 
-`jd.dag.toGraphviz` will return a string representation of the graph. If you paste the output of the calculation graph into an online graphviz editor, you'll see something like this.
+`graph.dag.toGraphviz` will return a string representation of the graph. If you paste the output of the calculation graph into an online graphviz editor, you'll see something like this.
 
 ![backward](backward.png)
 
-To do it, it navigates the graph in reverse topological order, propagating its gradient to its child nodes in accordance with the chain rule.
+To do it, it navigates the graph in reverse topological order, propagating its gradient to its child nodes in accordance with the chain rule. Hopefully.
 

@@ -1,5 +1,9 @@
 package io.github.quafadas.spireAD
 
+import cats.Show
+import vecxt.matrix.Matrix
+import vecxt.all.*
+
 object TejVDoubleAlgebra:
 
   export Matrixy.matOps
@@ -15,6 +19,50 @@ object TejVDoubleAlgebra:
   export Reductions.redArray
   export Reductions.redMat
   export Reductions.redScalar
+
+  object ShowDetails:
+
+    given Show[Matrix[Double]] with
+      def show(matrix: Matrix[Double]): String =
+        val rows =
+          for i <- 0 until Math.min(1, matrix.rows)
+          yield matrix
+            .row(i)
+            .map(s => "%.3f".format(s).reverse.padTo(6, ' ').reverse)
+            .mkString(" | ")
+        val footer = ("-" * (rows.head.length))
+        (rows :+ footer).mkString("\n")
+      end show
+    end given
+
+    given Show[Array[Double]] with
+      def show(arr: Array[Double]): String =
+
+        arr.map("%.3f".format(_).reverse.padTo(6, ' ').reverse).mkString("[", ", ", "]")
+    end given
+
+    given Show[Scalar[Double]] with
+      def show(arr: Scalar[Double]): String =
+        arr.scalar.toString
+    end given
+  end ShowDetails
+
+  object ShowLite:
+    given Show[Matrix[Double]] with
+      def show(matrix: Matrix[Double]): String =
+        "Mat"
+    end given
+
+    given Show[Array[Double]] with
+      def show(arr: Array[Double]): String =
+        "arr"
+    end given
+
+    given Show[Scalar[Double]] with
+      def show(arr: Scalar[Double]): String =
+        "%.3f".format(arr.scalar)
+    end given
+  end ShowLite
 
 end TejVDoubleAlgebra
 

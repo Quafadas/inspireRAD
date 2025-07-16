@@ -29,10 +29,10 @@ class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
     )
 
   def reachableNodesFromSink(
-    sink: AdNode[T],
-    sources: Set[AdNode[T]],
-    incomingEdges: Map[AdNode[T], List[AdNode[T]]] // map from node -> list of predecessors
-  ): Set[AdNode[T]] = {
+      sink: AdNode[T],
+      sources: Set[AdNode[T]],
+      incomingEdges: Map[AdNode[T], List[AdNode[T]]] // map from node -> list of predecessors
+  ): Set[AdNode[T]] =
     assert(getAllNodes.contains(sink), s"Sink node $sink not found in the graph")
     assert(sources.nonEmpty, "Sources set cannot be empty")
     // Removed overly restrictive assertion about empty incoming edges
@@ -40,28 +40,28 @@ class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
     val visited = mutable.Set[AdNode[T]]()
     val stack = mutable.Stack[AdNode[T]](sink)
 
-    while (stack.nonEmpty) {
+    while stack.nonEmpty do
       val current = stack.pop()
-      if (!visited.contains(current)) {
+      if !visited.contains(current) then
         visited += current
 
         // Stop descending if we've hit a source node
-        if (!sources.contains(current)) {
+        if !sources.contains(current) then
           val predecessors = incomingEdges.getOrElse(current, Nil)
           predecessors.foreach(stack.push)
-        }
-      }
-    }
+        end if
+      end if
+    end while
 
     visited.toSet
-  }
+  end reachableNodesFromSink
 
-  /** Computes the incoming edges map from the DAG's adjacency list.
-    * Returns a map from each node to the list of its predecessors.
+  /** Computes the incoming edges map from the DAG's adjacency list. Returns a map from each node to the list of its
+    * predecessors.
     */
-  inline def computeIncomingEdges: Map[AdNode[T], List[AdNode[T]]] = {
+  inline def computeIncomingEdges: Map[AdNode[T], List[AdNode[T]]] =
     val incoming = mutable.Map[AdNode[T], mutable.ListBuffer[AdNode[T]]]()
-    
+
     // Build incoming edges from adjacency list - only include nodes that have incoming edges
     adjacencyList.foreach { case (fromId, toIds) =>
       val fromNode = nodeMap(fromId)
@@ -70,18 +70,16 @@ class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
         incoming.getOrElseUpdate(toNode, mutable.ListBuffer()) += fromNode
       }
     }
-    
+
     incoming.view.mapValues(_.toList).toMap
-  }
+  end computeIncomingEdges
 
   /** Convenient overload that computes incoming edges automatically */
   def reachableNodesFromSink(
-    sink: AdNode[T],
-    sources: Set[AdNode[T]]
-  ): Set[AdNode[T]] = {
+      sink: AdNode[T],
+      sources: Set[AdNode[T]]
+  ): Set[AdNode[T]] =
     reachableNodesFromSink(sink, sources, computeIncomingEdges)
-  }
-
 
   inline def addAdNode(adNode: AdNode[T]): Unit =
     if !adjacencyList.contains(adNode.id) then
@@ -224,7 +222,5 @@ class DAG[@sp(Double) T: Field: ClassTag: Trig: NRoot]:
 
     sb.append("}")
     sb.toString()
-  end toGraphviz  
+  end toGraphviz
 end DAG
-
-
