@@ -1,4 +1,4 @@
-import io.github.quafadas.spireAD.*
+import io.github.quafadas.inspireRAD.*
 import vecxt.all.*
 import scala.reflect.ClassTag
 import vecxt.BoundsCheck.DoBoundsCheck.yes

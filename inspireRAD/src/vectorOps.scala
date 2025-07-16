@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 enum UrnaryOps:
   case Sin, Cos, Tan, Exp, Log, Sinh, Cosh, Tanh, Neg, Sqrt, Abs, Index

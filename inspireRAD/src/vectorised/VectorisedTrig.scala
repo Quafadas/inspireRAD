@@ -1,11 +1,11 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import vecxt.all.*
 import narr.*
 import spire.math.JetDim
 import spire.math.Jet
 import spire.implicits.*
-import io.github.quafadas.spireAD.VectorisedField.jetNumeric
+import io.github.quafadas.inspireRAD.VectorisedField.jetNumeric
 import vecxt.BoundsCheck.DoBoundsCheck.no
 
 object VectorisedTrig:

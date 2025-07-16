@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import java.util.UUID
 import java.util as ju

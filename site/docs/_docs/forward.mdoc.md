@@ -13,7 +13,7 @@ import _root_.algebra.ring.Field
 import spire.algebra.Trig
 
 import spire.math.Jet.*
-import io.github.quafadas.spireAD.*
+import io.github.quafadas.inspireRAD.*
 
 def softmax[T: Trig: ClassTag](x: Array[T])(using  
   f: Field[T]  

@@ -2,7 +2,7 @@ import io.github.quafadas.table.*
 
 // import viz.PlotNt.plot
 import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution
-import io.github.quafadas.spireAD.*
+import io.github.quafadas.inspireRAD.*
 
 // import scala.NamedTuple
 // import scala.NamedTuple.*
@@ -20,7 +20,7 @@ import scala.collection.immutable.HashMap
 import vecxt.BoundsCheck.DoBoundsCheck.yes
 import scala.util.chaining.*
 
-import io.github.quafadas.spireAD.*
+import io.github.quafadas.inspireRAD.*
 import spire.*
 import spire.implicits.*
 import spire.algebra.*

@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import spire.implicits.*
 import munit.DisciplineSuite
@@ -11,7 +11,7 @@ import cats.kernel.Monoid
 import cats.instances.show
 import cats.Show
 
-import io.github.quafadas.spireAD.VectorisedMonoid
+import io.github.quafadas.inspireRAD.VectorisedMonoid
 
 // import org.scalacheck._
 // import org.scalacheck.Gen._

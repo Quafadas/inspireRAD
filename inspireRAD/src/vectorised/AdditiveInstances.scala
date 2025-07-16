@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import scala.specialized as sp
 import vecxt.BoundsCheck.DoBoundsCheck.yes
@@ -546,7 +546,7 @@ object VectorisedAdditiveMonoids:
     def empty(hasDim: Matrix[Double]): Matrix[Double] = Matrix.zeros[Double](hasDim.shape)
     def combine(x: Matrix[Double], y: Matrix[Double]): Matrix[Double] = vecxt.all.+(x)(y)
     override def repeatedCombineN(a: Matrix[Double], n: Int): Matrix[Double] = a * n
-    // Members declared in io.github.quafadas.spireAD.VectorisedAdditiveGroup
+    // Members declared in io.github.quafadas.inspireRAD.VectorisedAdditiveGroup
     def inverse(a: Matrix[Double]): Matrix[Double] = negate(a)
 
     extension (a: Matrix[Double])
@@ -560,7 +560,7 @@ object VectorisedAdditiveMonoids:
     def empty(hasDim: NArray[Double]): NArray[Double] = NArray.fill[Double](hasDim.length)(0.0)
     def combine(x: NArray[Double], y: NArray[Double]): NArray[Double] = vecxt.arrays.+(x)(y)
     override def repeatedCombineN(a: NArray[Double], n: Int): NArray[Double] = a * n
-    // Members declared in io.github.quafadas.spireAD.VectorisedAdditiveGroup
+    // Members declared in io.github.quafadas.inspireRAD.VectorisedAdditiveGroup
     def inverse(a: NArray[Double]): NArray[Double] = negate(a)
 
     extension (a: NArray[Double])
@@ -570,7 +570,7 @@ object VectorisedAdditiveMonoids:
       inline def -(b: NArray[Double]): NArray[Double] = vecxt.arrays.-(a)(b)
     end extension
 
-    // Members declared in io.github.quafadas.spireAD.VectorisedAdditiveSemigroup
+    // Members declared in io.github.quafadas.inspireRAD.VectorisedAdditiveSemigroup
 
   given additiveVectorMonoid: VectorisedMonoid[Vector, Double] = new VectorisedMonoid[Vector, Double]:
     def empty(hasDim: Vector[Double]): Vector[Double] = Vector.fill[Double](hasDim.length)(0.0)

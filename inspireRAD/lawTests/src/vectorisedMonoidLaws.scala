@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 /*
  * Copyright (c) 2015 Typelevel
@@ -25,7 +25,7 @@ import cats.kernel.Eq
 import cats.kernel.laws.SemigroupLaws
 import cats.kernel.laws.IsEq
 import cats.kernel.laws.IsEqArrow
-import io.github.quafadas.spireAD.VectorisedMonoid
+import io.github.quafadas.inspireRAD.VectorisedMonoid
 
 import cats.data.NonEmptyList
 

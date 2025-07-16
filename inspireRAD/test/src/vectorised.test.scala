@@ -1,10 +1,10 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import munit.*
 import narr.*
 import vecxt.all.*
 import vecxt.BoundsCheck.DoBoundsCheck.yes
-import io.github.quafadas.spireAD.VectorisedTrig
+import io.github.quafadas.inspireRAD.VectorisedTrig
 import scala.reflect.ClassTag
 // import vecxt.matrix.Matrix
 // import vecxt.MatrixHelper.*

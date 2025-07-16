@@ -23,7 +23,7 @@
  * information or have any questions.
  */
 
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole

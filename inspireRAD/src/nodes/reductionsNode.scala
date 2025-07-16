@@ -1,12 +1,12 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import java.util.UUID
-import io.github.quafadas.spireAD.ReductionOps
+import io.github.quafadas.inspireRAD.ReductionOps
 import cats.Show
 import scala.reflect.ClassTag
 import cats.syntax.all.toShow
 import algebra.ring.Field
-import io.github.quafadas.spireAD.Tej.zero
+import io.github.quafadas.inspireRAD.Tej.zero
 
 case class ReductionNode[F[_], T](
     value1: Scalar[T],

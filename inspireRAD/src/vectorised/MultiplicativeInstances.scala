@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import scala.specialized as sp
 import vecxt.arrays.*
@@ -15,7 +15,7 @@ object VectorisedMultiplicativeMonoids:
       def empty(hasDim: NArray[Double]): NArray[Double] = NArray.fill[Double](hasDim.length)(1.0)
       def combine(x: NArray[Double], y: NArray[Double]): NArray[Double] = vecxt.arrays.*(x)(y)
 
-      // Members declared in io.github.quafadas.spireAD.VectorisedMultiplicativeGroup
+      // Members declared in io.github.quafadas.inspireRAD.VectorisedMultiplicativeGroup
       def inverse(a: NArray[Double]): NArray[Double] = vecxt.arrays./(1.0)(a)
 
       extension (a: NArray[Double])
@@ -25,7 +25,7 @@ object VectorisedMultiplicativeMonoids:
         inline def reciprocal: NArray[Double] = vecxt.arrays./(1.0)(a)
       end extension
 
-      // Members declared in io.github.quafadas.spireAD.VectorisedAdditiveSemigroup
+      // Members declared in io.github.quafadas.inspireRAD.VectorisedAdditiveSemigroup
 
   given multiplicativeVectorMonoid: VectorisedMonoid[Vector, Double] = new VectorisedMonoid[Vector, Double]:
     def empty(hasDim: Vector[Double]): Vector[Double] = Vector.fill[Double](hasDim.length)(0.0)

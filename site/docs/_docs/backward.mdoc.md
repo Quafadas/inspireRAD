@@ -20,9 +20,9 @@ import spire.algebra.Trig
 import vecxt.all.*
 import vecxt.BoundsCheck.DoBoundsCheck.yes
 import spire.math.Jet.*
-import io.github.quafadas.spireAD.*
-import io.github.quafadas.spireAD.TejVDoubleAlgebra.*
-import io.github.quafadas.spireAD.TejVDoubleAlgebra.ShowLite.given
+import io.github.quafadas.inspireRAD.*
+import io.github.quafadas.inspireRAD.TejVDoubleAlgebra.*
+import io.github.quafadas.inspireRAD.TejVDoubleAlgebra.ShowLite.given
 
 given graph: TejVGraph[Double] = TejVGraph[Double]()
 

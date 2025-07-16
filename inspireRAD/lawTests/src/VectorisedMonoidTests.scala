@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import cats.kernel.laws.discipline.SemigroupTests
 import org.scalacheck.Arbitrary
@@ -8,7 +8,7 @@ import cats.kernel.laws.discipline.catsLawsIsEqToProp
 import cats.data.NonEmptyList
 import org.scalacheck.Gen
 
-import io.github.quafadas.spireAD.VectorisedMonoid
+import io.github.quafadas.inspireRAD.VectorisedMonoid
 
 trait VectorisedMonoidTests[F[_], A] extends SemigroupTests[F[A]]:
 

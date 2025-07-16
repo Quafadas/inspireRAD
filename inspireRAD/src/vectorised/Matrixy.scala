@@ -1,4 +1,4 @@
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import vecxt.matrix.Matrix
 import vecxt.BoundsCheck.BoundsCheck

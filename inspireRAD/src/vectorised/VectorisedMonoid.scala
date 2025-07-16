@@ -19,7 +19,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.github.quafadas.spireAD
+package io.github.quafadas.inspireRAD
 
 import scala.specialized as sp
 import cats.kernel.Eq
