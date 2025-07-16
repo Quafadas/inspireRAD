@@ -22,6 +22,7 @@ import vecxt.all.mapRows
 object TestUtils:
   def graphDebug(s: String) =
     os.write.over(os.Path("/Users/simon/Code/spire_AD/") / "graph.dot", s)
+end TestUtils
 
 class DAGVSuite extends FunSuite:
 
