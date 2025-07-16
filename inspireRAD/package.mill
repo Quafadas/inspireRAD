@@ -1,4 +1,4 @@
-package build.spireAD
+package build.inspireRAD
 
 import mill._
 import mill.scalalib._
@@ -46,7 +46,7 @@ object `package` extends RootModule {
     // }
     object jvm extends SharedTest {
 
-      override def moduleDeps = Seq(build.spireAD.jvm)
+      override def moduleDeps = Seq(build.inspireRAD.jvm)
     }
   }
 }

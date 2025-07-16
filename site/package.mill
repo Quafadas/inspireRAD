@@ -11,8 +11,8 @@ object `package` extends RootModule with SiteModule {
   // override val jsSiteModule = jsSite
   // override def pathToImportMap = Some(PathRef(T.workspace / "importmap.json"))
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ build.Config.vecIncubatorFlag
-  def scalaVersion = build.spireAD.jvm.scalaVersion
-  override def moduleDeps = Seq(build.spireAD.jvm)
+  def scalaVersion = build.inspireRAD.jvm.scalaVersion
+  override def moduleDeps = Seq(build.inspireRAD.jvm)
   override def scalaDocOptions = super.scalaDocOptions
 
   override def scalacOptions: T[Seq[String]] = super.scalacOptions()
