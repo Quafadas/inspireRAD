@@ -67,7 +67,7 @@ jobs:
         run: ./mill inspireRAD.test.${{ matrix.project }}
 
   publish:
-    if: github.repository == 'Quafadas/spire_AD' && contains(github.ref, 'refs/tags/')
+    if: github.repository == 'Quafadas/inspireRAD' && contains(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:

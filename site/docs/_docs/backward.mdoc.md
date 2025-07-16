@@ -8,8 +8,7 @@ However, if you look into the code for `Jet`, what you'll see, is that it's trac
 
 The motivation for reverse mode differentiation, is that it is O(1).
 
-The implementation is fascinating from both a maths and implementation perspective. The reverse mode AD algorithm uses some cunning mathematics (not described here) and the directed (acyclic) graph of the calcualtion at that point. To use it;
-
+The implementation is fascinating from both a maths and implementation perspective. The reverse mode AD algorithm uses some cunning mathematics (not described here) and required you to build a directed (acyclic) graph of the calculation. Gradients are then pushed "backward" through the graph. An example
 ```scala mdoc:height=200
 
 import spire._
@@ -36,9 +35,12 @@ val weights = Matrix.fromColumns(Array(0.1, 0.2), Array(0.05, 0.1)).tej
 
 val probits = (data @@ weights).exp.normaliseRowsL1
 val selected = probits(Array((0,0), (1,1))).mapRowsToScalar(ReductionOps.Sum).log.mean
+
 val loss = selected * -1.0.tej
 
 loss.backward((weights = weights))
+
+
 
 ```
 `traced.backward(weights)` does the backward pass, and returns a named tuple of the gradient of the `loss` variable with respect to the input nodes, in this case "weights".
