@@ -21,7 +21,7 @@ import vecxt.BoundsCheck.DoBoundsCheck.yes
 import spire.math.Jet.*
 import io.github.quafadas.inspireRAD.*
 import io.github.quafadas.inspireRAD.TejVDoubleAlgebra.*
-import io.github.quafadas.inspireRAD.TejVDoubleAlgebra.ShowLite.given
+import io.github.quafadas.inspireRAD.TejVDoubleAlgebra.ShowDetails.given
 
 given graph: TejVGraph[Double] = TejVGraph[Double]()
 
@@ -34,7 +34,7 @@ val data = Matrix.fromRows(
 val weights = Matrix.fromColumns(Array(0.1, 0.2), Array(0.05, 0.1)).tej
 
 val probits = (data @@ weights).exp.normaliseRowsL1
-val selected = probits(Array((0,0), (1,1))).mapRowsToScalar(ReductionOps.Sum).log.mean
+val selected = probits(Array((0,0), (1,1), (2, 0))).mapRowsToScalar(ReductionOps.Sum).log.mean
 
 val loss = selected * -1.0.tej
 

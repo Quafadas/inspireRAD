@@ -25,7 +25,7 @@ object TejVDoubleAlgebra:
     given Show[Matrix[Double]] with
       def show(matrix: Matrix[Double]): String =
         val rows =
-          for i <- 0 until Math.min(1, matrix.rows)
+          for i <- 0 until matrix.rows
           yield matrix
             .row(i)
             .map(s => "%.3f".format(s).reverse.padTo(6, ' ').reverse)
