@@ -1,46 +1,21 @@
 package build.site
 
-import $ivy.`io.github.quafadas:millSite_mill0.12_2.13:0.0.38`
-import io.github.quafadas.millSite._
-import mill._, scalalib._
-import mill.scalajslib.api._
+import mill.*, scalalib.*
+import mill.scalajslib.api.*
+import io.github.quafadas.millSite.*
+import mill.util.VcsVersion
 
+object `package` extends SiteModule:
 
-object `package` extends RootModule with SiteModule {
+  def latestVersion: T[String] = Task {
+    VcsVersion.vcsState().lastTag.getOrElse("0.0.0").replace("v", "")
+  }
 
-  // override val jsSiteModule = jsSite
-  // override def pathToImportMap = Some(PathRef(T.workspace / "importmap.json"))
-  override def forkArgs: T[Seq[String]] = super.forkArgs() ++ build.Config.vecIncubatorFlag
-  def scalaVersion = build.inspireRAD.jvm.scalaVersion
-  override def moduleDeps = Seq(build.inspireRAD.jvm)
-  override def scalaDocOptions = super.scalaDocOptions
+  override def repoLink = Task(
+    build.inspireRAD.jvm.pomSettings().url
+  )
 
-  override def scalacOptions: T[Seq[String]] = super.scalacOptions()
+  override def unidocTitle = Task("Scautable API")
 
-  // object jsSite extends SiteJSModule {
-
-  //   override def moduleDeps = Seq(build.spireAD.js)
-  //   override def scalaVersion = build.Config.scalaVersion
-  //   override def scalaJSVersion = build.spireAD.js.scalaJSVersion
-
-  //   override def scalaJsCompilerVersion: String = build.Config.scalaVersion
-
-
-  //   // override def allScalacOptions: T[Seq[String]] = super.allScalacOptions`() ++ Seq("-experimental", "-language:experimental.namedTuples")
-  //   override def scalacOptions: T[Seq[String]] = super.scalacOptions() ++ Seq("-experimental", "-language:experimental.namedTuples")
-  //   override def moduleKind = ModuleKind.ESModule
-  //   // override def ivyDeps = super.ivyDeps() ++ Agg(
-  //   //   ivy"org.scala-js::scalajs-dom::2.8.0",
-  //   //   ivy"com.lihaoyi::scalatags::0.13.1",
-  //   //   ivy"com.raquo::laminar::17.0.0",
-  //   //   ivy"com.lihaoyi::upickle::4.0.2"
-  //   // )
-
-  //   // object test extends ScalaJSTests with CommonTests {
-  //   //   def moduleKind = ModuleKind.CommonJSModule
-  //   // }
-  // }
-
-
-}
-
+  override def unidocDeps = Seq(build.inspireRAD.jvm)
+end `package`

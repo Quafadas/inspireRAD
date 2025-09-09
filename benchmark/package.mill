@@ -1,12 +1,10 @@
 package build.benchmark
 
-import $ivy.`com.lihaoyi::mill-contrib-jmh:`
-
 import mill._, scalalib._, publish._
 import contrib.jmh.JmhModule
 
 
-object `package` extends RootModule with JmhModule with ScalaModule {
+object `package` extends JmhModule with ScalaModule {
 
   def scalaVersion = build.inspireRAD.jvm.scalaVersion
   def jmhCoreVersion = "1.37"

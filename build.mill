@@ -1,78 +1,75 @@
+//| mill-version: 1.0.4
+//| mill-jvm-version: 24
+//| mvnDeps:
+//| - io.github.quafadas:millSite_mill1_3.7:0.0.52
+//| - com.goyeau::mill-scalafix::0.6.0
+//| - com.lihaoyi::mill-contrib-jmh:$MILL_VERSION
+
+/** //| mill-jvm-opts: ["-Xmx4g", "-Xms2g", "--add-modules=jdk.incubator.vector"]
+  *
+  * --add-modules=jdk.incubator.vector
+  */
 package build
 
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
-
-import $ivy.`com.goyeau::mill-scalafix::0.4.2`
-
-
-import de.tobiasroeser.mill.vcs.version._
-import mill._, mill.scalalib._, mill.scalajslib._, mill.scalanativelib._
-import mill._, scalalib._, publish._
-import mill.scalajslib.api._
-import mill.scalanativelib._
-import mill.util.Jvm
-import mill.api.Result
+import mill.*, mill.scalalib.*, mill.scalajslib.*, mill.scalanativelib.*
+import mill.*, scalalib.*, publish.*
+import mill.scalajslib.api.*
+import mill.util.VcsVersion
 import com.goyeau.mill.scalafix.ScalafixModule
 
-import $packages._
-
-object Config {
-  val scalaVersion = "3.7.1"
-  val oslib =  ivy"com.lihaoyi::os-lib:0.11.3"
+object Config:
+  val scalaVersion = "3.7.2"
+  val oslib = mvn"com.lihaoyi::os-lib:0.11.3"
   val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
-  val vecxtV = "0.0.31"
-  val vecxt = ivy"io.github.quafadas::vecxt::$vecxtV"
+  val vecxtV = "0.0.32"
+  val vecxt = mvn"io.github.quafadas::vecxt::$vecxtV"
   val scalaJs = "1.19.0"
+end Config
 
-}
-
-//  mill --import ivy:com.lihaoyi::mill-contrib-bloop: mill.contrib.bloop.Bloop/install
+//  mill --import mvn:com.lihaoyi::mill-contrib-bloop: mill.contrib.bloop.Bloop/install
 // mill mill.scalalib.scalafmt.ScalafmtModule/
-trait Common extends ScalaModule with ScalafixModule {
+trait Common extends ScalaModule with ScalafixModule:
   def scalaVersion = Config.scalaVersion
 
-  def publishVersion = T{VcsVersion.vcsState().format()}
+  def publishVersion = Task(VcsVersion.vcsState().format())
 
-  def ivyDeps = super.ivyDeps() ++ Agg(
+  def mvnDeps = super.mvnDeps() ++ Seq(
     Config.vecxt,
-    ivy"org.typelevel::spire::0.18.0",
-    ivy"org.typelevel::cats-core::2.13.0",
+    mvn"org.typelevel::spire::0.18.0",
+    mvn"org.typelevel::cats-core::2.13.0"
   )
 
-  override def scalacOptions: Target[Seq[String]] = super.scalacOptions() ++ Seq("-explain-cyclic", "-Wunused:imports")
-}
+  override def scalacOptions = super.scalacOptions() ++ Seq("-explain-cyclic", "-Wunused:imports")
+end Common
 
-trait PublishModule extends mill.scalalib.PublishModule {
-  override def pomSettings = T {
+trait PublishModule extends mill.scalalib.PublishModule:
+  override def pomSettings = Task {
     PomSettings(
       description = "Reverse mode automatic differentiation based on Spire",
       organization = "io.github.quafadas",
       url = "https://github.com/Quafadas/spireAD",
       licenses = Seq(License.`Apache-2.0`),
-      versionControl =
-        VersionControl.github("quafadas", "spire_AD"),
+      versionControl = VersionControl.github("quafadas", "spire_AD"),
       developers = Seq(
         Developer("quafadas", "Simon Parten", "https://github.com/quafadas")
       )
     )
   }
+end PublishModule
 
-}
-
-trait CommonJS extends ScalaJSModule {
+trait CommonJS extends ScalaJSModule:
   def scalaJSVersion = Config.scalaJs
-  def ivyDeps = super.ivyDeps() ++ Seq(ivy"org.scala-js:scalajs-java-securerandom_sjs1_2.13:1.0.0")
+  def mvnDeps = super.mvnDeps() ++ Seq(mvn"org.scala-js:scalajs-java-securerandom_sjs1_2.13:1.0.0")
   // def moduleKind = ModuleKind.
-}
+end CommonJS
 
-
-trait CommonNative extends ScalaNativeModule {
+trait CommonNative extends ScalaNativeModule:
   def scalaNativeVersion: mill.T[String] = "0.5.5"
-}
+end CommonNative
 
-trait CommonTests extends TestModule.Munit {
+trait CommonTests extends TestModule.Munit:
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Config.vecIncubatorFlag
-  def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"org.scalameta::munit::1.1.0",
+  def mvnDeps = super.mvnDeps() ++ Seq(
+    mvn"org.scalameta::munit::1.1.0"
   )
-}
+end CommonTests

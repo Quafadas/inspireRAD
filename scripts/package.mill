@@ -1,9 +1,9 @@
 package build.scripts
 
 import build.Config
-import mill._, scalalib._
+import mill.*, scalalib.*
 
-object `package` extends RootModule with build.Common with ShareCompileResources {
+object `package` extends build.Common with ShareCompileResources:
   def scalaVersion = Config.scalaVersion
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Config.vecIncubatorFlag
 
@@ -11,13 +11,12 @@ object `package` extends RootModule with build.Common with ShareCompileResources
 
   override def mainClass = Some("makemore")
 
-  override def ivyDeps: T[Agg[Dep]] = super.ivyDeps() ++ Agg(
-    ivy"io.github.quafadas::scautable:0.0.24",
-    ivy"io.github.quafadas::dedav4s:0.9.3"
+  override def mvnDeps = super.mvnDeps() ++ Seq(
+    mvn"io.github.quafadas::scautable:0.0.24",
+    mvn"io.github.quafadas::dedav4s:0.9.3"
   )
+end `package`
 
-}
-
-trait ShareCompileResources extends ScalaModule {
+trait ShareCompileResources extends ScalaModule:
   override def compileResources = super.compileResources() ++ resources()
-}
+end ShareCompileResources

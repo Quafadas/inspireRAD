@@ -1,48 +1,44 @@
 package build.inspireRAD
 
-import mill._
-import mill.scalalib._
-import mill.scalalib.publish._
-import mill.scalajslib._
-import mill.scalajslib.api._
+import mill.*
+import mill.scalalib.*
+import mill.scalalib.publish.*
+import mill.scalajslib.*
+import mill.scalajslib.api.*
 import build.Config
 
-object `package` extends RootModule {
+object `package` extends Module:
 
-  trait SharedModule extends build.Common with PlatformScalaModule {
-  }
+  trait SharedModule extends build.Common with PlatformScalaModule 
 
-  trait SharedTest extends SharedModule with build.CommonTests {
-  }
+  trait SharedTest extends SharedModule with build.CommonTests 
 
-
-  object jvm extends SharedModule with ScalaModule with build.PublishModule {
-    override def ivyDeps = T {
-      super.ivyDeps() ++ Agg(
+  object jvm extends SharedModule with ScalaModule with build.PublishModule:
+    override def mvnDeps = Task {
+      super.mvnDeps() ++ Seq(
         Config.oslib,
-        ivy"io.github.quafadas::vecxtensions::${build.Config.vecxtV}"
+        mvn"io.github.quafadas::vecxtensions::${build.Config.vecxtV}"
       )
     }
-
-  }
+  end jvm
 
   // object js extends SharedModule with ScalaJSModule with build.PublishModule {
   //   def scalaJSVersion = build.Config.scalaJs
-  //   override def ivyDeps = super.ivyDeps() ++
+  //   override def mvnDeps = super.mvnDeps() ++
   //     Agg(
-  //       ivy"org.scala-js::scalajs-dom::2.8.0",
-  //       ivy"org.scala-js::scalajs-java-securerandom::1.0.0".withDottyCompat(scalaVersion())
+  //       mvn"org.scala-js::scalajs-dom::2.8.0",
+  //       mvn"org.scala-js::scalajs-java-securerandom::1.0.0".withDottyCompat(scalaVersion())
   //     )
   // }
 
-   object test extends Module {
+  object test extends Module:
     // object js extends SharedTest with build.CommonJS with TestScalaJSModule {
     //   override def moduleDeps = Seq(build.spireAD.js)
 
     // }
-    object jvm extends SharedTest {
+    object jvm extends SharedTest:
 
       override def moduleDeps = Seq(build.inspireRAD.jvm)
-    }
-  }
-}
+    end jvm
+  end test
+end `package`

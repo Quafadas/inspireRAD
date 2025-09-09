@@ -49,7 +49,7 @@ It is possible to inspect the calculation graph which is carried around in side 
 
 `graph.dag.toGraphviz` will return a string representation of the graph. If you paste the output of the calculation graph into an online graphviz editor, you'll see something like this.
 
-![backward](backward.png)
+![backward](assets/backward.png)
 
 To do it, it navigates the graph in reverse topological order, propagating its gradient to its child nodes in accordance with the chain rule. Hopefully.
 
