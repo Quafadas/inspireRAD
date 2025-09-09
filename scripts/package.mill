@@ -7,7 +7,7 @@ object `package` extends build.Common with ShareCompileResources:
   def scalaVersion = Config.scalaVersion
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Config.vecIncubatorFlag
 
-  def moduleDeps = Seq(build.inspireRAD.jvm)
+  def moduleDeps = Seq(build.inspireRAD)
 
   override def mainClass = Some("makemore")
 

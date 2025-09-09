@@ -11,9 +11,8 @@
   */
 package build
 
-import mill.*, mill.scalalib.*, mill.scalajslib.*, mill.scalanativelib.*
 import mill.*, scalalib.*, publish.*
-import mill.scalajslib.api.*
+
 import mill.util.VcsVersion
 import com.goyeau.mill.scalafix.ScalafixModule
 
@@ -26,10 +25,10 @@ object Config:
   val vecxtV = "0.0.32"
   val vecxt = mvn"io.github.quafadas::vecxt::$vecxtV"
   val scalaJs = "1.19.0"
+  val munit = "1.1.0"
 end Config
 
-//  mill --import mvn:com.lihaoyi::mill-contrib-bloop: mill.contrib.bloop.Bloop/install
-// mill mill.scalalib.scalafmt.ScalafmtModule/
+
 trait Common extends ScalaModule with ScalafixModule:
   def scalaVersion = Config.scalaVersion
 
@@ -59,19 +58,19 @@ trait PublishModule extends mill.scalalib.PublishModule:
   }
 end PublishModule
 
-trait CommonJS extends ScalaJSModule:
-  def scalaJSVersion = Config.scalaJs
-  def mvnDeps = super.mvnDeps() ++ Seq(mvn"org.scala-js:scalajs-java-securerandom_sjs1_2.13:1.0.0")
-  // def moduleKind = ModuleKind.
-end CommonJS
+// trait CommonJS extends ScalaJSModule:
+//   def scalaJSVersion = Config.scalaJs
+//   def mvnDeps = super.mvnDeps() ++ Seq(mvn"org.scala-js:scalajs-java-securerandom_sjs1_2.13:1.0.0")
+//   // def moduleKind = ModuleKind.
+// end CommonJS
 
-trait CommonNative extends ScalaNativeModule:
-  def scalaNativeVersion: mill.T[String] = "0.5.5"
-end CommonNative
+// trait CommonNative extends ScalaNativeModule:
+//   def scalaNativeVersion: mill.T[String] = "0.5.5"
+// end CommonNative
 
 trait CommonTests extends TestModule.Munit:
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Config.vecIncubatorFlag
   def mvnDeps = super.mvnDeps() ++ Seq(
-    mvn"org.scalameta::munit::1.1.0"
+    mvn"org.scalameta::munit::${Config.munit}"
   )
 end CommonTests

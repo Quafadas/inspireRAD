@@ -6,8 +6,8 @@ import contrib.jmh.JmhModule
 
 object `package` extends JmhModule with ScalaModule {
 
-  def scalaVersion = build.inspireRAD.jvm.scalaVersion
+  def scalaVersion = build.inspireRAD.scalaVersion
   def jmhCoreVersion = "1.37"
   override def forkArgs: T[Seq[String]] = super.forkArgs() ++ Seq("-Xmx4G")
-  override def moduleDeps: Seq[JavaModule] = Seq(build.inspireRAD.jvm)
+  override def moduleDeps: Seq[JavaModule] = Seq(build.inspireRAD)
 }

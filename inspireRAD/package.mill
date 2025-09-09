@@ -2,43 +2,20 @@ package build.inspireRAD
 
 import mill.*
 import mill.scalalib.*
-import mill.scalalib.publish.*
-import mill.scalajslib.*
-import mill.scalajslib.api.*
 import build.Config
 
-object `package` extends Module:
-
-  trait SharedModule extends build.Common with PlatformScalaModule 
-
-  trait SharedTest extends SharedModule with build.CommonTests 
-
-  object jvm extends SharedModule with ScalaModule with build.PublishModule:
-    override def mvnDeps = Task {
-      super.mvnDeps() ++ Seq(
-        Config.oslib,
-        mvn"io.github.quafadas::vecxtensions::${build.Config.vecxtV}"
+object `package` extends build.Common, build.PublishModule:
+  override def mvnDeps = Task {
+    super.mvnDeps() ++ Seq(
+      Config.oslib,
+        mvn"io.github.quafadas::vecxtensions::${Config.vecxtV}"
       )
     }
-  end jvm
-
-  // object js extends SharedModule with ScalaJSModule with build.PublishModule {
-  //   def scalaJSVersion = build.Config.scalaJs
-  //   override def mvnDeps = super.mvnDeps() ++
-  //     Agg(
-  //       mvn"org.scala-js::scalajs-dom::2.8.0",
-  //       mvn"org.scala-js::scalajs-java-securerandom::1.0.0".withDottyCompat(scalaVersion())
-  //     )
-  // }
-
-  object test extends Module:
-    // object js extends SharedTest with build.CommonJS with TestScalaJSModule {
-    //   override def moduleDeps = Seq(build.spireAD.js)
-
-    // }
-    object jvm extends SharedTest:
-
-      override def moduleDeps = Seq(build.inspireRAD.jvm)
-    end jvm
-  end test
-end `package`
+    def forkArgs = super.forkArgs() ++ Config.vecIncubatorFlag
+    
+    object test extends build.CommonTests:
+      def forkArgs = super.forkArgs() ++ Config.vecIncubatorFlag
+      override def mvnDeps = super.mvnDeps() ++ Seq(
+        mvn"org.scalameta::munit::${Config.munit}"
+      )
+    end test  

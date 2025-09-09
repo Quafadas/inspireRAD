@@ -12,10 +12,10 @@ object `package` extends SiteModule:
   }
 
   override def repoLink = Task(
-    build.inspireRAD.jvm.pomSettings().url
+    build.inspireRAD.pomSettings().url
   )
 
   override def unidocTitle = Task("Scautable API")
 
-  override def unidocDeps = Seq(build.inspireRAD.jvm)
+  override def unidocDeps = Seq(build.inspireRAD)
 end `package`
