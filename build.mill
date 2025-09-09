@@ -17,6 +17,8 @@ import mill.scalajslib.api.*
 import mill.util.VcsVersion
 import com.goyeau.mill.scalafix.ScalafixModule
 
+def format = mill.scalalib.scalafmt.ScalafmtModule
+
 object Config:
   val scalaVersion = "3.7.2"
   val oslib = mvn"com.lihaoyi::os-lib:0.11.3"
