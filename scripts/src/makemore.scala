@@ -34,6 +34,7 @@ import scala.reflect.ClassTag
 import vecxt.all.row
 import cats.syntax.all.toShow
 import spire.algebra.NRoot
+import narr.NArray
 import TejVDoubleAlgebra.given
 
 type JsonMod = ujson.Value => Unit
@@ -140,22 +141,12 @@ import cats.Show
   val yChars =
     bookended.flatMap(_.yenc).toArray
 
-  inline def calcLoss[T](
-      weights: Matrix[T],
-      incomingData: Matrix[T],
+  def calcLoss(
+      weights: Matrix[Double],
+      incomingData: Matrix[Double],
       targets: Array[Int]
-  )(using
-      inline mOps: Matrixy[Matrix, T],
-      inline fm: VectorisedField[Matrix, T],
-      inline fa: VectorisedTrig[Array, T],
-      inline fas: VectorisedField[Scalar, T],
-      inline faa: VectorisedField[Array, T],
-      inline redArr: Reductions[Array, T, 1],
-      inline redMat: Reductions[Matrix, T, 2],
-      inline t: VectorisedTrig[Matrix, T],
-      nt: Numeric[T],
-      ct: ClassTag[T]
-  ): Scalar[T] =
+  )(using ctx: LossContext[Matrix, NArray, Scalar, Double]): Scalar[Double] =
+    import ctx.given
     val logits = incomingData @@ weights
     val counts = logits.exp
     val probsNN = counts.mapRows(row => row / row.sum)
@@ -167,12 +158,8 @@ import cats.Show
       weights: TejV[Matrix, Double],
       incomingData: TejV[Matrix, Double],
       targets: Array[Int]
-  )(using
-      dag: TejVGraph[Double],
-      sh: Show[Matrix[Double]],
-      sha: Show[Array[Double]],
-      shs: Show[Scalar[Double]]
-  ): TejV[Scalar, Double] =
+  )(using dag: TejVGraph[Double]): TejV[Scalar, Double] =
+    import TejVDoubleAlgebra.ShowDetails.given
     val logits = incomingData @@ weights
     val counts = logits.exp
 
