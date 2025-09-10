@@ -1,7 +1,4 @@
----
-title: Basics
----
-
+# Intro
 
 ## Basics of Differentiation
 
@@ -135,3 +132,112 @@ val y = Jet(10.0) + Jet.h[Double](0)
 y * y
 ```
 Where we tracked the derivative of the first dimension.
+
+## Backward Mode
+
+Is something of a mind bend. FOr the example of squaring a number, we need to track the computation graph. A little AST / compiler of the calculation.
+
+Let's visualize the computation graph of squaring a number with a Mermaid diagram:
+
+```mermaid
+graph LR
+  input["input x"] --> x[x]
+  input["input x"] --> y
+  y[x] --> mul[*]
+  x[x] --> mul[*]
+  mul --> result["f(x) = x²"]
+```
+Is a representation of the "forward" pass of the computation graph for squaring a number.
+
+Now, let's visualize the "backward" pass of the computation graph, where we propagate derivatives from the output back to the input:
+
+```mermaid
+graph RL
+  result["f(x) = x²"] --> mul["* (gradient = 1.0)"]
+  mul --> x["x (gradient = x)"]
+  mul --> y["x (gradient = x)"]
+  x --> input["input x (gradient = x + x)"]
+  y --> input
+```
+## The Chain Rule
+
+The chain rule is a fundamental concept in calculus that allows us to find the derivative of a composite function. If we have a function h(x) = f(g(x)), the chain rule states that:
+
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow>
+    <mfrac>
+      <mrow>
+        <mi>d</mi>
+        <mi>h</mi>
+      </mrow>
+      <mrow>
+        <mi>d</mi>
+        <mi>x</mi>
+      </mrow>
+    </mfrac>
+    <mo>=</mo>
+    <mfrac>
+      <mrow>
+        <mi>d</mi>
+        <mi>f</mi>
+      </mrow>
+      <mrow>
+        <mi>d</mi>
+        <mi>g</mi>
+      </mrow>
+    </mfrac>
+    <mo>⋅</mo>
+    <mfrac>
+      <mrow>
+        <mi>d</mi>
+        <mi>g</mi>
+      </mrow>
+      <mrow>
+        <mi>d</mi>
+        <mi>x</mi>
+      </mrow>
+    </mfrac>
+  </mrow>
+</math>
+
+Or in the more common notation:
+
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow>
+    <msup>
+      <mi>h</mi>
+      <mo>′</mo>
+    </msup>
+    <mo>(</mo>
+    <mi>x</mi>
+    <mo>)</mo>
+    <mo>=</mo>
+    <msup>
+      <mi>f</mi>
+      <mo>′</mo>
+    </msup>
+    <mo>(</mo>
+    <mi>g</mi>
+    <mo>(</mo>
+    <mi>x</mi>
+    <mo>)</mo>
+    <mo>)</mo>
+    <mo>⋅</mo>
+    <msup>
+      <mi>g</mi>
+      <mo>′</mo>
+    </msup>
+    <mo>(</mo>
+    <mi>x</mi>
+    <mo>)</mo>
+  </mrow>
+</math>
+
+This rule is particularly important in backward mode automatic differentiation, as it allows us to propagate gradients backwards through complex computational graphs.
+
+In this backward pass:
+
+1. We start with a gradient of 1.0 at the output - the gradient of anything with respect to itself is 1.0
+2. At the multiplication node, the gradient splits and flows to both inputs
+3. Each input to the multiplication receives the gradient multiplied by the other input
+4. The gradients from both paths sum at the input node, giving us the total derivative of 2x

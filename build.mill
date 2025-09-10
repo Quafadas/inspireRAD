@@ -1,7 +1,8 @@
 //| mill-version: 1.0.4
 //| mill-jvm-version: 24
+//| mill-jvm-opts: [ "--add-modules", "jdk.incubator.vector"]
 //| mvnDeps:
-//| - io.github.quafadas:millSite_mill1_3.7:0.0.52
+//| - io.github.quafadas:millSite_mill1_3.7:0.0.53
 //| - com.goyeau::mill-scalafix::0.6.0
 //| - com.lihaoyi::mill-contrib-jmh:$MILL_VERSION
 
@@ -48,9 +49,9 @@ trait PublishModule extends mill.scalalib.PublishModule:
     PomSettings(
       description = "Reverse mode automatic differentiation based on Spire",
       organization = "io.github.quafadas",
-      url = "https://github.com/Quafadas/spireAD",
+      url = "https://github.com/Quafadas/inspireRAD",
       licenses = Seq(License.`Apache-2.0`),
-      versionControl = VersionControl.github("quafadas", "spire_AD"),
+      versionControl = VersionControl.github("quafadas", "inspireRAD"),
       developers = Seq(
         Developer("quafadas", "Simon Parten", "https://github.com/quafadas")
       )
@@ -74,3 +75,5 @@ trait CommonTests extends TestModule.Munit:
     mvn"org.scalameta::munit::${Config.munit}"
   )
 end CommonTests
+
+val vecIncubatorFlag = Seq("--add-modules", "jdk.incubator.vector")

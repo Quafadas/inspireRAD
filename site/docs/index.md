@@ -12,15 +12,15 @@ ivy"io.github.quafadas::spireAD::{{projectVersion}}"
 
 ## goals
 
-implement a reverse automatic differentation algorithm in Scala on top of spire.
+implement a reverse automatic differentation algorithm.
 
-Completeness (in terms of operations)
+Correctness (in terms of operations)
 
 Adopt Spires typeclass driven design
 
-Accuracy
-
 Reasonable ease of use at the call site
+
+Reasonable hardware accelerated (CPU) performance
 
 ## non goals
 (at this stage)

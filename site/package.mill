@@ -7,10 +7,6 @@ import mill.util.VcsVersion
 
 object `package` extends SiteModule:
 
-  def latestVersion: T[String] = Task {
-    VcsVersion.vcsState().lastTag.getOrElse("0.0.0").replace("v", "")
-  }
-
   override def repoLink = Task(
     build.inspireRAD.pomSettings().url
   )
@@ -18,4 +14,6 @@ object `package` extends SiteModule:
   override def unidocTitle = Task("Scautable API")
 
   override def unidocDeps = Seq(build.inspireRAD)
+
+  def forkArgs: T[Seq[String]] = build.vecIncubatorFlag
 end `package`

@@ -1,6 +1,4 @@
----
-title: Backward Mode
----
+# Backward Mode
 
 So we got forward mode, essentially free. Sweet.
 
@@ -38,9 +36,15 @@ val selected = probits(Array((0,0), (1,1), (2, 0))).mapRowsToScalar(ReductionOps
 
 val loss = selected * -1.0.tej
 
-loss.backward((weights = weights))
+val gradient = loss.backward((weights = weights))
 
+println(weights.value.printMat)
 
+println(gradient.weights.printMat)
+
+val updated = weights - ((gradient.weights * 0.1).tej)
+
+println(updated.value.printMat)
 
 ```
 `traced.backward(weights)` does the backward pass, and returns a named tuple of the gradient of the `loss` variable with respect to the input nodes, in this case "weights".

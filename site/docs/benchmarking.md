@@ -1,3 +1,4 @@
+# Benchmarking
 
 Here is a benchmark of softmax for varying parameter sizes. Note this on my local computer. It appears as thought the forward pass method dominates below about 250 parameters.
 
