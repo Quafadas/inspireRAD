@@ -104,7 +104,7 @@ jobs:
           fetch-tags: true
 
       - name: Generate static site
-        run: ./mill out/site/laika/generateSite.dest
+        run: ./mill site.siteGen
 
       - name: Setup Pages
         uses: actions/configure-pages@main
