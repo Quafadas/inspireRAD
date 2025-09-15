@@ -104,14 +104,14 @@ jobs:
           fetch-tags: true
 
       - name: Generate static site
-        run: ./mill site.siteGen
+        run: ./mill out/site/laika/generateSite.dest
 
       - name: Setup Pages
         uses: actions/configure-pages@main
       - uses: actions/upload-artifact@main
         with:
           name: page
-          path: out/site/siteGen.dest
+          path: out/site/laika/generateSite.dest
           if-no-files-found: error
 
   deploy:
