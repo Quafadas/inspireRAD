@@ -41,15 +41,15 @@ jobs:
 
       - uses: coursier/setup-action@main
         with:
-          jvm: temurin@17
-          apps: scala-cli
+          jvm: temurin@24
+          apps:
 
-      - name: Setup NodeJS v18 LTS
-        if: matrix.project == 'js'
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: npm
+      # - name: Setup NodeJS v18 LTS
+      #   if: matrix.project == 'js'
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      #     cache: npm
       - name: formatCheck
         run: ./mill mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
 
@@ -59,12 +59,12 @@ jobs:
 
       # Removed native project configuration, no need to install dependencies
 
-      - name: scalaJSLink
-        if: matrix.project == 'js'
-        run: ./mill inspireRAD.${{ matrix.project }}.fastLinkJS
+      # - name: scalaJSLink
+      #   if: matrix.project == 'js'
+      #   run: ./mill inspireRAD.${{ matrix.project }}.fastLinkJS
 
       - name: Test
-        run: ./mill inspireRAD.test.${{ matrix.project }}
+        run: ./mill inspireRAD.test
 
   publish:
     if: github.repository == 'Quafadas/inspireRAD' && contains(github.ref, 'refs/tags/')
@@ -96,7 +96,7 @@ jobs:
     steps:
       - uses: coursier/setup-action@main
         with:
-          jvm: temurin@17
+          jvm: temurin@24
           apps: scala-cli
       - uses: actions/checkout@v4
         with:
@@ -111,7 +111,7 @@ jobs:
       - uses: actions/upload-artifact@main
         with:
           name: page
-          path: out/site/publishDocs.dest
+          path: out/site/siteGen.dest
           if-no-files-found: error
 
   deploy:
