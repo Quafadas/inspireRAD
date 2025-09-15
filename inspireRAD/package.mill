@@ -4,7 +4,7 @@ import mill.*
 import mill.scalalib.*
 import build.Config
 
-object `package` extends build.Common, build.PublishModule:
+object `package` extends build.Common, build.PublishModule, ScalaModule:
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq(
       Config.oslib,
@@ -12,10 +12,10 @@ object `package` extends build.Common, build.PublishModule:
       )
     }
     def forkArgs = super.forkArgs() ++ Config.vecIncubatorFlag
-    
-    object test extends build.CommonTests:
+
+    object test extends ScalaTests, build.CommonTests:
       def forkArgs = super.forkArgs() ++ Config.vecIncubatorFlag
       override def mvnDeps = super.mvnDeps() ++ Seq(
         mvn"org.scalameta::munit::${Config.munit}"
       )
-    end test  
+    end test
