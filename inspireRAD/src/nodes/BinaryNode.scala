@@ -6,19 +6,21 @@ import cats.syntax.show.*
 import cats.Show
 import scala.reflect.ClassTag
 import algebra.ring.Field
+import vecxt.ndarray.NDArray
+import vecxt.NDArrayDoubleOps.*
+import vecxt.NDArrayReductions.*
+import vecxt.BoundsCheck.DoBoundsCheck.no
 
-case class BinaryNode[F[_], @sp(Double) T](
+case class BinaryNode[T](
     op: BinaryOps,
-    value1: F[T],
+    value1: NDArray[T],
     thisId: UUID,
     left: UUID,
     right: UUID
 )(using
-    vf: VectorisedField[F, T],
-    vt: VectorisedTrig[F, T],
-    fi: Field[T],
-    sh: Show[F[T]]
-) extends VNode[F, T](value1, thisId):
+    ops: TejOps[T],
+    sh: Show[NDArray[T]]
+) extends VNode[T](value1, thisId):
 
   override def toString(): String =
     s"$op \n v:$value1 g: $grad \n (_id: ${id.toString().takeRight(4)})"
@@ -26,96 +28,60 @@ case class BinaryNode[F[_], @sp(Double) T](
   override def graphShow: String =
     s"BinaryNode (id: ${thisId.toString().takeRight(4)}, op: $op \n value: \n ${value.show} \n grad: \n ${grad.show})"
 
-  override def setGradOne(using ct: ClassTag[T]): Unit =
-    grad = vf.allOnes(value1)
-
-  override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
+  override def backward(using td: TejVGraph[T]): Unit =
     val leftN = td.dag.getNode(left)
     val rightN = td.dag.getNode(right)
-    // println("BinaryNode backward")
-    // println("Left Node: " + leftN)
-    // println("Right Node: " + rightN)
-    val gradDimL = leftN.vf2.numDimensions
-    val gradDimR = rightN.vf2.numDimensions
-    val thisDim = this.vf2.numDimensions
 
-    // Left and right sides, may have gradients of different dimensions. Arg.
-    (thisDim, gradDimL, gradDimR) match
-      // If the dimensions match, we can just use the gradients directly
-      case (thisDim, gradDimL, gradimR) if (thisDim == gradDimL) && (gradDimR == thisDim) =>
-        val leftN2 = leftN.asInstanceOf[VDimChangeNode[F, F, T]]
-        val rightN2 = rightN.asInstanceOf[VDimChangeNode[F, F, T]]
+    // Dispatch based on ndim of this node vs. left/right grad shapes
+    val thisDim = value1.ndim
+    val leftGradDim = leftN.grad.ndim
+    val rightGradDim = rightN.grad.ndim
+
+    (thisDim, leftGradDim, rightGradDim) match
+      // All same dimension: simple element-wise gradient accumulation
+      case (td, ld, rd) if td == ld && td == rd =>
+        val g = grad.asInstanceOf[NDArray[Double]]
+        val lv = leftN.value.asInstanceOf[NDArray[Double]]
+        val rv = rightN.value.asInstanceOf[NDArray[Double]]
+        val lg = leftN.grad.asInstanceOf[NDArray[Double]]
+        val rg = rightN.grad.asInstanceOf[NDArray[Double]]
         op match
           case BinaryOps.Add =>
-            leftN2.grad += leftN2.grad + this.grad
-            rightN2.grad += rightN2.grad + this.grad
-
+            leftN.grad = (lg + g).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg + g).asInstanceOf[NDArray[T]]
           case BinaryOps.Sub =>
-            leftN2.grad += this.grad
-            rightN2.grad -= this.grad
-
+            leftN.grad = (lg + g).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg - g).asInstanceOf[NDArray[T]]
           case BinaryOps.Mul =>
-            leftN2.grad += this.grad * rightN2.value
-            rightN2.grad += this.grad * leftN2.value
-
+            leftN.grad = (lg + g * rv).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg + g * lv).asInstanceOf[NDArray[T]]
           case BinaryOps.Div =>
-            leftN2.grad += this.grad / rightN2.value
-            rightN2.grad -= this.grad * leftN2.value / (rightN2.value * rightN2.value)
-        end match
-      case (thisDim, gradDimL, gradDimR) if (thisDim == 0) =>
-        // If this dimension is a scalar, then we can use the scalar operations stored in the left / right nodes.
-        // Further, we know that the left and right _values_ are scalar.
-        // Left and right _gradients_ however... are not scalar - otherwise we would have the simple case above.
-        val gradVal = this.grad.asInstanceOf[Scalar[T]].scalar
-        val rightVal = rightN.value.asInstanceOf[Scalar[T]].scalar
-        val leftVal = leftN.value.asInstanceOf[Scalar[T]].scalar
+            leftN.grad = (lg + g / rv).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg - g * lv / (rv * rv)).asInstanceOf[NDArray[T]]
 
-        val leftN2 = leftN.vf2
-        val rightN2 = rightN.vf2
+      // This node is a scalar (0-d), left/right may have higher dim
+      case (0, _, _) =>
+        val gradVal = grad.asInstanceOf[NDArray[Double]].data(grad.asInstanceOf[NDArray[Double]].offset)
+        val leftScalar = leftN.value.asInstanceOf[NDArray[Double]].data(leftN.value.asInstanceOf[NDArray[Double]].offset)
+        val rightScalar = rightN.value.asInstanceOf[NDArray[Double]].data(rightN.value.asInstanceOf[NDArray[Double]].offset)
+        val lg = leftN.grad.asInstanceOf[NDArray[Double]]
+        val rg = rightN.grad.asInstanceOf[NDArray[Double]]
         op match
           case BinaryOps.Add =>
-            leftN.grad = leftN2.+(leftN.grad)(gradVal)
-            rightN.grad = rightN2.+(rightN.grad)(gradVal)
-
+            leftN.grad = (lg + gradVal).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg + gradVal).asInstanceOf[NDArray[T]]
           case BinaryOps.Sub =>
-            leftN.grad = leftN2.-(leftN.grad)(gradVal)
-            rightN.grad = rightN2.-(rightN.grad)(gradVal)
-
+            leftN.grad = (lg + gradVal).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg - gradVal).asInstanceOf[NDArray[T]]
           case BinaryOps.Mul =>
-            leftN.grad = leftN2.+(leftN.grad)(fi.times(gradVal, rightVal))
-            rightN.grad = rightN2.+(rightN.grad)(fi.times(gradVal, rightVal))
-
+            leftN.grad = (lg + gradVal * rightScalar).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg + gradVal * leftScalar).asInstanceOf[NDArray[T]]
           case BinaryOps.Div =>
-            leftN.grad = leftN2.+(leftN.grad)(fi.div(gradVal, rightVal))
+            leftN.grad = (lg + gradVal / rightScalar).asInstanceOf[NDArray[T]]
+            rightN.grad = (rg - gradVal * leftScalar / (rightScalar * rightScalar)).asInstanceOf[NDArray[T]]
 
-            rightN.grad = rightN2.-(rightN.grad)(fi.div(fi.times(gradVal, leftVal), fi.times(rightVal, rightVal)))
-        end match
-      case (thisDim, gradDimL, gradDimR) =>
-        // Let's not think about this right now as it makes my head hurt and I don't need it atm.
+      case _ =>
         ???
-    end match
 
-    // op match
-    //   case BinaryOps.Add =>
-    //     leftN.grad += leftN.grad + this.grad
-    //     rightN.grad += rightN.grad + this.grad
-
-    //   case BinaryOps.Sub =>
-    //     leftN.grad += this.grad
-    //     rightN.grad -= this.grad
-
-    //   case BinaryOps.Mul =>
-    //     leftN.grad += this.grad * rightN.value
-    //     rightN.grad += this.grad * leftN.value
-
-    //   case BinaryOps.Div =>
-    //     leftN.grad += this.grad / rightN.value
-    //     rightN.grad -= this.grad * leftN.value / (rightN.value * rightN.value)
-
-    // end match
-    // println("--> backward binary" + this.toString())
-    // println("Update Left: " + leftN)
-    // println("Update Right: " + rightN)
-    // println("<--- end backward this node")
   end backward
 end BinaryNode

@@ -1,116 +1,92 @@
 package io.github.quafadas.inspireRAD
 
 import java.util.UUID
-import scala.specialized as sp
 import cats.syntax.show.*
 import cats.Show
-import vecxt.matrix.Matrix
-import vecxt.MatrixInstance.updateInPlace
-import vecxt.all.row
-import scala.reflect.ClassTag
-import narr.*
-import vecxt.BoundsCheck.DoBoundsCheck.yes
-import algebra.ring.Field
-import vecxt.all.printMat
-import vecxt.all.printArr
+import vecxt.ndarray.NDArray
+import vecxt.NDArrayDoubleOps.*
+import vecxt.NDArrayReductions.*
+import vecxt.ndarrayOps.*
+import vecxt.BoundsCheck.DoBoundsCheck.no
 import NormaliseRowOps.*
-import spire.algebra.NRoot
 
 case class NormaliseRowsNode[T](
-    value1: Matrix[T],
+    value1: NDArray[T],
     thisId: UUID,
     depId: UUID,
     op: NormaliseRowOps
 )(using
-    vf: VectorisedField[Matrix, T],
-    vt: VectorisedTrig[Matrix, T],
-    vta: VectorisedField[Array, T],
-    red: Reductions[Array, T, 1],
-    f: Field[T],
-    nr: NRoot[T],
-    sh: Show[Matrix[T]],
-    numeric: Numeric[T],
-    ct: ClassTag[T]
-) extends VNode[Matrix, T](value1, thisId):
+    ops: TejOps[T],
+    sh: Show[NDArray[T]]
+) extends VNode[T](value1, thisId):
 
   override def toString(): String =
     s"v:$value g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"NormaliseRowsNode (id: ${thisId.toString().takeRight(4)}, op: ${op.toString()},\n value: ${value1.show}, \n grad: ${grad.show})"
+    s"NormaliseRowsNode (id: ${thisId.toString().takeRight(4)}, op: ${op.toString()})"
 
-  override def setGradOne(using ct: ClassTag[T]): Unit =
-    grad = vf.allOnes(value1)
+  override def setGradOne(using ct: scala.reflect.ClassTag[T]): Unit =
+    grad = ops.ones(value1.shape)
 
-  override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
+  override def backward(using td: TejVGraph[T]): Unit =
+    val n = td.dag.getNode(depId)
+    val inMat = value1.asInstanceOf[NDArray[Double]]
+    val g = grad.asInstanceOf[NDArray[Double]]
+    val rows = inMat.shape(0)
+    val cols = inMat.shape(1)
+    val newGrad = NDArray.fill[Double](Array(rows, cols), 0.0)
 
-    val n = td.dag.getNode(depId).asInstanceOf[VDimChangeNode[Matrix, Matrix, T]]
-    val newGrad = vf.zero(grad)
+    def rowSlice(mat: NDArray[Double], i: Int): Array[Double] =
+      Array.tabulate(cols)(j => mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1)))
+
+    def setRowSlice(mat: NDArray[Double], i: Int, row: Array[Double]): Unit =
+      for j <- 0 until cols do
+        mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1)) = row(j)
+
     op match
       case Softmax =>
-        for i <- 0 until value1.rows do
-          val x = value1.row(i)
-          val gRow = grad.row(i)
-          val dot = red.sum(vta.*(x)(gRow))
-          val newGradRow = vta.*(x)(vta.-(gRow)(dot))
+        for i <- 0 until rows do
+          val x = rowSlice(inMat, i)
+          val gRow = rowSlice(g, i)
+          val dot = x.zip(gRow).map(_ * _).sum
+          val newGradRow = x.zip(gRow).map((xi, gi) => xi * (gi - dot))
+          setRowSlice(newGrad, i, newGradRow)
 
-          newGrad.updateInPlace(NArray(i), ::, NArray(newGradRow*))
-        end for
-      case LogSoftmax      => ???
+      case LogSoftmax => ???
+
       case NormaliseRowsL1 =>
-        // For L1 normalization f(x) = x / ||x||_1, the Jacobian element ∂f_i/∂x_j is:
-        // ∂f_i/∂x_j = (δ_ij * ||x||_1 - sign(x_j)) / ||x||_1^2
-        // where δ_ij is Kronecker delta and sign(x_j) = ∂|x_j|/∂x_j
-        for i <- 0 until value1.rows do
-          val x = n.value.row(i)
-
-          val gRow = grad.row(i)
-          val norm = red.sum(vta.abs(x))
-          if norm != f.zero then
-            val normSquared = f.times(norm, norm)
-            val signX = vta.sign(x)
-            val gSum = vta.sum(gRow)
+        for i <- 0 until rows do
+          val x = rowSlice(inMat, i)
+          val gRow = rowSlice(g, i)
+          val norm = x.map(math.abs).sum
+          if norm != 0.0 then
+            val normSq = norm * norm
+            val signX = x.map(v => if v > 0 then 1.0 else if v < 0 then -1.0 else 0.0)
+            val gSum = gRow.sum
             val gradRow = x.indices.map { j =>
-              val numerator = f.minus(
-                f.times(gRow(j), norm),
-                f.times(f.times(signX(j), x(j)), gSum)
-              )
-              f.div(numerator, normSquared)
+              (gRow(j) * norm - signX(j) * x(j) * gSum) / normSq
             }.toArray
-            // println("x : " + x.printArr)
-            // println("gRow: " + gRow.printArr)
-            // println("norm: " + norm)
-            // println("normSquared: " + normSquared)
-            // println("signX: " + signX.printArr)
-            // println("gSum: " + gSum)
-            // println("gradRow: " + gradRow.mkString(", "))
+            setRowSlice(newGrad, i, gradRow)
+          else
+            setRowSlice(newGrad, i, Array.fill(cols)(0.0))
 
-            newGrad.updateInPlace(NArray(i), ::, NArray(gradRow*))
-          else newGrad.updateInPlace(NArray(i), ::, NArray(vta.zero(x)*))
-          end if
-      case NormaliseRowOps.NormaliseRowsL2 =>
-        // You can express this vectorized per row as:
-        // \nabla x = \frac{g \cdot s - \left( \sum_j g_j x_j \right)}{s^2}
-        // Or more compactly (in vector form):
-        // val dotGX = g dot x
-        // val gradX = (g * s - x * dotGX) / (s * s)
-        // pre row, where g is a row from the upstream gradient
+      case NormaliseRowsL2 =>
+        for i <- 0 until rows do
+          val x = rowSlice(inMat, i)
+          val gRow = rowSlice(g, i)
+          val norm = math.sqrt(x.map(v => v * v).sum)
+          if norm != 0.0 then
+            val dotGX = x.zip(gRow).map(_ * _).sum
+            val gradRow = x.indices.map { j =>
+              (gRow(j) * norm - x(j) * dotGX) / (norm * norm)
+            }.toArray
+            setRowSlice(newGrad, i, gradRow)
+          else
+            setRowSlice(newGrad, i, Array.fill(cols)(0.0))
 
-        for i <- 0 until value1.rows do
-          val x = value1.row(i)
-          val gRow = grad.row(i)
-          val norm = nr.sqrt(red.sum(vta.*(x)(x)))
-          val dotGX = red.sum(vta.*(gRow)(x)) // g ⋅ x
-          val gS = vta.*(gRow)(norm) // g * s
-          val xDotGX = vta.*(x)(dotGX) // x * (g ⋅ x)
-          val gradX = vta./(vta.-(gS)(xDotGX))(f.times(norm, norm)) // (g*s - x*(g⋅x)) / s^2
-          // println(s"Row $i: x: ${x.printArr}, gRow: ${gRow.printArr}, dotGX: $dotGX, S: $S, S_2: $S_2, gS: ${gS.printArr}")
-          // println(s"Row $i: gradX: ${gradX.printArr}")
-          // val newRow = vta./(grad.row(i))(gRow)
-          newGrad.updateInPlace(NArray(i), ::, NArray(gradX*))
-        end for
     end match
-    n.grad += newGrad
+    n.grad = (n.grad.asInstanceOf[NDArray[Double]] + newGrad).asInstanceOf[NDArray[T]]
 
   end backward
 end NormaliseRowsNode

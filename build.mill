@@ -1,4 +1,4 @@
-//| mill-version: 1.0.4
+//| mill-version: 1.1.6
 //| mill-jvm-version: 24
 //| mill-jvm-opts: [ "--add-modules", "jdk.incubator.vector"]
 //| mvnDeps:
@@ -20,12 +20,12 @@ import com.goyeau.mill.scalafix.ScalafixModule
 def format = mill.scalalib.scalafmt.ScalafmtModule
 
 object Config:
-  val scalaVersion = "3.7.2"
+  val scalaVersion = "3.8.3"
   val oslib = mvn"com.lihaoyi::os-lib:0.11.3"
   val vecIncubatorFlag = Seq("""--add-modules=jdk.incubator.vector""")
-  val vecxtV = "0.0.32"
+  val vecxtV = "0.0.39"
   val vecxt = mvn"io.github.quafadas::vecxt::$vecxtV"
-  val scalaJs = "1.19.0"
+  val scalaJs = "1.21.0"
   val munit = "1.1.0"
 end Config
 

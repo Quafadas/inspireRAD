@@ -4,17 +4,19 @@ import java.util.UUID
 import scala.specialized as sp
 import cats.syntax.show.*
 import cats.Show
+import vecxt.ndarray.NDArray
+import vecxt.NDArrayDoubleOps.*
+import vecxt.BoundsCheck.DoBoundsCheck.no
 
-case class UrnaryNode[F[_], @sp(Double) T](
+case class UrnaryNode[T](
     op: UrnaryOps,
-    value1: F[T],
+    value1: NDArray[T],
     thisId: UUID,
     depId: UUID
 )(using
-    vf: VectorisedField[F, T],
-    vt: VectorisedTrig[F, T],
-    sh: Show[F[T]]
-) extends VNode[F, T](value1, thisId):
+    ops: TejOps[T],
+    sh: Show[NDArray[T]]
+) extends VNode[T](value1, thisId):
 
   override def toString(): String =
     s"$op \n v:$value g: $grad \n (_id: ${id.toString().takeRight(4)})"
@@ -22,35 +24,21 @@ case class UrnaryNode[F[_], @sp(Double) T](
   override def graphShow: String =
     s"UrnaryNode (id: ${thisId.toString().takeRight(4)}, op: $op, value: ${value.show}, grad: ${grad.show})"
 
-  override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-    /** Although the ".asInstanceOf[VNode[F, T]]" appears sketchy, it was in fact validated by the compiler, on the
-      * _forward_ pass. A failure here would be indicative of a problem building the graph, rather than an
-      * incompatibility in the bound
-      */
+  override def backward(using td: TejVGraph[T]): Unit =
+    val n = td.dag.getNode(depId)
 
-    val n: VDimChangeNode[F, F, T] = td.dag.getNode(depId).asInstanceOf[VDimChangeNode[F, F, T]]
+    val g = grad.asInstanceOf[NDArray[Double]]
+    val nv = n.value.asInstanceOf[NDArray[Double]]
 
-    val update = op match
-      case UrnaryOps.Sin => this.grad * n.value.cos
-      case UrnaryOps.Cos => this.grad * n.value.sin * -1.0.const
-      // case UrnaryOps.Tan  => this.grad / (cos(n.realValue) * cos(n.realValue))
-      case UrnaryOps.Exp => this.grad * n.value.exp
-      case UrnaryOps.Log => this.grad / n.value
+    val update: NDArray[Double] = op match
+      case UrnaryOps.Sin  => g * TejOps.elementwise(nv, math.cos)
+      case UrnaryOps.Cos  => neg(g * TejOps.elementwise(nv, math.sin))
+      case UrnaryOps.Exp  => g * exp(nv)
+      case UrnaryOps.Log  => g / nv
+      case UrnaryOps.Neg  => neg(g)
+      case _              => ???
 
-      // case UrnaryOps.Sinh => this.grad * cosh(n2.value)
-      // case UrnaryOps.Cosh => this.grad * sinh(n.value)
-      // case UrnaryOps.Tanh => this.grad / (cosh(n.realValue) * cosh(n.realValue))
-      case UrnaryOps.Neg => -this.grad
-      // case UrnaryOps.Sqrt => this.grad / (2 * sqrt(n.realValue))
-      case _ => ???
-
-    n.grad = n.grad + update
-    // n.grad = td.dag.getNode(depId).grad + this.grad
-    // println("--->backward unary" + this.toString())
-    // println("New grad backward: " + n.id.toString().takeRight(4))
-    // println("Updated: by " + update.show)
-    // println("Grad: " + n.grad.show)
-    // println("<--- end backward this node")
+    n.grad = (n.grad.asInstanceOf[NDArray[Double]] + update).asInstanceOf[NDArray[T]]
 
   end backward
 end UrnaryNode

@@ -1,40 +1,38 @@
 package io.github.quafadas.inspireRAD
 
-import vecxt.matrix.Matrix
 import java.util.UUID
 import cats.syntax.show.*
 import cats.Show
-import narr.*
-import vecxt.all.update
-import vecxt.all.apply
-import scala.reflect.ClassTag
+import vecxt.ndarray.NDArray
+import vecxt.NDArrayDoubleOps.*
+import vecxt.ndarrayOps.*
+import vecxt.BoundsCheck.DoBoundsCheck.no
 import algebra.ring.Field
 
+/** Gathers elements from a 2-d matrix at given (row, col) indices into a 1-d array.
+  * On backward, scatters gradients back to the corresponding (row, col) positions.
+  */
 case class ArrangeNode[T](
-    value1: Array[T],
+    value1: NDArray[T],  // 1-d result of length indices.length
     thisId: UUID,
     depId: UUID,
-    indices: NArray[(Int, Int)]
+    indices: Array[(Int, Int)]
 )(using
-    vfa: VectorisedField[Array, T],
-    vt: VectorisedTrig[Array, T],
-    sh: Show[Array[T]],
-    fi: Field[T],
-    ct: ClassTag[T]
-) extends VNode[Array, T](value1, thisId):
+    ops: TejOps[T],
+    sh: Show[NDArray[T]]
+) extends VNode[T](value1, thisId):
 
   override def graphShow: String =
-    s"SelectIndiciesNode (id: ${thisId.toString().takeRight(4)}, first 5 indices: ${indices.take(5).mkString(", ")})"
+    s"ArrangeNode (id: ${thisId.toString().takeRight(4)}, first 5 indices: ${indices.take(5).mkString(", ")})"
 
-  override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-    val n = td.dag.getNode(depId).asInstanceOf[VNode[Matrix, T]]
-    import vecxt.BoundsCheck.DoBoundsCheck.no
-    // val zeros = n.vf1.zero( n.grad )
+  override def backward(using td: TejVGraph[T]): Unit =
+    val n = td.dag.getNode(depId)
+    val matGrad = n.grad.asInstanceOf[NDArray[Double]]
+    val g = grad.asInstanceOf[NDArray[Double]]
     for z <- 0 until indices.length do
       val (i, j) = indices(z)
-      n.grad(i, j) = fi.plus(n.grad(i, j), this.grad(z))
-    end for
-    // n.grad += zeros
+      val current = matGrad.data(matGrad.offset + i * matGrad.strides(0) + j * matGrad.strides(1))
+      matGrad.data(matGrad.offset + i * matGrad.strides(0) + j * matGrad.strides(1)) =
+        current + g.data(g.offset + z)
 
-  end backward
 end ArrangeNode

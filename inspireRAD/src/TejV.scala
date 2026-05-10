@@ -1,324 +1,229 @@
 package io.github.quafadas.inspireRAD
 
-import scala.math.*
 import scala.reflect.*
 import scala.NamedTuple.*
-import spire.algebra.*
 import scala.util.chaining.*
-import scala.specialized as sp
 import java.util.UUID
 import cats.Show
-import vecxt.matrix.Matrix
-import narr.*
-import vecxt.BoundsCheck
+import cats.syntax.show.toShow
+import vecxt.ndarray.NDArray
+import vecxt.NDArrayDoubleOps.*
+import vecxt.NDArrayReductions.*
+import vecxt.ndarrayOps.*
+import vecxt.BoundsCheck.DoBoundsCheck.no
 
 // Type-level function to extract gradient types from TejV types
 type GradientTypes[V <: Tuple] <: Tuple = V match
-  case EmptyTuple         => EmptyTuple
-  case TejV[f, t] *: tail => f[t] *: GradientTypes[tail]
+  case EmptyTuple       => EmptyTuple
+  case TejV[t] *: tail  => NDArray[t] *: GradientTypes[tail]
 
 extension (d: Double)
-  def tej[T](using
-      td: TejVGraph[T],
-      sh: Show[Scalar[T]],
-      fi: Field[T],
-      f: VectorisedField[Scalar, T],
-      vt: VectorisedTrig[Scalar, T]
-  ): TejV[Scalar, T] = TejV(Scalar(fi.fromDouble(d)))
+  def tej(using td: TejVGraph[Double]): TejV[Double] =
+    TejV(NDArray.fill[Double](Array(), d))
 end extension
 
-extension (m: Array[Double])
-  def tej(using td: TejVGraph[Double], sh: Show[Array[Double]], f: VectorisedField[Array, Double]) =
-    TejV(m)
+extension (arr: Array[Double])
+  def tej(using td: TejVGraph[Double]): TejV[Double] =
+    TejV(NDArray.fromArray(arr))
 end extension
 
-extension (m: Matrix[Double])
-  def tej(using
-      td: TejVGraph[Double],
-      sh: Show[Matrix[Double]],
-      f: VectorisedField[Matrix, Double],
-      tr: VectorisedTrig[Matrix, Double],
-      ev: Matrixy[Matrix, Double]
-  ) =
-    TejV(m)
-end extension
+object TejV:
 
-object TejV extends TejInstances:
-
-  def apply[F[_], T](
-      t: F[T]
-  )(using td: TejVGraph[T], f: VectorisedField[F, T], tr: VectorisedTrig[F, T], sh: Show[F[T]]): TejV[F, T] =
-    new TejV(value = t).tap(td.addToGraph)
+  def apply[T](
+      value: NDArray[T]
+  )(using td: TejVGraph[T], ops: TejOps[T], sh: Show[NDArray[T]]): TejV[T] =
+    new TejV(value).tap(td.addToGraph)
   end apply
 
-  def createDontAddToGraph[F[_], T](
-      t: F[T]
-  )(using
-      f: VectorisedField[F, T],
-      tr: VectorisedTrig[F, T],
-      sh: Show[F[T]]
-  ): TejV[F, T] =
-    new TejV(t)
-
-  // implicit def autoTejV[F[_], T](anF: F[T])(using
-  //     c: ClassTag[T],
-  //     td: TejVGraph[T],
-  //     f: VectorisedField[F, T],
-  //     sh: Show[F[T]],
-  //     t: VectorisedTrig[F, T]
-  // ): TejV[F, T] =
-  //   new TejV(value = anF).tap(td.addToGraph)
+  def createDontAddToGraph[T](
+      value: NDArray[T]
+  )(using ops: TejOps[T], sh: Show[NDArray[T]]): TejV[T] =
+    new TejV(value)
 
 end TejV
 
 @SerialVersionUID(0L)
-final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
-    f: VectorisedField[F, T],
-    sh: Show[F[T]]
+final case class TejV[T] private (value: NDArray[T])(using
+    ops: TejOps[T],
+    sh: Show[NDArray[T]]
 ) extends Serializable:
   lhs =>
   lazy val id = UUID.randomUUID()
 
-  def exp(using t: VectorisedTrig[F, T], td: TejVGraph[T]) =
-    new TejV(lhs.value.exp).tap(td.unary(_, UrnaryOps.Exp, lhs.id))
+  def exp(using td: TejVGraph[T]): TejV[T] =
+    val nv = vecxt.NDArrayDoubleOps.exp(value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.unary(_, UrnaryOps.Exp, lhs.id))
   end exp
 
-  def log(using t: VectorisedTrig[F, T], td: TejVGraph[T]) =
-    new TejV(lhs.value.log).tap(td.unary(_, UrnaryOps.Log, lhs.id))
+  def log(using td: TejVGraph[T]): TejV[T] =
+    val nv = vecxt.NDArrayDoubleOps.log(value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.unary(_, UrnaryOps.Log, lhs.id))
+  end log
 
-  def sin(using t: VectorisedTrig[F, T], td: TejVGraph[T]) =
-    new TejV(lhs.value.sin).tap(td.unary(_, UrnaryOps.Sin, lhs.id))
+  def sin(using td: TejVGraph[T]): TejV[T] =
+    val nv = TejOps.elementwise(value.asInstanceOf[NDArray[Double]], math.sin).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.unary(_, UrnaryOps.Sin, lhs.id))
+  end sin
 
-  def cos(using t: VectorisedTrig[F, T], td: TejVGraph[T]) =
-    new TejV(lhs.value.cos).tap(td.unary(_, UrnaryOps.Cos, lhs.id))
+  def cos(using td: TejVGraph[T]): TejV[T] =
+    val nv = TejOps.elementwise(value.asInstanceOf[NDArray[Double]], math.cos).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.unary(_, UrnaryOps.Cos, lhs.id))
+  end cos
 
-  def +(
-      rhs: TejV[F, T]
-  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
-    new TejV(lhs.value + rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Add))
+  def neg(using td: TejVGraph[T]): TejV[T] =
+    val nv = vecxt.NDArrayDoubleOps.neg(value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.unary(_, UrnaryOps.Neg, lhs.id))
+  end neg
+
+  def +(rhs: TejV[T])(using td: TejVGraph[T]): TejV[T] =
+    val nv = (value.asInstanceOf[NDArray[Double]] + rhs.value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Add))
   end +
 
-  def +(rhs: TejV[Scalar, T])(using
-      f: VectorisedField[F, T],
-      fs: VectorisedField[Scalar, T],
-      t: VectorisedTrig[F, T],
-      ts: VectorisedTrig[Scalar, T],
-      td: TejVGraph[T],
-      fi: Field[T],
-      sh: Show[F[T]],
-      shs: Show[Scalar[T]],
-      rd: Reductions[F, T, InferDimension[F]],
-      n: Numeric[T],
-      ct: ClassTag[T]
-  ): TejV[F, T] =
-    // val fid = f.fromDouble(d)
-    val newVal = f.+(lhs.value)(rhs.value.scalar)
-    new TejV(newVal).tap(td.scalar[F](lhs.id, rhs.id, _, BinaryScalarOps.Add, rhs.value.scalar))
-  end +
-
-  def -(
-      rhs: TejV[F, T]
-  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
-    new TejV(lhs.value - rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Sub))
+  def -(rhs: TejV[T])(using td: TejVGraph[T]): TejV[T] =
+    val nv = (value.asInstanceOf[NDArray[Double]] - rhs.value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Sub))
   end -
 
-  def *(
-      rhs: TejV[F, T]
-  )(using f: VectorisedField[F, T], t: VectorisedTrig[F, T], td: TejVGraph[T], fi: Field[T], sh: Show[F[T]]) =
-    new TejV(lhs.value * rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Mul))
+  def *(rhs: TejV[T])(using td: TejVGraph[T]): TejV[T] =
+    val nv = (value.asInstanceOf[NDArray[Double]] * rhs.value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Mul))
   end *
 
-  def /(
-      rhs: TejV[F, T]
-  )(using
-      f: VectorisedField[F, T],
-      t: VectorisedTrig[F, T],
-      td: TejVGraph[T],
-      sh: Show[F[T]],
-      fi: Field[T]
-  ): TejV[F, T] =
-    new TejV(lhs.value / rhs.value).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
+  def /(rhs: TejV[T])(using td: TejVGraph[T]): TejV[T] =
+    val nv = (value.asInstanceOf[NDArray[Double]] / rhs.value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.binary(lhs.id, rhs.id, _, BinaryOps.Div))
   end /
 
-  def div(rhs: TejV[Scalar, T])(using
-      f: VectorisedField[F, T],
-      t: VectorisedTrig[F, T],
-      td: TejVGraph[T],
-      sh: Show[F[T]],
-      fi: Field[T],
-      ct: ClassTag[T],
-      n: Numeric[T],
-      red: Reductions[F, T, InferDimension[F]]
-  ): TejV[F, T] =
-    val newVal = f./(lhs.value)(rhs.value.scalar)
-    new TejV(newVal).tap(
-      td.scalar(lhs.id, rhs.id, _, BinaryScalarOps.Div, rhs.value.scalar)
-    )
+  /** Divide by a scalar TejV (0-d). Gradient tracked. */
+  def div(rhs: TejV[T])(using td: TejVGraph[T]): TejV[T] =
+    val scalarD = rhs.value.asInstanceOf[NDArray[Double]].data(rhs.value.asInstanceOf[NDArray[Double]].offset)
+    val nv = (value.asInstanceOf[NDArray[Double]] / scalarD).asInstanceOf[NDArray[T]]
+    new TejV(nv).tap(td.scalar(lhs.id, rhs.id, _, BinaryScalarOps.Div, rhs.value.asInstanceOf[T]))
   end div
 
-  def clampMin(threshold: T)(using
-      f: VectorisedField[F, T],
-      t: VectorisedTrig[F, T],
-      td: TejVGraph[T],
-      sh: Show[F[T]],
-      fi: Field[T],
-      ct: ClassTag[T],
-      red: Reductions[F, T, InferDimension[F]],
-      n: Numeric[T]
-  ): TejV[F, T] =
-    val newVal = f.clampMin(lhs.value)(threshold)
-    new TejV(newVal).tap(td.scalar(lhs.id, lhs.id, _, BinaryScalarOps.ClampMin, threshold))
+  def clampMin(threshold: T)(using td: TejVGraph[T]): TejV[T] =
+    val scalarD = threshold.asInstanceOf[Double]
+    val v = value.asInstanceOf[NDArray[Double]]
+    val result = NDArray.fill[Double](v.shape, 0.0)
+    for i <- 0 until v.numel do
+      result.data(result.offset + i) = math.max(v.data(v.offset + i), scalarD)
+    // Create a 0-d scalar TejV for the "rhs" (the constant threshold) - we reuse lhs id (no gradient for scalar constant)
+    val threshTejId = lhs.id // same id trick: scalar node backward just checks lhs
+    new TejV(result.asInstanceOf[NDArray[T]]).tap(tv =>
+      td.scalar(lhs.id, lhs.id, tv, BinaryScalarOps.ClampMin, threshold)
+    )
   end clampMin
 
-  def sum(using
-      td: TejVGraph[T],
-      rd: Reductions[F, T, NumDim[F]],
-      r: Numeric[T],
-      vfScalar: VectorisedField[Scalar, T],
-      vfTrig: VectorisedTrig[Scalar, T],
-      f: Field[T],
-      sh: Show[Scalar[T]],
-      ct: ClassTag[T]
-  ): TejV[Scalar, T] =
-    val newT = TejV.createDontAddToGraph(Scalar(value.sum))
-    // println(newT)
-    newT.tap(td.reduction(_, lhs, ReductionOps.Sum, lhs.id))
+  def sum(using td: TejVGraph[T]): TejV[T] =
+    val s = vecxt.NDArrayReductions.sum(value.asInstanceOf[NDArray[Double]])
+    val nv = NDArray.fill[Double](Array(), s).asInstanceOf[NDArray[T]]
+    TejV.createDontAddToGraph(nv).tap(td.reduction(_, lhs.id, ReductionOps.Sum))
   end sum
 
-  def normaliseRowsL1(using
-      td: TejVGraph[T],
-      vf: VectorisedField[Array, T],
-      vf2: VectorisedField[Matrix, T],
-      vt2: VectorisedTrig[Matrix, T],
-      red: Reductions[Array, T, 1],
-      n: Numeric[T],
-      f: Field[T],
-      sh: Show[Matrix[T]],
-      mty: Matrixy[Matrix, T],
-      nr: NRoot[T],
-      ct: ClassTag[T],
-      ev: F[T] <:< Matrix[T]
-  ): TejV[Matrix, T] =
-    val newMat = mty.mapRows(value) { (row: Array[T]) =>
-      val su = row.sum
-      vf./(row)(su)
-    }
-
-    new TejV(newMat).tap(
-      td.normaliseRows(this.id, _, NormaliseRowOps.NormaliseRowsL1)
-    )
-  end normaliseRowsL1
-
-  def normaliseRowsL2(using
-      td: TejVGraph[T],
-      vf: VectorisedField[Array, T],
-      vf2: VectorisedField[Matrix, T],
-      vt2: VectorisedTrig[Matrix, T],
-      red: Reductions[Array, T, 1],
-      n: Numeric[T],
-      f: Field[T],
-      sh: Show[Matrix[T]],
-      mty: Matrixy[Matrix, T],
-      nr: NRoot[T],
-      ct: ClassTag[T],
-      ev: F[T] <:< Matrix[T]
-  ): TejV[Matrix, T] =
-    val newMat = mty.mapRows(value) { (row: Array[T]) =>
-      val l2 = nr.sqrt(row.map(x => n.times(x, x)).sum)
-      vf./(row)(l2)
-    }
-
-    new TejV(newMat).tap(
-      td.normaliseRows(this.id, _, NormaliseRowOps.NormaliseRowsL2)
-    )
-  end normaliseRowsL2
-
-  def softmaxRows(using
-      td: TejVGraph[T],
-      vf: VectorisedField[Array, T],
-      vf2: VectorisedField[Matrix, T],
-      vt2: VectorisedTrig[Matrix, T],
-      vta: VectorisedTrig[Array, T],
-      red: Reductions[Array, T, 1],
-      n: Numeric[T],
-      f: Field[T],
-      sh: Show[Matrix[T]],
-      nr: NRoot[T],
-      mty: Matrixy[Matrix, T],
-      ct: ClassTag[T],
-      ev: F[T] <:< Matrix[T]
-  ): TejV[Matrix, T] =
-    val newMat = mty.mapRows(value) { (row: Array[T]) =>
-
-      val norm = vf.-(row)(row.max)
-      val expd = vta.exp(norm)
-      val summed = red.sum(expd)
-      vf./(expd)(summed)
-    }
-
-    new TejV(newMat).tap(
-      td.normaliseRows(this.id, _, NormaliseRowOps.Softmax)
-    )
-  end softmaxRows
-
-  def product(using
-      td: TejVGraph[T],
-      rd: Reductions[F, T, NumDim[F]],
-      n: Numeric[T],
-      vfScalar: VectorisedField[Scalar, T],
-      sh: Show[Scalar[T]],
-      vfTrig: VectorisedTrig[Scalar, T],
-      f: Field[T],
-      ct: ClassTag[T]
-  ): TejV[Scalar, T] =
-    TejV.createDontAddToGraph(Scalar(value.product)).tap(td.reduction(_, lhs, ReductionOps.Product, lhs.id))
+  def product(using td: TejVGraph[T]): TejV[T] =
+    val s = vecxt.NDArrayReductions.product(value.asInstanceOf[NDArray[Double]])
+    val nv = NDArray.fill[Double](Array(), s).asInstanceOf[NDArray[T]]
+    TejV.createDontAddToGraph(nv).tap(td.reduction(_, lhs.id, ReductionOps.Product))
   end product
 
-  def mean(using
-      td: TejVGraph[T],
-      rd: Reductions[F, T, NumDim[F]],
-      n: Numeric[T],
-      vfScalar: VectorisedField[Scalar, T],
-      sh: Show[Scalar[T]],
-      vfTrig: VectorisedTrig[Scalar, T],
-      f: Field[T],
-      ct: ClassTag[T]
-  ): TejV[Scalar, T] =
-    TejV.createDontAddToGraph(Scalar(value.mean)).tap(td.reduction(_, lhs, ReductionOps.Mean, lhs.id))
+  def mean(using td: TejVGraph[T]): TejV[T] =
+    val s = vecxt.NDArrayReductions.mean(value.asInstanceOf[NDArray[Double]])
+    val nv = NDArray.fill[Double](Array(), s).asInstanceOf[NDArray[T]]
+    TejV.createDontAddToGraph(nv).tap(td.reduction(_, lhs.id, ReductionOps.Mean))
   end mean
 
-  // def backward[G[_]](wrt: Set[TejV[?, T]], debug: Boolean = false)(using
-  //     td: TejVGraph[T],
-  //     ct: ClassTag[T]
-  // ): Set[VNode[G, T]] =
-  //   if debug || !td.dag.isCompletelyConnected then os.write.over(os.pwd / "graph.dot", td.dag.toGraphviz)
-  //   end if
-  //   assert(td.dag.isCompletelyConnected, "Graph is not completely connected before backward pass.")
-  //   val graph = td.dag.toposort
-  //   val reversed = graph.reverse
+  def normaliseRowsL1(using td: TejVGraph[T]): TejV[T] =
+    val mat = value.asInstanceOf[NDArray[Double]]
+    val rows = mat.shape(0)
+    val cols = mat.shape(1)
+    val result = NDArray.fill[Double](Array(rows, cols), 0.0)
+    for i <- 0 until rows do
+      val rowSum = (0 until cols).map(j => math.abs(mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1)))).sum
+      for j <- 0 until cols do
+        result.data(result.offset + i * result.strides(0) + j * result.strides(1)) =
+          mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1)) / rowSum
+    new TejV(result.asInstanceOf[NDArray[T]]).tap(td.normaliseRows(lhs.id, _, NormaliseRowOps.NormaliseRowsL1))
+  end normaliseRowsL1
 
-  //   reversed.head.setGradOne
+  def normaliseRowsL2(using td: TejVGraph[T]): TejV[T] =
+    val mat = value.asInstanceOf[NDArray[Double]]
+    val rows = mat.shape(0)
+    val cols = mat.shape(1)
+    val result = NDArray.fill[Double](Array(rows, cols), 0.0)
+    for i <- 0 until rows do
+      val rowL2 = math.sqrt((0 until cols).map(j => {
+        val v = mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1))
+        v * v
+      }).sum)
+      for j <- 0 until cols do
+        result.data(result.offset + i * result.strides(0) + j * result.strides(1)) =
+          mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1)) / rowL2
+    new TejV(result.asInstanceOf[NDArray[T]]).tap(td.normaliseRows(lhs.id, _, NormaliseRowOps.NormaliseRowsL2))
+  end normaliseRowsL2
 
-  //   // This _may_ prevent a bunch of uncessary work. need to check.
-  //   // val minIndex = reversed.zipWithIndex.collect {
-  //   //   case (node, index) if wrt.exists(_.id == node.id) => index
-  //   // }.min
+  def softmaxRows(using td: TejVGraph[T]): TejV[T] =
+    val mat = value.asInstanceOf[NDArray[Double]]
+    val rows = mat.shape(0)
+    val cols = mat.shape(1)
+    val result = NDArray.fill[Double](Array(rows, cols), 0.0)
+    for i <- 0 until rows do
+      val rowMax = (0 until cols).map(j => mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1))).max
+      val exps = (0 until cols).map(j => math.exp(mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1)) - rowMax))
+      val sumExp = exps.sum
+      for j <- 0 until cols do
+        result.data(result.offset + i * result.strides(0) + j * result.strides(1)) = exps(j) / sumExp
+    new TejV(result.asInstanceOf[NDArray[T]]).tap(td.normaliseRows(lhs.id, _, NormaliseRowOps.Softmax))
+  end softmaxRows
 
-  //   // println(s"minIndex: $minIndex")
+  /** Matrix multiply (2-d @@ 2-d). */
+  def @@(rhs: TejV[T])(using td: TejVGraph[T]): TejV[T] =
+    val result = (value.asInstanceOf[NDArray[Double]] @@ rhs.value.asInstanceOf[NDArray[Double]]).asInstanceOf[NDArray[T]]
+    new TejV(result).tap(mval => td.matrixy(lhs.id, rhs.id, mval, MatrixyBinaryOps.MatMul))
+  end @@
 
-  //   if debug then println("---> Backward pass for TejV")
-  //   end if
+  /** Reduce each row to a scalar (returns 1-d NDArray). */
+  def mapRowsToScalar(fct: ReductionOps)(using td: TejVGraph[T]): TejV[T] =
+    val mat = value.asInstanceOf[NDArray[Double]]
+    val rows = mat.shape(0)
+    val cols = mat.shape(1)
+    val result = NDArray.fill[Double](Array(rows), 0.0)
+    fct match
+      case ReductionOps.Sum =>
+        for i <- 0 until rows do
+          result.data(result.offset + i) =
+            (0 until cols).map(j => mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1))).sum
+      case ReductionOps.Product =>
+        for i <- 0 until rows do
+          result.data(result.offset + i) =
+            (0 until cols).map(j => mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1))).product
+      case ReductionOps.Mean =>
+        for i <- 0 until rows do
+          result.data(result.offset + i) =
+            (0 until cols).map(j => mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1))).sum / cols.toDouble
+    new TejV(result.asInstanceOf[NDArray[T]]).tap(td.rowReduction(_, lhs.id, fct))
+  end mapRowsToScalar
 
-  //   reversed.foreach { node =>
-  //     if debug then println("node: " + node.graphShow)
-  //     end if
-  //     node.backward
-  //   }
-  //   val ids = wrt.map(_.id)
-  //   td.dag.getAllNodes.filter(n => ids.contains(n.id)).asInstanceOf[Set[VNode[G, T]]]
-  // end backward
+  /** Select elements at given (row, col) indices from a 2-d matrix. Returns 1-d result. */
+  def apply(indices: Array[(Int, Int)])(using td: TejVGraph[T]): TejV[T] =
+    val mat = value.asInstanceOf[NDArray[Double]]
+    val result = NDArray.fill[Double](Array(indices.length), 0.0)
+    for z <- 0 until indices.length do
+      val (i, j) = indices(z)
+      result.data(result.offset + z) = mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1))
+    new TejV(result.asInstanceOf[NDArray[T]]).tap(tv => td.selectIndicies(tv, indices, lhs.id))
+  end apply
 
-  // Simpler approach: return a regular Tuple with type info preserved at call site
+  /** Gather values from a 2-d matrix at given (row, col) indices into a flat 1-d array. */
+  def arrange(indices: Array[(Int, Int)])(using td: TejVGraph[T]): TejV[T] =
+    val mat = value.asInstanceOf[NDArray[Double]]
+    val result = NDArray.fill[Double](Array(indices.length), 0.0)
+    for z <- 0 until indices.length do
+      val (i, j) = indices(z)
+      result.data(result.offset + z) = mat.data(mat.offset + i * mat.strides(0) + j * mat.strides(1))
+    new TejV(result.asInstanceOf[NDArray[T]]).tap(tv => td.arrange(tv, indices, lhs.id))
+  end arrange
+
   def backward[N <: Tuple, V <: Tuple](wrt: NamedTuple[N, V], debug: Boolean = false)(using
       td: TejVGraph[T],
       ct: ClassTag[T]
@@ -339,15 +244,13 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     reversed.foreach { node =>
       if debug then println("node: " + node.graphShow)
       end if
-
       node.backward
     }
 
-    // Extract gradients while preserving tuple structure
     def extractGradientTuple(t: Tuple): Tuple = t match
       case EmptyTuple => EmptyTuple
       case h *: tail  =>
-        val tejv = h.asInstanceOf[TejV[?, T]]
+        val tejv = h.asInstanceOf[TejV[?]]
         val grad = td.dag.getNode(tejv.id).grad
         grad *: extractGradientTuple(tail)
 
@@ -359,137 +262,8 @@ final case class TejV[F[_], @sp(Float, Double) T] private (value: F[T])(using
     if debug then println("-----------Backward pass complete")
     end if
 
-    // Return with names preserved - the caller will have the correct types
     gradientTuple.asInstanceOf[NamedTuple[N, GradientTypes[V]]]
   end backward
 
-  def @@(rhs: TejV[Matrix, T])(using
-      f: VectorisedField[Matrix, T],
-      f2: VectorisedField[Array, T],
-      t: VectorisedTrig[Matrix, T],
-      td: TejVGraph[T],
-      sh: Show[Matrix[T]],
-      ev: F[T] <:< Matrix[T],
-      fi: Field[T],
-      matTc: Matrixy[Matrix, T]
-  ): TejV[Matrix, T] =
-    val newmat = matTc.@@(value)(rhs.value)
-    new TejV(newmat).tap(mval => td.matrixy(lhs.id, rhs.id, mval, MatrixyBinaryOps.MatMul))
-  end @@
-
-  def mapRowsToScalar(fct: ReductionOps)(using
-      f: VectorisedField[NArray, T],
-      t: VectorisedTrig[NArray, T],
-      rd: Reductions[NArray, T, 1],
-      td: TejVGraph[T],
-      f2: Field[T],
-      shm: Show[Matrix[T]],
-      sha: Show[NArray[T]],
-      ev: F[T] <:< Matrix[T],
-      matTc: Matrixy[Matrix, T],
-      ct: ClassTag[T]
-  ): TejV[NArray, T] =
-    val rowfct = fct match
-      case ReductionOps.Sum =>
-        ((row: NArray[T]) => row.sum)
-      case ReductionOps.Product =>
-        ((row: NArray[T]) => row.product)
-      case ReductionOps.Mean =>
-        ((row: NArray[T]) => row.mean)
-
-    val newmat = matTc.mapRowsToScalar(value)(rowfct)
-
-    // println(td.dag.toGraphviz)
-    new TejV(newmat).tap(newVal =>
-      // td.addToGraph(newVal)
-      td.rowReduction(
-        newVal,
-        lhs.id,
-        fct,
-        newVal.value
-      )
-    )
-
-  end mapRowsToScalar
-
-  // def mapRows(fct: TejV[Array, T] => TejV[Array, T])(using
-  //     f: VectorisedField[NArray, T],
-  //     t: VectorisedTrig[Matrix, T],
-  //     tA: VectorisedTrig[Array, T],
-  //     vfm: VectorisedField[Matrix, T],
-  //     td: TejVGraph[T],
-  //     fi: Field[T],
-  //     shm: Show[Matrix[T]],
-  //     sha: Show[NArray[T]],
-  //     ev: F[T] <:< Matrix[T],
-  //     matTc: Matrixy[Matrix, T],
-  //     ct:ClassTag[T]
-  // ): TejV[Matrix, T] =
-
-  //   val mat = value.asInstanceOf[Matrix[T]]
-  //   val listIds = scala.collection.mutable.ListBuffer.empty[(UUID, UUID)]
-  //   val newmat = mat.mapRows(row =>
-  //     val oldRow = TejV(row)(using td, f, tA, sha)
-  //     val rowV = fct(oldRow)
-  //     listIds.addOne(
-  //       (oldRow.id, rowV.id)
-  //     )
-  //     rowV.value
-  //   )
-
-  //   val newTej = TejV.createDontAddToGraph(newmat)
-
-  //   td.mapRowsNode(
-  //     in = this.asInstanceOf[TejV[Matrix, T]],
-  //     out = newTej,
-  //     rows = listIds.toSeq
-  //   )
-
-  //   newTej
-
-  // end mapRows
-
-  def apply(i: NArray[(Int, Int)])(using
-      td: TejVGraph[T],
-      rd: Reductions[Matrix, T, 2],
-      vf: VectorisedField[Matrix, T],
-      vt: VectorisedTrig[Matrix, T],
-      vfa: VectorisedField[NArray, T],
-      ev: F[T] <:< Matrix[T],
-      matTc: Matrixy[Matrix, T],
-      ct: ClassTag[T],
-      sh: Show[Matrix[T]],
-      ord: Numeric[T]
-  ): TejV[Matrix, T] =
-    val newT = value.asInstanceOf[Matrix[T]]
-    val newT2 = matTc.apply(newT)(i)
-    new TejV[Matrix, T](newT2).tap(tv => td.selectIndicies(tv, i, lhs.id))
-  end apply
-
-  def arrange(i: NArray[(Int, Int)])(using
-      td: TejVGraph[T],
-      fi: Field[T],
-      vf: VectorisedField[Matrix, T],
-      vt: VectorisedTrig[Array, T],
-      vfa: VectorisedField[NArray, T],
-      ev: F[T] <:< Matrix[T],
-      matTc: Matrixy[Matrix, T],
-      ct: ClassTag[T],
-      ord: Numeric[T],
-      sh: Show[Array[T]]
-  ): TejV[Array, T] =
-    import vecxt.BoundsCheck.DoBoundsCheck.no
-    val newT = value.asInstanceOf[Matrix[T]]
-
-    val newT2 = matTc.arrange(newT)(i)
-    new TejV[Array, T](newT2).tap(tv => td.arrange(tv, i, lhs.id))
-  end arrange
-
 end TejV
 
-// trait TejVInstances[F[_], T]:
-//   implicit def tejVAlgebra(using
-//       c: ClassTag[T]
-//   ): TejVAlgebra[F, T] = new TejVAlgebra[F, T] {}
-
-// end TejVInstances

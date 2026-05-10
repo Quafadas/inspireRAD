@@ -5,107 +5,76 @@ import scala.specialized as sp
 import cats.syntax.show.*
 import cats.Show
 import scala.reflect.ClassTag
-import algebra.ring.Field
+import vecxt.ndarray.NDArray
+import vecxt.NDArrayDoubleOps.*
+import vecxt.NDArrayReductions.*
+import vecxt.ndarrayOps.*
+import vecxt.BoundsCheck.DoBoundsCheck.no
 
-/** In this class, the scalar constant is always assumed to be on the right side of the operation. It will provide the
-  * wrong answers otherwise
-  *
-  * @param op
-  * @param value1
-  * @param thisId
-  * @param left
-  * @param right
-  * @param scalar
-  * @param inGrad
-  * @param vf
-  * @param vg
-  * @param vt
-  * @param n
-  * @param f
-  * @param shf
-  * @param shg
-  * @param ct
+/** Handles scalar operations where a constant scalar (not a TejV) is the right-hand operand.
+  * Gradient flows to left and right (the right being a scalar TejV with a 0-d NDArray value).
   */
-case class ScalarNode[F[_], G[_], @sp(Double) T](
+case class ScalarNode[T](
     op: BinaryScalarOps,
-    value1: F[T],
+    value1: NDArray[T],
     thisId: UUID,
     left: UUID,
-    right: UUID, // a scalar node
-    scalar: T,
-    inGrad: G[T]
+    right: UUID,
+    scalar: T
 )(using
-    vf: VectorisedField[F, T],
-    vg: VectorisedField[G, T],
-    // vf2: VectorisedField[Scalar, T],
-    vt: VectorisedTrig[F, T],
-    // rd: Reductions[G, T, InferDimension[G]],
-    n: Numeric[T],
-    f: Field[T],
-    shf: Show[G[T]],
-    shg: Show[F[T]],
-    ct: ClassTag[T]
-) extends VDimChangeNode[F, G, T](value1, thisId):
-
-  var grad: G[T] = vg.zero(inGrad)
-
-  def setGradOne(using ct: scala.reflect.ClassTag[T]): Unit =
-    grad = vg.allOnes(grad)
-  def setGradZero(using ct: scala.reflect.ClassTag[T]): Unit =
-    grad = vg.zero(grad)
+    ops: TejOps[T],
+    sh: Show[NDArray[T]]
+) extends VNode[T](value1, thisId):
 
   override def toString(): String =
     s"$op \n v:$value1 g: $grad \n (_id: ${id.toString().takeRight(4)})"
 
   override def graphShow: String =
-    s"ScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op \n value: \n ${value1.show} \n grad \n ${grad.show})"
+    s"ScalarNode (id: ${thisId.toString().takeRight(4)}, op: $op \n value: \n ${value.show} \n grad \n ${grad.show})"
 
-  override def backward[N <: VDimChangeNode[?, ?, T]](using td: TejVGraph[T]): Unit =
-    // println("left " + td.dag.getNode(left))
-    // println(td.dag.getNode(right))
-
-    // println("grad this node" + this.grad)
+  override def backward(using td: TejVGraph[T]): Unit =
     val leftN = td.dag.getNode(left)
-    val rightN = td.dag.getNode(right).asInstanceOf[VDimChangeNode[?, Scalar, T]]
-    val rvf = rightN.vf2
-    val leftGradOps = leftN.vf2
-    val leftValOps = leftN.vf1
-    val gradDimL = leftN.vf2.numDimensions
-    val gradDimR = rightN.vf2.numDimensions
-    val thisDim = this.vf2.numDimensions
+    val rightN = td.dag.getNode(right)
+    val g = grad.asInstanceOf[NDArray[Double]]
+    val scalarD = scalar.asInstanceOf[Double]
 
     op match
       case BinaryScalarOps.Add =>
-        // Y = X + c
-        // LHS gradient is the same as the input gradient
-        leftN.grad = grad.asInstanceOf[leftN.thisGrad[T]]
-        // Sum all gradients for the scalar since it affects all elements
-        rightN.grad = Scalar(leftN.vf2.sum(leftN.grad))
+        // Y = X + c, dY/dX = 1, dY/dc = 1 (scalar sum)
+        leftN.grad = (leftN.grad.asInstanceOf[NDArray[Double]] + g).asInstanceOf[NDArray[T]]
+        val totalGrad = vecxt.NDArrayReductions.sum(g)
+        // right is a 0-d scalar NDArray
+        rightN.grad = (rightN.grad.asInstanceOf[NDArray[Double]] + totalGrad).asInstanceOf[NDArray[T]]
 
       case BinaryScalarOps.Sub =>
-        ???
+        leftN.grad = (leftN.grad.asInstanceOf[NDArray[Double]] + g).asInstanceOf[NDArray[T]]
+        val totalGrad = vecxt.NDArrayReductions.sum(g)
+        rightN.grad = (rightN.grad.asInstanceOf[NDArray[Double]] - totalGrad).asInstanceOf[NDArray[T]]
 
       case BinaryScalarOps.Mul =>
-        ???
+        leftN.grad = (leftN.grad.asInstanceOf[NDArray[Double]] + g * scalarD).asInstanceOf[NDArray[T]]
+        val dotSum = vecxt.NDArrayReductions.sum(g * leftN.value.asInstanceOf[NDArray[Double]])
+        rightN.grad = (rightN.grad.asInstanceOf[NDArray[Double]] + dotSum).asInstanceOf[NDArray[T]]
 
       case BinaryScalarOps.Div =>
-        val leftCheat = leftN.asInstanceOf[VDimChangeNode[?, G, T]]
-        leftCheat.grad = vf2./(grad)(scalar)
-        // val dot = vf.*(value1)(grad.asInstanceOf[F[T]])
-        // val sumDot = vf.sum(dot)
-        // val toAdd = f.times(f.fromInt(-1), f.div(sumDot, scalar))
-        // rightN.grad = rvf.+(rightN.grad)(toAdd)
+        // Y = X / c, dY/dX = 1/c
+        leftN.grad = (leftN.grad.asInstanceOf[NDArray[Double]] + g / scalarD).asInstanceOf[NDArray[T]]
 
       case BinaryScalarOps.ClampMin =>
-        val leftCheat = leftN.asInstanceOf[VDimChangeNode[F, F, T]]
-        val theCheck = vf.>(value1)(scalar)
-        val tmp = grad.asInstanceOf[F[T]] *:* theCheck
-        leftCheat.grad = tmp
+        // Y = max(X, threshold): grad is 1 where X > threshold, else 0
+        val lv = leftN.value.asInstanceOf[NDArray[Double]]
+        val mask = lv > scalarD
+        val maskedGrad = g * mask.asInstanceOf[NDArray[Double]]  // treat Boolean as Double using map
+        // We do a manual element-wise masking since NDArray[Boolean] * NDArray[Double] isn't direct
+        val gData = g.data
+        val mvData = lv.data
+        val result = NDArray.fill[Double](g.shape, 0.0)
+        for i <- 0 until g.numel do
+          val gi = gData(g.offset + i)
+          val vi = mvData(lv.offset + i)
+          result.data(result.offset + i) = if vi > scalarD then gi else 0.0
+        leftN.grad = (leftN.grad.asInstanceOf[NDArray[Double]] + result).asInstanceOf[NDArray[T]]
 
     end match
-    // println("--> backward binary" + this.toString())
-    // println("Update Left: " + leftN)
-    // println("Update Right: " + rightN)
-    // println("<--- end backward this node")
   end backward
 end ScalarNode
